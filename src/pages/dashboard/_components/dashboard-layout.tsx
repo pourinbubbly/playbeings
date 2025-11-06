@@ -54,13 +54,11 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
       <header className="sticky top-0 z-50 glass-card border-b border-[var(--neon-cyan)]/20">
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan transition-all group-hover:neon-glow-magenta overflow-hidden">
-              <img 
-                src="https://cdn.hercules.app/file_C1apUdTtCZmsdaOnfQV8Z8c0" 
-                alt="PlayBeings" 
-                className="w-full h-full object-cover"
-              />
-            </div>
+            <img 
+              src="https://cdn.hercules.app/file_C1apUdTtCZmsdaOnfQV8Z8c0" 
+              alt="PlayBeings" 
+              className="w-12 h-12 object-contain"
+            />
             <span className="text-3xl font-bold gradient-text-cyber tracking-wider">
               PLAYBEINGS
             </span>
