@@ -56,7 +56,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           <Link to="/" className="flex items-center gap-3 group">
             <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan transition-all group-hover:neon-glow-magenta overflow-hidden">
               <img 
-                src="https://cdn.hercules.app/file_Sq9KNXoJFIfUyuO54qGofrdS" 
+                src="https://cdn.hercules.app/file_C1apUdTtCZmsdaOnfQV8Z8c0" 
                 alt="PlayBeings" 
                 className="w-full h-full object-cover"
               />
