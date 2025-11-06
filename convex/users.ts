@@ -138,3 +138,144 @@ export const getUserByUsername = query({
     return user;
   },
 });
+
+export const deleteAccount = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    // Delete all related data
+    // Steam profiles
+    const steamProfiles = await ctx.db
+      .query("steamProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const profile of steamProfiles) {
+      await ctx.db.delete(profile._id);
+    }
+
+    // Games
+    const games = await ctx.db
+      .query("games")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const game of games) {
+      await ctx.db.delete(game._id);
+    }
+
+    // User quests
+    const userQuests = await ctx.db
+      .query("userQuests")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const quest of userQuests) {
+      await ctx.db.delete(quest._id);
+    }
+
+    // Trading cards
+    const cards = await ctx.db
+      .query("tradingCards")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const card of cards) {
+      await ctx.db.delete(card._id);
+    }
+
+    // NFT boosts
+    const boosts = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const boost of boosts) {
+      await ctx.db.delete(boost._id);
+    }
+
+    // Reward redemptions
+    const redemptions = await ctx.db
+      .query("rewardRedemptions")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const redemption of redemptions) {
+      await ctx.db.delete(redemption._id);
+    }
+
+    // Point history
+    const pointHistory = await ctx.db
+      .query("pointHistory")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const point of pointHistory) {
+      await ctx.db.delete(point._id);
+    }
+
+    // Wallets
+    const wallets = await ctx.db
+      .query("wallets")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const wallet of wallets) {
+      await ctx.db.delete(wallet._id);
+    }
+
+    // Follows (as follower)
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", user._id))
+      .collect();
+    for (const follow of follows) {
+      await ctx.db.delete(follow._id);
+    }
+
+    // Follows (as following)
+    const followers = await ctx.db
+      .query("follows")
+      .withIndex("by_following", (q) => q.eq("followingId", user._id))
+      .collect();
+    for (const follower of followers) {
+      await ctx.db.delete(follower._id);
+    }
+
+    // Profile comments
+    const comments = await ctx.db
+      .query("profileComments")
+      .withIndex("by_author", (q) => q.eq("authorId", user._id))
+      .collect();
+    for (const comment of comments) {
+      await ctx.db.delete(comment._id);
+    }
+
+    // Daily check-ins
+    const checkIns = await ctx.db
+      .query("dailyCheckIns")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    for (const checkIn of checkIns) {
+      await ctx.db.delete(checkIn._id);
+    }
+
+    // Finally, delete the user
+    await ctx.db.delete(user._id);
+
+    return { success: true };
+  },
+});

@@ -13,6 +13,7 @@ import Rewards from "./pages/rewards/page.tsx";
 import Analytics from "./pages/analytics/page.tsx";
 import News from "./pages/news/page.tsx";
 import Profile from "./pages/profile/page.tsx";
+import Settings from "./pages/settings/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 export default function App() {
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/dashboard/analytics" element={<Analytics />} />
           <Route path="/dashboard/news" element={<News />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
