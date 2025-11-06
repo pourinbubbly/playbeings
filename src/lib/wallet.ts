@@ -71,7 +71,7 @@ export function getConnectedWallet(): string | null {
 }
 
 // CARV SVM Testnet RPC URL
-const CARV_RPC_URL = "https://rpc-testnet.carv.io";
+const CARV_RPC_URL = "https://rpc.testnet.carv.io/rpc";
 
 // Helper to create a transaction signer for Backpack
 class BackpackSigner {
