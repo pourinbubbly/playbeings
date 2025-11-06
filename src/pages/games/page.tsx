@@ -67,55 +67,72 @@ function GamesContent() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Game Library</CardTitle>
-            <CardDescription>
-              Your complete Steam game collection
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="space-y-8">
+        {/* Header */}
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
+          <div className="flex items-center gap-4">
+            <div className="w-14 h-14 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
+              <Gamepad2 className="w-8 h-8 text-[var(--neon-cyan)]" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold gradient-text-cyber tracking-wider uppercase">
+                Game Library
+              </h1>
+              <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
+                Your complete Steam collection
+              </p>
+            </div>
+          </div>
+        </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* Games Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedGames.map((game) => (
-            <Card key={game._id} className="overflow-hidden hover:border-primary/50 transition-colors">
-              <div className="aspect-video bg-muted relative">
+            <div 
+              key={game._id} 
+              className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group"
+            >
+              <div className="aspect-video bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
                 <img
                   src={game.imageUrl}
                   alt={game.name}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                   onError={(e) => {
                     e.currentTarget.style.display = "none";
                   }}
                 />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                {game.playtime > 6000 && (
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] font-semibold uppercase tracking-wider text-xs">
+                      100+ Hours
+                    </Badge>
+                  </div>
+                )}
               </div>
-              <CardContent className="pt-4 space-y-3">
-                <h3 className="font-semibold line-clamp-1">{game.name}</h3>
+              
+              <div className="p-4 space-y-3">
+                <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">
+                  {game.name}
+                </h3>
                 
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 text-sm text-[var(--neon-cyan)] font-semibold uppercase tracking-wide">
                     <Clock className="w-4 h-4" />
-                    <span>{Math.floor(game.playtime / 60)} hours played</span>
+                    <span>{Math.floor(game.playtime / 60)}h played</span>
                   </div>
                   
                   {game.lastPlayed && game.lastPlayed > 0 && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <Calendar className="w-4 h-4" />
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                      <Calendar className="w-3 h-3" />
                       <span>
-                        Last played: {new Date(game.lastPlayed * 1000).toLocaleDateString()}
+                        {new Date(game.lastPlayed * 1000).toLocaleDateString()}
                       </span>
                     </div>
                   )}
                 </div>
-
-                {game.playtime > 6000 && (
-                  <Badge variant="secondary" className="w-full justify-center">
-                    100+ Hours
-                  </Badge>
-                )}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           ))}
         </div>
       </div>

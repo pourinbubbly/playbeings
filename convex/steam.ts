@@ -70,7 +70,7 @@ export const linkSteamAccount = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`,
+          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
       };
@@ -107,7 +107,7 @@ export const syncSteamData = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`,
+          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
         totalPlaytime,
@@ -123,18 +123,30 @@ export const getSteamInventory = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
     try {
-      // Get Steam inventory (753 is Steam Community item appid)
-      const inventoryResponse = await fetch(
-        `https://steamcommunity.com/inventory/${args.steamId}/753/6?l=english&count=5000`
-      );
+      // Try multiple contexts for Steam inventory
+      const contexts = [3, 6, 1];
+      let inventoryData = null;
       
-      if (!inventoryResponse.ok) {
-        throw new Error("Failed to fetch inventory");
+      for (const context of contexts) {
+        try {
+          const inventoryResponse = await fetch(
+            `https://steamcommunity.com/inventory/${args.steamId}/753/${context}?l=english&count=5000`
+          );
+          
+          if (inventoryResponse.ok) {
+            const data = await inventoryResponse.json();
+            if (data.assets && data.descriptions) {
+              inventoryData = data;
+              break;
+            }
+          }
+        } catch (e) {
+          console.log(`Failed to fetch with context ${context}, trying next...`);
+        }
       }
-
-      const inventoryData = await inventoryResponse.json();
       
-      if (!inventoryData.assets || !inventoryData.descriptions) {
+      if (!inventoryData || !inventoryData.assets || !inventoryData.descriptions) {
+        console.log("No inventory data found");
         return [];
       }
 
@@ -147,12 +159,18 @@ export const getSteamInventory = action({
           );
           return description ? { ...asset, ...description } : null;
         })
-        .filter((item: { type?: string; tradable?: number }) => 
-          item && 
-          item.type && 
-          item.type.includes("Trading Card") &&
-          item.tradable === 1
-        )
+        .filter((item: { type?: string; tradable?: number; tags?: Array<{ category?: string; name?: string }> }) => {
+          if (!item) return false;
+          // Check if it's a trading card using multiple methods
+          const isCard = item.type && (
+            item.type.includes("Trading Card") || 
+            item.type.includes("Card")
+          );
+          const hasCardTag = item.tags?.some(tag => 
+            tag.category === "item_class" && tag.name === "Trading Card"
+          );
+          return (isCard || hasCardTag) && item.tradable === 1;
+        })
         .map((card: {
           classid: string;
           name: string;
@@ -160,15 +178,17 @@ export const getSteamInventory = action({
           icon_url: string;
           type: string;
           app_name?: string;
+          market_hash_name?: string;
         }) => ({
           classid: card.classid,
           name: card.name,
-          marketName: card.market_name,
-          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
+          marketName: card.market_name || card.market_hash_name || card.name,
+          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}/330x192`,
           type: card.type,
-          gameName: card.app_name || "Unknown Game",
+          gameName: card.app_name || "Steam Community",
         }));
 
+      console.log(`Found ${tradingCards.length} trading cards`);
       return tradingCards;
     } catch (error) {
       console.error("Failed to fetch Steam inventory:", error);

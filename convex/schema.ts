@@ -101,12 +101,15 @@ export default defineSchema({
 
   rewardRedemptions: defineTable({
     userId: v.id("users"),
+    rewardId: v.id("rewards"),
     rewardName: v.string(),
     pointsSpent: v.number(),
-    code: v.string(),
-    status: v.string(), // "pending", "delivered", "claimed"
+    code: v.optional(v.string()),
+    status: v.string(), // "pending", "approved", "revealed"
     redeemedAt: v.number(),
-  }).index("by_user", ["userId"]),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"]),
 
   pointHistory: defineTable({
     userId: v.id("users"),

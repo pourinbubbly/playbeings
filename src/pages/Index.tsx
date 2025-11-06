@@ -17,57 +17,64 @@ import {
 
 export default function Index() {
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background cyber-grid-animated relative">
+      {/* Animated background gradients */}
+      <div className="fixed inset-0 pointer-events-none">
+        <div className="absolute top-20 -left-20 w-96 h-96 bg-[var(--neon-cyan)] rounded-full blur-[120px] opacity-10 animate-pulse" />
+        <div className="absolute bottom-20 -right-20 w-96 h-96 bg-[var(--neon-magenta)] rounded-full blur-[120px] opacity-10 animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-[var(--neon-purple)] rounded-full blur-[120px] opacity-5 animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
       {/* Navigation */}
-      <header className="border-b border-border backdrop-blur-xl bg-card/95 sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-              <Zap className="w-6 h-6 text-white" />
+      <header className="glass-card border-b border-[var(--neon-cyan)]/20 sticky top-0 z-50">
+        <div className="container mx-auto px-4 h-20 flex items-center justify-between relative z-10">
+          <Link to="/" className="flex items-center gap-3 group">
+            <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan transition-all group-hover:neon-glow-magenta">
+              <Zap className="w-7 h-7 text-[var(--neon-cyan)] group-hover:text-[var(--neon-magenta)] transition-colors" />
             </div>
-            <span className="text-2xl font-bold gradient-text">PlayBeings</span>
+            <span className="text-3xl font-bold gradient-text-cyber tracking-wider glitch-text-slow">PLAYBEINGS</span>
           </Link>
           <div className="flex items-center gap-4">
             <Authenticated>
-              <Button asChild size="sm">
-                <Link to="/dashboard">Dashboard</Link>
+              <Button asChild className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider">
+                <Link to="/dashboard">DASHBOARD</Link>
               </Button>
             </Authenticated>
             <Unauthenticated>
-              <SignInButton size="sm" />
+              <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider" />
             </Unauthenticated>
           </div>
         </div>
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 md:py-32">
+      <section className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-full border border-primary/20">
-              <Shield className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium">Powered by CARV SVM Blockchain</span>
+            <div className="inline-flex items-center gap-2 px-6 py-3 glass-card rounded-sm border-2 border-[var(--neon-cyan)]/30 neon-glow-cyan">
+              <Shield className="w-5 h-5 text-[var(--neon-cyan)]" />
+              <span className="text-sm font-bold uppercase tracking-wider text-[var(--neon-cyan)]">CARV SVM Blockchain Powered</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tight">
-              Turn Your Gaming Into <span className="gradient-text">Real Rewards</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-wider uppercase">
+              Turn Gaming Into <span className="gradient-text-cyber glitch-text-slow">Real Rewards</span>
             </h1>
 
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-              Connect your Steam account, complete daily quests, mint NFTs, and earn real rewards from your gaming achievements.
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto uppercase tracking-wide">
+              Connect Steam • Complete Quests • Mint NFTs • Earn Rewards
             </p>
 
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
               <Authenticated>
-                <Button asChild size="lg" className="text-lg px-8">
-                  <Link to="/dashboard">Go to Dashboard</Link>
+                <Button asChild className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
+                  <Link to="/dashboard">ENTER DASHBOARD</Link>
                 </Button>
               </Authenticated>
               <Unauthenticated>
-                <SignInButton size="lg" className="text-lg px-8" />
+                <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14" />
               </Unauthenticated>
-              <Button asChild variant="outline" size="lg" className="text-lg px-8">
-                <a href="#features">Learn More</a>
+              <Button asChild variant="ghost" className="glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
+                <a href="#features">LEARN MORE</a>
               </Button>
             </div>
           </div>
@@ -75,24 +82,24 @@ export default function Index() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 border-y border-border bg-muted/30">
+      <section className="py-16 glass-card border-y-2 border-[var(--neon-cyan)]/20 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-            <StatItem label="Active Players" value="12,456" />
-            <StatItem label="Quests Completed" value="186,234" />
-            <StatItem label="NFTs Minted" value="45,891" />
-            <StatItem label="Rewards Distributed" value="$28,450" />
+            <StatItem label="Active Players" value="0" />
+            <StatItem label="Quests Completed" value="0" />
+            <StatItem label="NFTs Minted" value="0" />
+            <StatItem label="Rewards Distributed" value="$0" />
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 md:py-32">
+      <section id="features" className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">Everything You Need</h2>
-            <p className="text-xl text-muted-foreground">
-              A complete platform to earn, collect, and compete
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text-cyber uppercase tracking-wider">Everything You Need</h2>
+            <p className="text-xl text-muted-foreground uppercase tracking-wide">
+              Complete platform to earn, collect, and compete
             </p>
           </div>
 
@@ -132,12 +139,12 @@ export default function Index() {
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 md:py-32 bg-muted/30">
+      <section className="py-20 md:py-32 glass-card relative z-10">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h2>
-            <p className="text-xl text-muted-foreground">
-              Start earning from your gaming in three simple steps
+            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text-cyber uppercase tracking-wider">How It Works</h2>
+            <p className="text-xl text-muted-foreground uppercase tracking-wide">
+              Start earning from gaming in three simple steps
             </p>
           </div>
 
@@ -162,20 +169,20 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 md:py-32">
+      <section className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto bg-gradient-to-r from-primary/10 to-accent/10 rounded-2xl border border-primary/20 p-12 text-center space-y-6">
-            <h2 className="text-4xl md:text-5xl font-bold">Ready to Start Earning?</h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of gamers already earning rewards from their gaming.
+          <div className="max-w-3xl mx-auto glass-card rounded-sm border-2 border-[var(--neon-cyan)]/30 neon-glow-cyan p-12 text-center space-y-6">
+            <h2 className="text-4xl md:text-5xl font-bold gradient-text-cyber uppercase tracking-wider">Ready to Start Earning?</h2>
+            <p className="text-xl text-muted-foreground uppercase tracking-wide">
+              Join gamers earning rewards from their gaming
             </p>
             <div className="pt-4">
               <Unauthenticated>
-                <SignInButton size="lg" className="text-lg px-8" />
+                <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14" />
               </Unauthenticated>
               <Authenticated>
-                <Button asChild size="lg" className="text-lg px-8">
-                  <Link to="/dashboard">Go to Dashboard</Link>
+                <Button asChild className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
+                  <Link to="/dashboard">ENTER DASHBOARD</Link>
                 </Button>
               </Authenticated>
             </div>
@@ -184,18 +191,18 @@ export default function Index() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-12 bg-card">
+      <footer className="glass-card border-t-2 border-[var(--neon-cyan)]/20 py-12 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                  <Zap className="w-5 h-5 text-white" />
+                <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
+                  <Zap className="w-6 h-6 text-[var(--neon-cyan)]" />
                 </div>
-                <span className="text-lg font-bold gradient-text">PlayBeings</span>
+                <span className="text-xl font-bold gradient-text-cyber tracking-wider">PLAYBEINGS</span>
               </div>
-              <p className="text-sm text-muted-foreground">
-                Turn your gaming into real rewards with blockchain technology.
+              <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                Turn gaming into rewards with blockchain
               </p>
             </div>
 
@@ -248,12 +255,12 @@ function FeatureCard({
   description: string;
 }) {
   return (
-    <div className="p-6 bg-card border border-border rounded-lg space-y-4 hover:border-primary/50 transition-colors">
-      <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+    <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 space-y-4 hover-glow-cyan transition-all relative z-10">
+      <div className="w-14 h-14 bg-black/40 rounded border-2 border-[var(--neon-cyan)] flex items-center justify-center text-[var(--neon-cyan)] neon-glow-cyan">
         {icon}
       </div>
-      <h3 className="text-xl font-semibold">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="text-xl font-bold uppercase tracking-wider gradient-text-purple">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">{description}</p>
     </div>
   );
 }
@@ -268,21 +275,21 @@ function StepCard({
   description: string;
 }) {
   return (
-    <div className="relative p-6 bg-card border border-border rounded-lg space-y-4">
-      <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center text-2xl font-bold text-primary-foreground">
+    <div className="relative glass-card p-8 rounded-sm border-2 border-[var(--neon-magenta)]/20 space-y-4 hover-glow-magenta transition-all">
+      <div className="w-14 h-14 bg-black/40 rounded border-2 border-[var(--neon-magenta)] flex items-center justify-center text-3xl font-bold text-[var(--neon-magenta)] neon-glow-magenta">
         {number}
       </div>
-      <h3 className="text-xl font-semibold">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed">{description}</p>
+      <h3 className="text-xl font-bold uppercase tracking-wider gradient-text-cyber">{title}</h3>
+      <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">{description}</p>
     </div>
   );
 }
 
 function StatItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="text-center">
-      <div className="text-4xl md:text-5xl font-bold gradient-text mb-2">{value}</div>
-      <div className="text-sm text-muted-foreground">{label}</div>
+    <div className="text-center glass-card p-6 rounded-sm border-2 border-[var(--neon-purple)]/20 hover-glow-purple">
+      <div className="text-4xl md:text-5xl font-bold gradient-text-cyber mb-3">{value}</div>
+      <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">{label}</div>
     </div>
   );
 }

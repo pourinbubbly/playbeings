@@ -70,38 +70,38 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-10 relative z-10">
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar - Cyber navigation with neon */}
-          <aside className="lg:w-72 space-y-4">
-            <nav className="glass-card p-2 rounded-sm space-y-2">
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.href;
-                return (
-                  <Link key={item.href} to={item.href}>
-                    <div
-                      className={cn(
-                        "flex items-center gap-4 px-4 py-3.5 rounded-sm transition-all font-semibold uppercase tracking-wider text-sm border-2",
-                        isActive
-                          ? "neon-border-cyan bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] neon-glow-cyan"
-                          : "border-transparent hover:neon-border-magenta hover:bg-[var(--neon-magenta)]/10 text-muted-foreground hover:text-[var(--neon-magenta)] hover:neon-glow-magenta"
-                      )}
-                    >
-                      <item.icon className="w-5 h-5 shrink-0" />
-                      <span>{item.label}</span>
-                      {isActive && (
-                        <span className="ml-auto text-xs animate-pulse">◆</span>
-                      )}
-                    </div>
-                  </Link>
-                );
-              })}
-            </nav>
-          </aside>
-
-          {/* Main Content */}
-          <main className="flex-1">{children}</main>
+      {/* Top Navigation - Horizontal menu */}
+      <nav className="glass-card border-b border-[var(--neon-cyan)]/20 relative z-40">
+        <div className="container mx-auto px-6">
+          <div className="flex items-center gap-2 overflow-x-auto py-2">
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.href;
+              return (
+                <Link key={item.href} to={item.href}>
+                  <div
+                    className={cn(
+                      "flex items-center gap-3 px-5 py-3 rounded-sm transition-all font-semibold uppercase tracking-wider text-sm border-2 whitespace-nowrap",
+                      isActive
+                        ? "neon-border-cyan bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] neon-glow-cyan"
+                        : "border-transparent hover:neon-border-magenta hover:bg-[var(--neon-magenta)]/10 text-muted-foreground hover:text-[var(--neon-magenta)] hover:neon-glow-magenta"
+                    )}
+                  >
+                    <item.icon className="w-5 h-5 shrink-0" />
+                    <span>{item.label}</span>
+                    {isActive && (
+                      <span className="text-xs animate-pulse">◆</span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </div>
+      </nav>
+
+      <div className="container mx-auto px-6 py-10 relative z-10">
+        {/* Main Content */}
+        <main>{children}</main>
       </div>
     </div>
   );
