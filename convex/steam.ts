@@ -123,6 +123,8 @@ export const getSteamInventory = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
     try {
+      console.log(`Fetching inventory for Steam ID: ${args.steamId}`);
+      
       // First check profile privacy
       const profileResponse = await fetch(
         `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${args.steamId}`
@@ -130,98 +132,119 @@ export const getSteamInventory = action({
       const profileData = await profileResponse.json();
       
       if (!profileData.response.players || profileData.response.players.length === 0) {
-        throw new Error("Steam profile not found");
+        throw new Error("Steam profile not found. Please check your Steam ID.");
       }
 
       const player = profileData.response.players[0];
-      console.log("Profile visibility:", player.communityvisibilitystate);
-
-      // Try multiple contexts for Steam inventory
-      const contexts = [6, 3, 1]; // Context 6 is for trading cards
-      let inventoryData = null;
-      let lastError = null;
+      console.log("Profile visibility state:", player.communityvisibilitystate);
       
-      for (const context of contexts) {
-        try {
-          const inventoryResponse = await fetch(
-            `https://steamcommunity.com/inventory/${args.steamId}/753/${context}?l=english&count=5000`,
-            {
-              headers: {
-                'User-Agent': 'Mozilla/5.0',
-              }
-            }
-          );
-          
-          if (inventoryResponse.status === 403) {
-            throw new Error("Steam inventory is private. Please set your inventory to public in Steam Privacy Settings.");
+      // communityvisibilitystate: 1 = private, 3 = public
+      if (player.communityvisibilitystate !== 3) {
+        throw new Error("Steam profile is private. Please set your profile to Public in Steam Privacy Settings.");
+      }
+
+      // Try to fetch inventory from Steam Community
+      console.log("Fetching Steam Community inventory...");
+      const inventoryResponse = await fetch(
+        `https://steamcommunity.com/inventory/${args.steamId}/753/6?l=english&count=5000`,
+        {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
           }
-          
-          if (inventoryResponse.ok) {
-            const data = await inventoryResponse.json();
-            if (data.assets && data.descriptions && data.assets.length > 0) {
-              inventoryData = data;
-              console.log(`Found inventory data in context ${context} with ${data.assets.length} items`);
-              break;
-            }
-          }
-        } catch (e) {
-          lastError = e;
-          console.log(`Failed to fetch with context ${context}:`, e);
         }
+      );
+      
+      console.log("Inventory response status:", inventoryResponse.status);
+      
+      if (inventoryResponse.status === 403) {
+        throw new Error("Steam inventory is private. Please set your inventory to Public in Steam Privacy Settings.");
       }
       
-      if (!inventoryData || !inventoryData.assets || !inventoryData.descriptions) {
-        if (lastError instanceof Error && lastError.message.includes("private")) {
-          throw lastError;
-        }
-        console.log("No inventory data found - inventory may be empty or private");
+      if (inventoryResponse.status === 500) {
+        throw new Error("Steam servers are experiencing issues. Please try again in a few minutes.");
+      }
+      
+      if (!inventoryResponse.ok) {
+        console.log("Failed to fetch inventory:", inventoryResponse.statusText);
+        throw new Error(`Failed to fetch inventory: ${inventoryResponse.statusText}`);
+      }
+      
+      const inventoryData = await inventoryResponse.json();
+      console.log("Inventory data received:", {
+        hasAssets: !!inventoryData.assets,
+        assetsLength: inventoryData.assets?.length || 0,
+        hasDescriptions: !!inventoryData.descriptions,
+        descriptionsLength: inventoryData.descriptions?.length || 0,
+        success: inventoryData.success,
+      });
+      
+      if (!inventoryData.success) {
+        throw new Error("Failed to load inventory. Steam API returned an error.");
+      }
+      
+      if (!inventoryData.assets || !inventoryData.descriptions || inventoryData.assets.length === 0) {
+        console.log("No items found in inventory");
         return [];
       }
 
       // Match assets with descriptions to get trading cards
-      const tradingCards = inventoryData.assets
-        .map((asset: { classid: string; instanceid: string; amount: string; assetid: string }) => {
-          const description = inventoryData.descriptions.find(
-            (desc: { classid: string; instanceid: string }) =>
-              desc.classid === asset.classid && desc.instanceid === asset.instanceid
-          );
-          return description ? { ...asset, ...description } : null;
-        })
-        .filter((item: { type?: string; tradable?: number; tags?: Array<{ category?: string; name?: string }> }) => {
-          if (!item) return false;
-          // Check if it's a trading card
-          const isCard = item.type && (
-            item.type.toLowerCase().includes("trading card") || 
-            item.type.toLowerCase().includes("card")
-          );
-          const hasCardTag = item.tags?.some(tag => 
-            tag.category === "item_class" && (
-              tag.name === "Trading Card" || 
-              tag.name?.toLowerCase().includes("card")
-            )
-          );
-          return (isCard || hasCardTag) && item.tradable === 1;
-        })
-        .map((card: {
-          classid: string;
-          assetid: string;
-          name: string;
-          market_name: string;
-          icon_url: string;
-          type: string;
-          app_name?: string;
-          market_hash_name?: string;
-        }) => ({
-          classid: card.classid,
-          assetid: card.assetid,
-          name: card.name,
-          marketName: card.market_name || card.market_hash_name || card.name,
-          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
-          type: card.type,
-          gameName: card.app_name || "Steam Community",
-        }));
+      console.log("Processing inventory items...");
+      const allItems = inventoryData.assets.map((asset: { classid: string; instanceid: string; amount: string; assetid: string }) => {
+        const description = inventoryData.descriptions.find(
+          (desc: { classid: string; instanceid: string }) =>
+            desc.classid === asset.classid && desc.instanceid === asset.instanceid
+        );
+        return description ? { ...asset, ...description } : null;
+      }).filter((item: unknown) => item !== null);
+      
+      console.log(`Total items in inventory: ${allItems.length}`);
+      
+      // Filter for trading cards
+      const tradingCards = allItems.filter((item: { 
+        type?: string; 
+        tradable?: number; 
+        tags?: Array<{ category?: string; name?: string; internal_name?: string }>;
+      }) => {
+        if (!item) return false;
+        
+        // Check type field for "Trading Card"
+        const typeIsCard = item.type && item.type.toLowerCase().includes("trading card");
+        
+        // Check tags for item_class = Trading Card
+        const hasCardTag = item.tags?.some(tag => 
+          tag.category === "item_class" && (
+            tag.name === "Trading Card" || 
+            tag.internal_name === "item_class_2"
+          )
+        );
+        
+        // Must be tradable
+        const isTradable = item.tradable === 1;
+        
+        const isCard = (typeIsCard || hasCardTag) && isTradable;
+        
+        return isCard;
+      }).map((card: {
+        classid: string;
+        assetid: string;
+        name: string;
+        market_name?: string;
+        market_hash_name?: string;
+        icon_url: string;
+        type: string;
+        name_color?: string;
+        app_name?: string;
+      }) => ({
+        classid: card.classid,
+        assetid: card.assetid,
+        name: card.name,
+        marketName: card.market_name || card.market_hash_name || card.name,
+        imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
+        type: card.type,
+        gameName: card.app_name || "Steam Community",
+      }));
 
-      console.log(`Found ${tradingCards.length} trading cards`);
+      console.log(`Found ${tradingCards.length} trading cards out of ${allItems.length} total items`);
       return tradingCards;
     } catch (error) {
       console.error("Failed to fetch Steam inventory:", error);

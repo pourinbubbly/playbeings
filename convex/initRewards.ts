@@ -18,7 +18,7 @@ export const seedRewards = internalMutation({
         pointsCost: 500,
         rewardType: "steam_wallet",
         rewardValue: 5,
-        imageUrl: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1596674470907-5120fe5fa715?w=400",
         isActive: true,
       },
       {
@@ -27,7 +27,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "steam_wallet",
         rewardValue: 10,
-        imageUrl: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1596674470907-5120fe5fa715?w=400",
         isActive: true,
       },
       {
@@ -36,7 +36,7 @@ export const seedRewards = internalMutation({
         pointsCost: 2250,
         rewardType: "steam_wallet",
         rewardValue: 25,
-        imageUrl: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1596674470907-5120fe5fa715?w=400",
         isActive: true,
       },
       {
@@ -45,7 +45,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "steam_wallet",
         rewardValue: 50,
-        imageUrl: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1596674470907-5120fe5fa715?w=400",
         isActive: true,
       },
       {
@@ -54,7 +54,7 @@ export const seedRewards = internalMutation({
         pointsCost: 9000,
         rewardType: "steam_wallet",
         rewardValue: 100,
-        imageUrl: "https://cdn.cloudflare.steamstatic.com/store/home/store_home_share.jpg",
+        imageUrl: "https://images.unsplash.com/photo-1596674470907-5120fe5fa715?w=400",
         isActive: true,
       },
       // Amazon Gift Cards
@@ -64,7 +64,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "amazon",
         rewardValue: 10,
-        imageUrl: "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+        imageUrl: "https://images.unsplash.com/photo-1704204656144-3dd12c110dd8?w=400",
         isActive: true,
       },
       {
@@ -73,7 +73,7 @@ export const seedRewards = internalMutation({
         pointsCost: 2250,
         rewardType: "amazon",
         rewardValue: 25,
-        imageUrl: "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+        imageUrl: "https://images.unsplash.com/photo-1704204656144-3dd12c110dd8?w=400",
         isActive: true,
       },
       {
@@ -82,7 +82,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "amazon",
         rewardValue: 50,
-        imageUrl: "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+        imageUrl: "https://images.unsplash.com/photo-1704204656144-3dd12c110dd8?w=400",
         isActive: true,
       },
       {
@@ -91,7 +91,7 @@ export const seedRewards = internalMutation({
         pointsCost: 9000,
         rewardType: "amazon",
         rewardValue: 100,
-        imageUrl: "https://m.media-amazon.com/images/G/01/gc/designs/livepreview/amazon_dkblue_noto_email_v2016_us-main._CB468775337_.png",
+        imageUrl: "https://images.unsplash.com/photo-1704204656144-3dd12c110dd8?w=400",
         isActive: true,
       },
       // Nintendo eShop Cards
@@ -101,7 +101,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "nintendo",
         rewardValue: 10,
-        imageUrl: "https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_2.0/c_scale,w_400/ncom/en_US/merchandising/buy-digital-games/eshop-cards/eshop-card-10",
+        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
         isActive: true,
       },
       {
@@ -110,7 +110,7 @@ export const seedRewards = internalMutation({
         pointsCost: 1850,
         rewardType: "nintendo",
         rewardValue: 20,
-        imageUrl: "https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_2.0/c_scale,w_400/ncom/en_US/merchandising/buy-digital-games/eshop-cards/eshop-card-20",
+        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
         isActive: true,
       },
       {
@@ -119,7 +119,7 @@ export const seedRewards = internalMutation({
         pointsCost: 3200,
         rewardType: "nintendo",
         rewardValue: 35,
-        imageUrl: "https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_2.0/c_scale,w_400/ncom/en_US/merchandising/buy-digital-games/eshop-cards/eshop-card-35",
+        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
         isActive: true,
       },
       {
@@ -128,7 +128,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "nintendo",
         rewardValue: 50,
-        imageUrl: "https://assets.nintendo.com/image/upload/f_auto/q_auto/dpr_2.0/c_scale,w_400/ncom/en_US/merchandising/buy-digital-games/eshop-cards/eshop-card-50",
+        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
         isActive: true,
       },
       // PlayStation Store Cards
@@ -138,7 +138,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "playstation",
         rewardValue: 10,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/0/00/PlayStation_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1678996569798-2662baf6d452?w=400",
         isActive: true,
       },
       {
@@ -147,7 +147,7 @@ export const seedRewards = internalMutation({
         pointsCost: 2250,
         rewardType: "playstation",
         rewardValue: 25,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/0/00/PlayStation_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1678996569798-2662baf6d452?w=400",
         isActive: true,
       },
       {
@@ -156,7 +156,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "playstation",
         rewardValue: 50,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/0/00/PlayStation_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1678996569798-2662baf6d452?w=400",
         isActive: true,
       },
       // Xbox Gift Cards
@@ -166,7 +166,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "xbox",
         rewardValue: 10,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Xbox_one_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1662027008658-ae6e5aeeed47?w=400",
         isActive: true,
       },
       {
@@ -175,7 +175,7 @@ export const seedRewards = internalMutation({
         pointsCost: 2250,
         rewardType: "xbox",
         rewardValue: 25,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Xbox_one_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1662027008658-ae6e5aeeed47?w=400",
         isActive: true,
       },
       {
@@ -184,7 +184,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "xbox",
         rewardValue: 50,
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/f/f9/Xbox_one_logo.svg",
+        imageUrl: "https://images.unsplash.com/photo-1662027008658-ae6e5aeeed47?w=400",
         isActive: true,
       },
     ];

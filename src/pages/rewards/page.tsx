@@ -125,8 +125,12 @@ function RewardsContent() {
                 key={reward._id}
                 className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all"
               >
-                <div className="aspect-video bg-black/40 flex items-center justify-center p-8 border-b-2 border-[var(--neon-purple)]/20">
-                  <Gift className="w-20 h-20 text-[var(--neon-purple)]" />
+                <div className="aspect-video bg-black/40 flex items-center justify-center p-4 border-b-2 border-[var(--neon-purple)]/20">
+                  <img 
+                    src={reward.imageUrl} 
+                    alt={reward.name}
+                    className="w-full h-full object-contain"
+                  />
                 </div>
                 <div className="p-6 space-y-4">
                   <div>
