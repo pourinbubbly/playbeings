@@ -27,6 +27,8 @@ export const updateCurrentUser = mutation({
       name: identity.name,
       email: identity.email,
       tokenIdentifier: identity.tokenIdentifier,
+      totalPoints: 0,
+      level: 1,
     });
   },
 });
