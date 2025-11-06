@@ -17,7 +17,22 @@ export async function connectBackpackWallet(): Promise<string> {
 
   try {
     const response = await window.backpack.connect();
-    return response.publicKey;
+    // Ensure we return a string
+    let walletAddress = '';
+    
+    if (typeof response.publicKey === 'string') {
+      walletAddress = response.publicKey;
+    } else if (response.publicKey && typeof response.publicKey === 'object') {
+      // If publicKey is an object with toString method
+      const pkObj = response.publicKey as { toString?: () => string };
+      walletAddress = pkObj.toString?.() || '';
+    }
+    
+    if (!walletAddress) {
+      throw new Error("Failed to get wallet address");
+    }
+    
+    return walletAddress;
   } catch (error) {
     throw new Error("Failed to connect Backpack wallet");
   }

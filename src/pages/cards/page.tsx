@@ -75,62 +75,70 @@ function CardsContent() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl font-bold">
-              NFT Trading Cards
-            </CardTitle>
-            <CardDescription>
-              Load your Steam trading cards and mint them as NFTs on CARV SVM Testnet to earn point boosts
-            </CardDescription>
-          </CardHeader>
-        </Card>
+      <div className="space-y-8">
+        {/* Header Card */}
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
+          <div className="flex items-center gap-4 mb-3">
+            <div className="w-14 h-14 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
+              <CreditCard className="w-8 h-8 text-[var(--neon-cyan)]" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold gradient-text-cyber tracking-wider uppercase">
+                NFT Trading Cards
+              </h1>
+              <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
+                Load Steam cards • Mint as NFTs • Earn 5-15% boost
+              </p>
+            </div>
+          </div>
+        </div>
 
         <SteamInventoryLoader onCardsLoaded={setSteamCards} />
 
         {steamCards.length === 0 ? (
-          <Card>
-            <CardContent className="pt-6">
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CreditCard />
-                  </EmptyMedia>
-                  <EmptyTitle>No trading cards loaded</EmptyTitle>
-                  <EmptyDescription>
-                    Click the button above to load your Steam trading cards. Make sure your Steam inventory is set to public.
-                  </EmptyDescription>
-                </EmptyHeader>
-              </Empty>
-            </CardContent>
-          </Card>
+          <div className="glass-card p-12 rounded-sm border-2 border-dashed border-[var(--neon-magenta)]/30">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CreditCard className="text-[var(--neon-magenta)]" />
+                </EmptyMedia>
+                <EmptyTitle className="gradient-text-purple text-2xl uppercase tracking-wider">No Cards Loaded</EmptyTitle>
+                <EmptyDescription className="text-muted-foreground text-sm uppercase tracking-wide">
+                  Click the button above • Load your Steam inventory • Make sure it's public
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {steamCards.map((card, index) => (
-              <Card
+              <div
                 key={card.classid || index}
-                className="overflow-hidden hover:shadow-lg transition-shadow"
+                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden hover-glow-cyan transition-all group"
               >
-                <div className="aspect-[3/4] bg-gradient-to-br from-primary/5 to-accent/5 relative overflow-hidden">
+                <div className="aspect-[3/4] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-cyan)]/20">
                   <img
                     src={card.imageUrl}
                     alt={card.name}
-                    className="w-full h-full object-contain p-4"
+                    className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-300"
                     onError={(e) => {
                       e.currentTarget.style.display = "none";
                     }}
                   />
-                  <div className="absolute top-2 left-2">
-                    <Badge variant="secondary">
+                  <div className="absolute top-3 left-3">
+                    <Badge 
+                      variant="secondary" 
+                      className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] font-semibold uppercase tracking-wider text-xs"
+                    >
                       Trading Card
                     </Badge>
                   </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <CardContent className="pt-4 space-y-3">
+                <div className="p-4 space-y-4">
                   <div>
-                    <h3 className="font-semibold line-clamp-1">{card.name}</h3>
-                    <p className="text-sm text-muted-foreground line-clamp-1">
+                    <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">{card.name}</h3>
+                    <p className="text-xs text-[var(--neon-cyan)] line-clamp-1 uppercase tracking-wide font-semibold mt-1">
                       {card.gameName}
                     </p>
                   </div>
@@ -138,14 +146,19 @@ function CardsContent() {
                   <Button
                     disabled={!connectedWallet || minting !== null}
                     onClick={() => handleMint(card)}
-                    className="w-full"
+                    className="w-full glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider transition-all"
                     size="sm"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
-                    {minting === card.classid ? "Minting..." : connectedWallet ? "Mint NFT (+5-15% Boost)" : "Connect Wallet"}
+                    {minting === card.classid ? "MINTING..." : connectedWallet ? "MINT NFT" : "CONNECT WALLET"}
                   </Button>
-                </CardContent>
-              </Card>
+                  {connectedWallet && (
+                    <p className="text-xs text-center text-[var(--neon-purple)] font-semibold uppercase tracking-wide">
+                      +{5 + Math.floor(Math.random() * 11)}% Boost
+                    </p>
+                  )}
+                </div>
+              </div>
             ))}
           </div>
         )}

@@ -52,45 +52,49 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
   };
 
   return (
-    <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
-      <CardHeader>
-        <CardTitle className="text-lg font-semibold">Load Steam Trading Cards</CardTitle>
-        <CardDescription>
-          Import your real Steam trading cards from your inventory
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <div className="glass-card rounded-sm border-2 border-dashed border-[var(--neon-magenta)]/30 p-8">
+      <div className="space-y-6">
+        <div className="text-center">
+          <h3 className="text-xl font-bold gradient-text-purple uppercase tracking-wider mb-2">
+            Load Steam Inventory
+          </h3>
+          <p className="text-sm text-muted-foreground uppercase tracking-wide">
+            Import your real Steam trading cards
+          </p>
+        </div>
+
         <Button
           onClick={handleLoadInventory}
           disabled={isLoading || !steamProfile}
-          className="w-full"
+          className="w-full glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider h-14 text-base"
           size="lg"
         >
           {isLoading ? (
             <>
               <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-              Loading Inventory...
+              LOADING INVENTORY...
             </>
           ) : (
             <>
               <RefreshCw className="w-5 h-5 mr-2" />
-              Load Trading Cards from Steam
+              LOAD STEAM CARDS
             </>
           )}
         </Button>
+
         {!steamProfile && (
-          <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
-            <p className="text-sm text-destructive font-medium text-center">
-              ⚠️ Connect your Steam account first from the Home page
+          <div className="p-4 rounded-sm glass-card border-2 border-destructive/30">
+            <p className="text-sm text-destructive font-semibold text-center uppercase tracking-wide">
+              ⚠️ Connect Steam first from Home page
             </p>
           </div>
         )}
         {steamProfile && (
-          <p className="text-xs text-muted-foreground mt-3 text-center">
-            Make sure your Steam inventory is set to public
+          <p className="text-xs text-center text-[var(--neon-cyan)] font-semibold uppercase tracking-wide">
+            Make sure your inventory is public
           </p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
