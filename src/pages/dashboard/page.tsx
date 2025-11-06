@@ -30,7 +30,7 @@ export default function Dashboard() {
 }
 
 function DashboardContent() {
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
+  const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const currentUser = useQuery(api.users.getCurrentUser);
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
 

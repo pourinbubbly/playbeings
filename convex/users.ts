@@ -39,6 +39,14 @@ export const updateCurrentUser = mutation({
   },
 });
 
+export const getUserById = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    return user;
+  },
+});
+
 export const getCurrentUser = query({
   args: {},
   handler: async (ctx) => {

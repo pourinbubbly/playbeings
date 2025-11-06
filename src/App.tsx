@@ -16,6 +16,7 @@ import Profile from "./pages/profile/page.tsx";
 import Settings from "./pages/settings/page.tsx";
 import Community from "./pages/community/page.tsx";
 import MyNFTs from "./pages/nfts/page.tsx";
+import UserProfile from "./pages/user/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 export default function App() {
@@ -36,6 +37,7 @@ export default function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/community" element={<Community />} />
+          <Route path="/user/:userId" element={<UserProfile />} />
           <Route path="/dashboard/nfts" element={<MyNFTs />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

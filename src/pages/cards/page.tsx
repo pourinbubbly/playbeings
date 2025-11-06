@@ -44,7 +44,7 @@ function CardsContent() {
   const [loading, setLoading] = useState(false);
   const [minting, setMinting] = useState<string | null>(null);
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
+  const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const getAchievements = useAction(api.steam.getSteamAchievements);
 
   const handleLoadAchievements = async () => {

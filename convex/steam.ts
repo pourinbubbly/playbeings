@@ -96,6 +96,18 @@ export const syncSteamData = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
     try {
+      // Get Steam profile
+      const profileResponse = await fetch(
+        `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${args.steamId}`
+      );
+      const profileData = await profileResponse.json();
+
+      if (!profileData.response.players || profileData.response.players.length === 0) {
+        throw new Error("Steam profile not found");
+      }
+
+      const player = profileData.response.players[0];
+
       // Get owned games
       const gamesResponse = await fetch(
         `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${args.steamId}&include_appinfo=1&include_played_free_games=1`
@@ -108,7 +120,32 @@ export const syncSteamData = action({
         0
       );
 
+      // Get achievements count
+      let achievementCount = 0;
+      for (const game of games.slice(0, 10)) {
+        try {
+          const achievementsResponse = await fetch(
+            `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${game.appid}&key=${STEAM_API_KEY}&steamid=${args.steamId}`
+          );
+          const achievementsData = await achievementsResponse.json();
+          if (achievementsData.playerstats && achievementsData.playerstats.achievements) {
+            achievementCount += achievementsData.playerstats.achievements.filter(
+              (a: { achieved: number }) => a.achieved === 1
+            ).length;
+          }
+        } catch (error) {
+          // Skip if game doesn't have achievements
+        }
+      }
+
       return {
+        steamId: player.steamid,
+        personaName: player.personaname,
+        avatarUrl: player.avatarfull,
+        profileUrl: player.profileurl,
+        totalPlaytime,
+        gameCount: games.length,
+        achievementCount,
         games: games.map((game: {
           appid: number;
           name: string;
@@ -122,8 +159,6 @@ export const syncSteamData = action({
           imageUrl: `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
-        totalPlaytime,
-        gameCount: games.length,
       };
     } catch (error) {
       throw new Error(`Failed to sync Steam data: ${error}`);

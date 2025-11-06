@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -311,6 +312,7 @@ interface UserCardProps {
 }
 
 function UserCard({ user, currentUserId }: UserCardProps) {
+  const navigate = useNavigate();
   const isFollowing = useQuery(api.community.isFollowing, { userId: user._id });
   const followUser = useMutation(api.community.followUser);
   const unfollowUser = useMutation(api.community.unfollowUser);
@@ -318,7 +320,8 @@ function UserCard({ user, currentUserId }: UserCardProps) {
 
   const isSelf = user._id === currentUserId;
 
-  const handleFollowToggle = async () => {
+  const handleFollowToggle = async (e: React.MouseEvent) => {
+    e.stopPropagation();
     setIsLoading(true);
     try {
       if (isFollowing) {
@@ -336,8 +339,19 @@ function UserCard({ user, currentUserId }: UserCardProps) {
     }
   };
 
+  const handleCardClick = () => {
+    if (isSelf) {
+      navigate("/profile");
+    } else {
+      navigate(`/user/${user._id}`);
+    }
+  };
+
   return (
-    <div className="glass-card p-4 border-2 border-[var(--neon-cyan)]/20 hover:border-[var(--neon-cyan)]/40 transition-all">
+    <div 
+      className="glass-card p-4 border-2 border-[var(--neon-cyan)]/20 hover:border-[var(--neon-cyan)]/40 transition-all cursor-pointer"
+      onClick={handleCardClick}
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Avatar className="w-12 h-12 border-2 border-[var(--neon-cyan)]">

@@ -45,7 +45,7 @@ interface NewsItem {
 function NewsContent() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
+  const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const getNews = useAction(api.steam.getSteamNews);
 
   const handleLoadNews = async () => {

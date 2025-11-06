@@ -31,7 +31,7 @@ function AnalyticsContent() {
   const gameAnalytics = useQuery(api.analytics.getGameAnalytics);
   const progressOverTime = useQuery(api.analytics.getProgressOverTime);
   const achievementStats = useQuery(api.analytics.getAchievementStats);
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
+  const steamProfile = useQuery(api.profiles.getSteamProfile, {});
 
   if (
     gameAnalytics === undefined ||

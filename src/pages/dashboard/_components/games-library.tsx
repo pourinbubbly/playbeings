@@ -5,7 +5,7 @@ import { Clock, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export function GamesLibrary() {
-  const games = useQuery(api.profiles.getUserGames);
+  const games = useQuery(api.profiles.getUserGames, {});
 
   if (games === undefined) {
     return (

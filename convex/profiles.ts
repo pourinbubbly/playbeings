@@ -138,27 +138,33 @@ export const saveGames = mutation({
 });
 
 export const getSteamProfile = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    let userId = args.userId;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+    // If no userId provided, get current user
+    if (!userId) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return null;
+      }
 
-    if (!user) {
-      return null;
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_token", (q) =>
+          q.eq("tokenIdentifier", identity.tokenIdentifier)
+        )
+        .unique();
+
+      if (!user) {
+        return null;
+      }
+      userId = user._id;
     }
 
     const profile = await ctx.db
       .query("steamProfiles")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .unique();
 
     return profile;
@@ -166,27 +172,33 @@ export const getSteamProfile = query({
 });
 
 export const getUserGames = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, args) => {
+    let userId = args.userId;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+    // If no userId provided, get current user
+    if (!userId) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return [];
+      }
 
-    if (!user) {
-      return [];
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_token", (q) =>
+          q.eq("tokenIdentifier", identity.tokenIdentifier)
+        )
+        .unique();
+
+      if (!user) {
+        return [];
+      }
+      userId = user._id;
     }
 
     const games = await ctx.db
       .query("games")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", userId))
       .order("desc")
       .collect();
 

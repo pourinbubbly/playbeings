@@ -1,7 +1,12 @@
+import { useState } from "react";
+import { useAction, useMutation } from "convex/react";
+import { api } from "@/convex/_generated/api.js";
 import type { Doc } from "@/convex/_generated/dataModel.d.ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Clock, Gamepad2, Trophy, Star, Flame } from "lucide-react";
+import { Button } from "@/components/ui/button.tsx";
+import { Clock, Gamepad2, Trophy, Star, Flame, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 
 interface ProfileOverviewProps {
   profile: Doc<"steamProfiles">;
@@ -9,9 +14,63 @@ interface ProfileOverviewProps {
 }
 
 export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  const syncSteamData = useAction(api.steam.syncSteamData);
+  const saveSteamProfile = useMutation(api.profiles.saveSteamProfile);
+  const saveGames = useMutation(api.profiles.saveGames);
+
   const formatPlaytime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     return `${hours.toLocaleString()} hrs`;
+  };
+
+  const formatLastSync = (timestamp: number) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return "Just now";
+  };
+
+  const handleSync = async () => {
+    if (!profile.steamId) {
+      toast.error("Steam ID not found");
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      toast.info("Syncing Steam data...");
+      
+      // Sync Steam data
+      const data = await syncSteamData({ steamId: profile.steamId });
+      
+      // Save Steam profile
+      await saveSteamProfile({
+        steamId: data.steamId,
+        personaName: data.personaName,
+        avatarUrl: data.avatarUrl,
+        profileUrl: data.profileUrl,
+        totalPlaytime: data.totalPlaytime,
+        gameCount: data.gameCount,
+        achievementCount: data.achievementCount,
+      });
+      
+      // Save games
+      await saveGames({ games: data.games });
+      
+      toast.success("Steam data synced successfully!");
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast.error("Failed to sync Steam data");
+    } finally {
+      setIsSyncing(false);
+    }
   };
 
   return (
@@ -28,12 +87,28 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
               <span className="text-sm font-bold text-[var(--neon-cyan)]">{user?.level || 1}</span>
             </div>
           </div>
-          <div>
-            <h2 className="text-3xl font-bold gradient-text-cyber tracking-wide mb-2">{profile.personaName}</h2>
-            <Badge className="bg-[var(--neon-purple)]/20 border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] font-bold uppercase tracking-wider neon-glow-purple">
-              <Star className="w-4 h-4 mr-2" />
-              {user?.totalPoints || 0} POINTS
-            </Badge>
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-3xl font-bold gradient-text-cyber tracking-wide">{profile.personaName}</h2>
+              <Button
+                onClick={handleSync}
+                disabled={isSyncing}
+                size="sm"
+                className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 hover:neon-glow-cyan font-semibold uppercase tracking-wider"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
+                {isSyncing ? "Syncing..." : "Sync"}
+              </Button>
+            </div>
+            <div className="flex items-center gap-3">
+              <Badge className="bg-[var(--neon-purple)]/20 border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] font-bold uppercase tracking-wider neon-glow-purple">
+                <Star className="w-4 h-4 mr-2" />
+                {user?.totalPoints || 0} POINTS
+              </Badge>
+              <span className="text-xs text-muted-foreground uppercase tracking-wide">
+                Last sync: {formatLastSync(profile.lastSynced)}
+              </span>
+            </div>
           </div>
         </div>
 

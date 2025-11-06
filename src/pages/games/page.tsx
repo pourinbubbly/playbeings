@@ -24,7 +24,7 @@ export default function Games() {
 }
 
 function GamesContent() {
-  const games = useQuery(api.profiles.getUserGames);
+  const games = useQuery(api.profiles.getUserGames, {});
 
   if (games === undefined) {
     return (
