@@ -9,7 +9,7 @@ const QUEST_TEMPLATES = [
     description: "Play games for 30 minutes before noon",
     requirement: 30,
     reward: 75,
-    icon: "sunrise",
+    icon: "🌅",
   },
   {
     type: "playtime",
@@ -17,7 +17,7 @@ const QUEST_TEMPLATES = [
     description: "Play games for 2 hours in the evening",
     requirement: 120,
     reward: 200,
-    icon: "moon",
+    icon: "🌙",
   },
   {
     type: "game_count",
@@ -25,7 +25,7 @@ const QUEST_TEMPLATES = [
     description: "Play games from 3 different genres today",
     requirement: 3,
     reward: 150,
-    icon: "compass",
+    icon: "🧭",
   },
   {
     type: "achievement",
@@ -33,7 +33,7 @@ const QUEST_TEMPLATES = [
     description: "Unlock 3 achievements in a single session",
     requirement: 3,
     reward: 180,
-    icon: "medal",
+    icon: "🏅",
   },
   {
     type: "playtime",
@@ -41,7 +41,7 @@ const QUEST_TEMPLATES = [
     description: "Play games for 5 hours total today",
     requirement: 300,
     reward: 400,
-    icon: "flame",
+    icon: "🔥",
   },
   {
     type: "game_count",
@@ -49,7 +49,7 @@ const QUEST_TEMPLATES = [
     description: "Play 5 different games today",
     requirement: 5,
     reward: 250,
-    icon: "library",
+    icon: "📚",
   },
   {
     type: "achievement",
@@ -57,7 +57,7 @@ const QUEST_TEMPLATES = [
     description: "Unlock 10 achievements today",
     requirement: 10,
     reward: 500,
-    icon: "trophy",
+    icon: "🏆",
   },
   {
     type: "playtime",
@@ -65,7 +65,7 @@ const QUEST_TEMPLATES = [
     description: "Complete a game session under 45 minutes",
     requirement: 45,
     reward: 100,
-    icon: "zap",
+    icon: "⚡",
   },
   {
     type: "social",
@@ -73,7 +73,7 @@ const QUEST_TEMPLATES = [
     description: "Play 2 multiplayer games today",
     requirement: 2,
     reward: 150,
-    icon: "users",
+    icon: "👥",
   },
   {
     type: "consistency",
@@ -81,7 +81,7 @@ const QUEST_TEMPLATES = [
     description: "Log in and play for 3 days in a row",
     requirement: 3,
     reward: 300,
-    icon: "calendar",
+    icon: "📅",
   },
 ];
 

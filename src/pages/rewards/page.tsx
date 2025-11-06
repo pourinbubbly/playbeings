@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge.tsx";
 import { Gift, Coins, CheckCircle2, AlertCircle, Clock, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useState } from "react";
+import React from "react";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 
 export default function Rewards() {
@@ -32,8 +33,14 @@ function RewardsContent() {
   const currentUser = useQuery(api.users.getCurrentUser);
   const redeemReward = useMutation(api.rewards.redeemReward);
   const revealCode = useMutation(api.rewards.revealCode);
+  const initializeApp = useMutation(api.initializeApp.initializeApp);
   const [redeeming, setRedeeming] = useState<Id<"rewards"> | null>(null);
   const [revealing, setRevealing] = useState<Id<"rewardRedemptions"> | null>(null);
+
+  // Initialize rewards on mount
+  React.useEffect(() => {
+    initializeApp();
+  }, [initializeApp]);
 
   const handleRedeem = async (rewardId: Id<"rewards">) => {
     try {
