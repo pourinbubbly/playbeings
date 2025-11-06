@@ -21,7 +21,11 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
 
   const formatPlaytime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
-    return `${hours.toLocaleString()} hrs`;
+    if (hours >= 1000) {
+      const thousands = (hours / 1000).toFixed(1);
+      return `${thousands}k hrs`;
+    }
+    return `${hours} hrs`;
   };
 
   const formatLastSync = (timestamp: number) => {
@@ -113,24 +117,24 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
         </div>
 
         {/* Stats */}
-        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="flex-1 grid grid-cols-2 lg:grid-cols-4 gap-3">
           <StatCard
-            icon={<Gamepad2 className="w-6 h-6" />}
+            icon={<Gamepad2 className="w-5 h-5" />}
             label="GAMES"
             value={profile.gameCount.toString()}
           />
           <StatCard
-            icon={<Clock className="w-6 h-6" />}
+            icon={<Clock className="w-5 h-5" />}
             label="PLAYTIME"
             value={formatPlaytime(profile.totalPlaytime)}
           />
           <StatCard
-            icon={<Trophy className="w-6 h-6" />}
+            icon={<Trophy className="w-5 h-5" />}
             label="TROPHIES"
             value={profile.achievementCount.toString()}
           />
           <StatCard
-            icon={<Flame className="w-6 h-6" />}
+            icon={<Flame className="w-5 h-5" />}
             label="STREAK"
             value={`${user?.currentStreak || 0} Days`}
             highlight={true}
@@ -153,18 +157,18 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`glass-card rounded-sm border-2 p-5 space-y-3 transition-all ${
+    <div className={`glass-card rounded-sm border-2 p-4 flex flex-col gap-2 transition-all ${
       highlight 
         ? "border-[var(--neon-purple)]/30 hover-glow-purple" 
         : "border-[var(--neon-magenta)]/20 hover-glow-magenta"
     }`}>
-      <div className={`flex items-center gap-2 font-semibold uppercase tracking-wider text-sm ${
+      <div className={`flex items-center gap-1.5 font-semibold uppercase tracking-wider text-xs ${
         highlight ? "text-[var(--neon-purple)]" : "text-[var(--neon-magenta)]"
       }`}>
         {icon}
-        <span>{label}</span>
+        <span className="truncate">{label}</span>
       </div>
-      <div className="text-3xl font-bold text-foreground break-words overflow-hidden">{value}</div>
+      <div className="text-2xl lg:text-3xl font-bold text-foreground truncate" title={value}>{value}</div>
     </div>
   );
 }
