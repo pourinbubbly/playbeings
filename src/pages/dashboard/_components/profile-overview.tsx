@@ -1,7 +1,7 @@
 import type { Doc } from "@/convex/_generated/dataModel.d.ts";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Clock, Gamepad2, Trophy, Star } from "lucide-react";
+import { Clock, Gamepad2, Trophy, Star, Flame } from "lucide-react";
 
 interface ProfileOverviewProps {
   profile: Doc<"steamProfiles">;
@@ -38,7 +38,7 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
         </div>
 
         {/* Stats */}
-        <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div className="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
           <StatCard
             icon={<Gamepad2 className="w-6 h-6" />}
             label="GAMES"
@@ -54,6 +54,12 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
             label="TROPHIES"
             value={profile.achievementCount.toString()}
           />
+          <StatCard
+            icon={<Flame className="w-6 h-6" />}
+            label="STREAK"
+            value={`${user?.currentStreak || 0} Days`}
+            highlight={true}
+          />
         </div>
       </div>
     </div>
@@ -64,14 +70,22 @@ function StatCard({
   icon,
   label,
   value,
+  highlight = false,
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  highlight?: boolean;
 }) {
   return (
-    <div className="glass-card rounded-sm border-2 border-[var(--neon-magenta)]/20 p-5 space-y-3 hover-glow-magenta transition-all">
-      <div className="flex items-center gap-2 text-[var(--neon-magenta)] font-semibold uppercase tracking-wider text-sm">
+    <div className={`glass-card rounded-sm border-2 p-5 space-y-3 transition-all ${
+      highlight 
+        ? "border-[var(--neon-purple)]/30 hover-glow-purple" 
+        : "border-[var(--neon-magenta)]/20 hover-glow-magenta"
+    }`}>
+      <div className={`flex items-center gap-2 font-semibold uppercase tracking-wider text-sm ${
+        highlight ? "text-[var(--neon-purple)]" : "text-[var(--neon-magenta)]"
+      }`}>
         {icon}
         <span>{label}</span>
       </div>

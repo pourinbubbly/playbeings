@@ -7,6 +7,7 @@ import { DashboardLayout } from "./_components/dashboard-layout.tsx";
 import { ProfileOverview } from "./_components/profile-overview.tsx";
 import { GamesLibrary } from "./_components/games-library.tsx";
 import { DailyQuestsSection } from "./_components/daily-quests-section.tsx";
+import { DailyCheckInCard } from "./_components/checkin/daily-checkin-card.tsx";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { useEffect } from "react";
 
@@ -53,6 +54,7 @@ function DashboardContent() {
     <DashboardLayout>
       <div className="space-y-8">
         <ProfileOverview profile={steamProfile} user={currentUser} />
+        <DailyCheckInCard />
         <DailyQuestsSection />
         <GamesLibrary />
       </div>

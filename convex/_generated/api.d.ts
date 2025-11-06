@@ -10,6 +10,7 @@
 
 import type * as analytics from "../analytics.js";
 import type * as cards from "../cards.js";
+import type * as checkin from "../checkin.js";
 import type * as community from "../community.js";
 import type * as initQuests from "../initQuests.js";
 import type * as initRewards from "../initRewards.js";
@@ -40,6 +41,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   cards: typeof cards;
+  checkin: typeof checkin;
   community: typeof community;
   initQuests: typeof initQuests;
   initRewards: typeof initRewards;
