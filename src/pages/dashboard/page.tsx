@@ -1,4 +1,4 @@
-import { Authenticated, AuthLoading } from "convex/react";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -7,6 +7,7 @@ import { DashboardLayout } from "./_components/dashboard-layout.tsx";
 import { ProfileOverview } from "./_components/profile-overview.tsx";
 import { GamesLibrary } from "./_components/games-library.tsx";
 import { DailyQuestsSection } from "./_components/daily-quests-section.tsx";
+import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { useEffect } from "react";
 
 export default function Dashboard() {
@@ -20,6 +21,9 @@ export default function Dashboard() {
       <Authenticated>
         <DashboardContent />
       </Authenticated>
+      <Unauthenticated>
+        <UnauthenticatedPage />
+      </Unauthenticated>
     </>
   );
 }

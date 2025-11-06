@@ -1,4 +1,4 @@
-import { Authenticated, AuthLoading } from "convex/react";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -9,6 +9,7 @@ import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
 import { Target } from "lucide-react";
+import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 
 export default function Quests() {
   return (
@@ -21,6 +22,9 @@ export default function Quests() {
       <Authenticated>
         <QuestsContent />
       </Authenticated>
+      <Unauthenticated>
+        <UnauthenticatedPage />
+      </Unauthenticated>
     </>
   );
 }

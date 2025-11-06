@@ -1,4 +1,4 @@
-import { Authenticated, AuthLoading } from "convex/react";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 import React from "react";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
+import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 
 export default function Rewards() {
   return (
@@ -23,6 +24,9 @@ export default function Rewards() {
       <Authenticated>
         <RewardsContent />
       </Authenticated>
+      <Unauthenticated>
+        <UnauthenticatedPage />
+      </Unauthenticated>
     </>
   );
 }

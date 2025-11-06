@@ -54,32 +54,47 @@ export default function Index() {
       {/* Hero Section */}
       <section className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto text-center space-y-8">
-            <div className="inline-flex items-center gap-2 px-6 py-3 glass-card rounded-sm border-2 border-[var(--neon-cyan)]/30 neon-glow-cyan">
-              <Shield className="w-5 h-5 text-[var(--neon-cyan)]" />
-              <span className="text-sm font-bold uppercase tracking-wider text-[var(--neon-cyan)]">CARV SVM Blockchain Powered</span>
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-7xl mx-auto">
+            {/* Left Content */}
+            <div className="space-y-8 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-6 py-3 glass-card rounded-sm border-2 border-[var(--neon-cyan)]/30 neon-glow-cyan">
+                <Shield className="w-5 h-5 text-[var(--neon-cyan)]" />
+                <span className="text-sm font-bold uppercase tracking-wider text-[var(--neon-cyan)]">CARV SVM Blockchain Powered</span>
+              </div>
+
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-wider uppercase text-foreground">
+                Turn Gaming Into <span className="gradient-text-cyber">Real Rewards</span>
+              </h1>
+
+              <p className="text-xl md:text-2xl text-muted-foreground uppercase tracking-wide">
+                Connect Steam • Complete Quests • Mint NFTs • Earn Rewards
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center lg:items-start lg:justify-start justify-center gap-4 pt-8">
+                <Authenticated>
+                  <Button asChild className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
+                    <Link to="/dashboard">ENTER DASHBOARD</Link>
+                  </Button>
+                </Authenticated>
+                <Unauthenticated>
+                  <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14" />
+                </Unauthenticated>
+                <Button asChild variant="ghost" className="glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
+                  <a href="#features">LEARN MORE</a>
+                </Button>
+              </div>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-wider uppercase text-foreground">
-              Turn Gaming Into <span className="gradient-text-cyber">Real Rewards</span>
-            </h1>
-
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto uppercase tracking-wide">
-              Connect Steam • Complete Quests • Mint NFTs • Earn Rewards
-            </p>
-
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-8">
-              <Authenticated>
-                <Button asChild className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
-                  <Link to="/dashboard">ENTER DASHBOARD</Link>
-                </Button>
-              </Authenticated>
-              <Unauthenticated>
-                <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14" />
-              </Unauthenticated>
-              <Button asChild variant="ghost" className="glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
-                <a href="#features">LEARN MORE</a>
-              </Button>
+            {/* Right Logo */}
+            <div className="hidden lg:flex items-center justify-center">
+              <div className="relative w-full max-w-md">
+                <div className="absolute inset-0 bg-[var(--neon-cyan)] rounded-full blur-[100px] opacity-20 animate-pulse" />
+                <img 
+                  src="https://cdn.hercules.app/file_pEkMdHtwpqvpBxQIVD8LxT1h" 
+                  alt="PlayBeings Gaming" 
+                  className="relative w-full h-auto drop-shadow-2xl"
+                />
+              </div>
             </div>
           </div>
         </div>

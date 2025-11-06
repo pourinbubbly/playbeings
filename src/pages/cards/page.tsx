@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Authenticated, AuthLoading } from "convex/react";
+import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Sparkles, CreditCard } from "lucide-react";
 import { toast } from "sonner";
+import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 
 export default function Cards() {
   return (
@@ -23,6 +24,9 @@ export default function Cards() {
       <Authenticated>
         <CardsContent />
       </Authenticated>
+      <Unauthenticated>
+        <UnauthenticatedPage />
+      </Unauthenticated>
     </>
   );
 }
