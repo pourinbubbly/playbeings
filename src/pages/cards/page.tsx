@@ -88,7 +88,7 @@ function CardsContent() {
         description: "Please confirm the transaction in your wallet",
       });
 
-      const { signature, explorerUrl } = await mintNFTOnCARV(
+      const { signature, explorerUrl, mintAddress } = await mintNFTOnCARV(
         achievement.name,
         achievement.description,
         achievement.gameName
@@ -99,12 +99,13 @@ function CardsContent() {
       toast.success(`Achievement NFT Minted!`, {
         description: (
           <div className="space-y-2">
-            <p>+{boost}% point boost activated on CARV SVM Testnet!</p>
+            <p className="font-semibold text-[var(--neon-magenta)]">+{boost}% point boost activated!</p>
+            <p className="text-xs text-muted-foreground">Mint Address: {mintAddress.slice(0, 8)}...{mintAddress.slice(-6)}</p>
             <a 
               href={explorerUrl} 
               target="_blank" 
               rel="noopener noreferrer"
-              className="text-[var(--neon-cyan)] hover:underline text-xs"
+              className="text-[var(--neon-cyan)] hover:underline text-xs flex items-center gap-1"
             >
               View on CARV Explorer →
             </a>
