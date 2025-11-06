@@ -81,14 +81,41 @@ function CardsContent() {
 
     setMinting(achievement.id);
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Dynamically import wallet functions
+      const { mintNFTOnCARV } = await import("@/lib/wallet.ts");
+      
+      toast.info("Approve transaction in Backpack...", {
+        description: "Please confirm the transaction in your wallet",
+      });
+
+      const { signature, explorerUrl } = await mintNFTOnCARV(
+        achievement.name,
+        achievement.description,
+        achievement.gameName
+      );
+
       const boost = 5 + Math.floor(Math.random() * 11);
+      
       toast.success(`Achievement NFT Minted!`, {
-        description: `+${boost}% point boost activated on CARV SVM Testnet!`,
+        description: (
+          <div className="space-y-2">
+            <p>+{boost}% point boost activated on CARV SVM Testnet!</p>
+            <a 
+              href={explorerUrl} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[var(--neon-cyan)] hover:underline text-xs"
+            >
+              View on CARV Explorer →
+            </a>
+          </div>
+        ),
+        duration: 10000,
       });
     } catch (error) {
+      console.error("Minting error:", error);
       toast.error("Minting failed", {
-        description: error instanceof Error ? error.message : "Unknown error",
+        description: error instanceof Error ? error.message : "Transaction was rejected or failed",
       });
     } finally {
       setMinting(null);
