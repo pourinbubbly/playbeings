@@ -91,7 +91,8 @@ function CardsContent() {
       const { signature, explorerUrl, mintAddress } = await mintNFTOnCARV(
         achievement.name,
         achievement.description,
-        achievement.gameName
+        achievement.gameName,
+        achievement.imageUrl
       );
 
       const boost = 5 + Math.floor(Math.random() * 11);

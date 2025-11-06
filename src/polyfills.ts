@@ -1,3 +1,16 @@
+// Extend Uint8Array prototype with Buffer methods
+Uint8Array.prototype.writeBigUInt64LE = function(value: bigint, offset: number): number {
+  const view = new DataView(this.buffer, this.byteOffset, this.byteLength);
+  view.setBigUint64(offset, value, true);
+  return offset + 8;
+};
+
+declare global {
+  interface Uint8Array {
+    writeBigUInt64LE(value: bigint, offset: number): number;
+  }
+}
+
 // Browser-compatible Buffer polyfill
 const BrowserBuffer = {
   alloc(size: number): Uint8Array {

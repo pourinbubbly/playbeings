@@ -85,7 +85,8 @@ class BackpackSigner {
 export async function mintNFTOnCARV(
   achievementName: string,
   achievementDescription: string,
-  gameName: string
+  gameName: string,
+  achievementImage: string
 ): Promise<{ signature: string; explorerUrl: string; mintAddress: string }> {
   if (!window.backpack) {
     throw new Error("Backpack wallet not found");
@@ -99,21 +100,21 @@ export async function mintNFTOnCARV(
     const connection = new Connection(CARV_RPC_URL, "confirmed");
     const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
 
-    console.log("Creating NFT mint on CARV SVM Testnet...");
+    console.log("Minting Achievement NFT on CARV SVM...");
     
-    // Generate a new mint keypair
+    // Generate unique mint keypair for this NFT
     const mintKeypair = Keypair.generate();
+    const mintAddress = mintKeypair.publicKey.toString();
     
-    console.log("Mint address:", mintKeypair.publicKey.toString());
+    console.log("NFT Mint Address:", mintAddress);
 
-    // Step 1: Create the mint account (0 decimals = NFT)
-    const createMintTx = new Transaction();
+    // Single transaction with all instructions
+    const transaction = new Transaction();
     
-    // Calculate rent for mint account
+    // 1. Create mint account (82 bytes for SPL Token Mint)
     const mintRent = await connection.getMinimumBalanceForRentExemption(82);
     
-    // Create mint account
-    createMintTx.add(
+    transaction.add(
       SystemProgram.createAccount({
         fromPubkey: walletPubkey,
         newAccountPubkey: mintKeypair.publicKey,
@@ -123,15 +124,15 @@ export async function mintNFTOnCARV(
       })
     );
 
-    // Initialize mint
+    // 2. Initialize mint (0 decimals = NFT)
     const initMintData = Buffer.alloc(67);
     initMintData[0] = 0; // InitializeMint instruction
-    initMintData[1] = 0; // 0 decimals (NFT)
+    initMintData[1] = 0; // 0 decimals
     new Uint8Array(initMintData.buffer).set(walletPubkey.toBuffer(), 2); // Mint authority
     initMintData[34] = 1; // Option: Some
     new Uint8Array(initMintData.buffer).set(walletPubkey.toBuffer(), 35); // Freeze authority
 
-    createMintTx.add({
+    transaction.add({
       keys: [
         { pubkey: mintKeypair.publicKey, isSigner: false, isWritable: true },
         { pubkey: new PublicKey("SysvarRent111111111111111111111111111111111"), isSigner: false, isWritable: false },
@@ -140,49 +141,7 @@ export async function mintNFTOnCARV(
       data: initMintData,
     });
 
-    // Add metadata memo
-    const memoData = JSON.stringify({
-      type: "ACHIEVEMENT_NFT",
-      name: achievementName,
-      description: achievementDescription,
-      game: gameName,
-      timestamp: Date.now(),
-    });
-    
-    createMintTx.add({
-      keys: [
-        { pubkey: walletPubkey, isSigner: true, isWritable: false },
-      ],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData, "utf-8"),
-    });
-
-    // Set recent blockhash
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    createMintTx.recentBlockhash = blockhash;
-    createMintTx.feePayer = walletPubkey;
-
-    // Partially sign with mint keypair
-    createMintTx.partialSign(mintKeypair);
-
-    console.log("Requesting wallet approval for mint creation...");
-    
-    // Sign and send with Backpack
-    const { signature: createSig } = await window.backpack.signAndSendTransaction(createMintTx);
-    
-    console.log("Mint created! Signature:", createSig);
-
-    // Wait for confirmation
-    await connection.confirmTransaction({
-      signature: createSig,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-
-    // Step 2: Create associated token account and mint 1 token
-    const mintToTx = new Transaction();
-
-    // Derive associated token account
+    // 3. Create Associated Token Account
     const [ata] = PublicKey.findProgramAddressSync(
       [
         walletPubkey.toBuffer(),
@@ -192,8 +151,7 @@ export async function mintNFTOnCARV(
       new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL")
     );
 
-    // Create ATA instruction
-    mintToTx.add({
+    transaction.add({
       keys: [
         { pubkey: walletPubkey, isSigner: true, isWritable: true },
         { pubkey: ata, isSigner: false, isWritable: true },
@@ -206,12 +164,12 @@ export async function mintNFTOnCARV(
       data: Buffer.from([]),
     });
 
-    // Mint 1 token
+    // 4. Mint 1 token to ATA
     const mintToData = Buffer.alloc(9);
     mintToData[0] = 7; // MintTo instruction
     mintToData.writeBigUInt64LE(BigInt(1), 1); // Amount: 1
 
-    mintToTx.add({
+    transaction.add({
       keys: [
         { pubkey: mintKeypair.publicKey, isSigner: false, isWritable: true },
         { pubkey: ata, isSigner: false, isWritable: true },
@@ -221,31 +179,57 @@ export async function mintNFTOnCARV(
       data: mintToData,
     });
 
-    const { blockhash: mintBlockhash, lastValidBlockHeight: mintLastValid } = await connection.getLatestBlockhash("confirmed");
-    mintToTx.recentBlockhash = mintBlockhash;
-    mintToTx.feePayer = walletPubkey;
-
-    console.log("Minting NFT to your wallet...");
+    // 5. Add NFT metadata as memo (includes achievement details and image)
+    const nftMetadata = JSON.stringify({
+      name: achievementName,
+      description: achievementDescription,
+      game: gameName,
+      image: achievementImage,
+      type: "CARV_ACHIEVEMENT_NFT",
+      attributes: [
+        { trait_type: "Game", value: gameName },
+        { trait_type: "Achievement", value: achievementName },
+      ],
+      minted_at: new Date().toISOString(),
+    });
     
-    const { signature: mintSig } = await window.backpack.signAndSendTransaction(mintToTx);
-    
-    console.log("NFT minted! Signature:", mintSig);
+    transaction.add({
+      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      data: Buffer.from(nftMetadata, "utf-8"),
+    });
 
+    // Set transaction metadata
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    // Partially sign with mint keypair
+    transaction.partialSign(mintKeypair);
+
+    console.log("Requesting Backpack approval...");
+    
+    // Sign and send with Backpack (single approval)
+    const { signature } = await window.backpack.signAndSendTransaction(transaction);
+    
+    console.log("NFT Minted! Tx:", signature);
+
+    // Wait for confirmation
     await connection.confirmTransaction({
-      signature: mintSig,
-      blockhash: mintBlockhash,
-      lastValidBlockHeight: mintLastValid,
+      signature,
+      blockhash,
+      lastValidBlockHeight,
     }, "confirmed");
 
-    const explorerUrl = `https://explorer.testnet.carv.io/tx/${mintSig}`;
+    const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
     
     return { 
-      signature: mintSig, 
+      signature, 
       explorerUrl,
-      mintAddress: mintKeypair.publicKey.toString()
+      mintAddress
     };
   } catch (error) {
-    console.error("NFT minting error:", error);
+    console.error("NFT minting failed:", error);
     throw error;
   }
 }
