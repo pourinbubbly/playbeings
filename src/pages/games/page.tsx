@@ -24,9 +24,10 @@ export default function Games() {
 }
 
 function GamesContent() {
+  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const games = useQuery(api.profiles.getUserGames);
 
-  if (games === undefined) {
+  if (games === undefined || steamProfile === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -41,24 +42,18 @@ function GamesContent() {
     );
   }
 
-  if (games.length === 0) {
+  if (!steamProfile || games.length === 0) {
     return (
       <DashboardLayout>
-        <Card>
-          <CardContent className="pt-6">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <Gamepad2 />
-                </EmptyMedia>
-                <EmptyTitle>No games found</EmptyTitle>
-                <EmptyDescription>
-                  Connect your Steam account to see your game library
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
-          </CardContent>
-        </Card>
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+          <Gamepad2 className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
+          <div>
+            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Oyun kütüphanenizi görmek için Steam hesabınızı bağlamanız gerekiyor
+            </p>
+          </div>
+        </div>
       </DashboardLayout>
     );
   }

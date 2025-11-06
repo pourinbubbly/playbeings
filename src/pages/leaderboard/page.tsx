@@ -27,16 +27,33 @@ export default function Leaderboard() {
 }
 
 function LeaderboardContent() {
+  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const leaderboard = useQuery(api.leaderboard.getLeaderboard, { limit: 100 });
   const currentUserRank = useQuery(api.leaderboard.getCurrentUserRank);
   const pointHistory = useQuery(api.leaderboard.getPointHistory, { limit: 20 });
 
-  if (leaderboard === undefined || currentUserRank === undefined || pointHistory === undefined) {
+  if (leaderboard === undefined || currentUserRank === undefined || pointHistory === undefined || steamProfile === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-96 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!steamProfile) {
+    return (
+      <DashboardLayout>
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+          <Trophy className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
+          <div>
+            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Liderlik tablosunu görmek için Steam hesabınızı bağlamanız gerekiyor
+            </p>
+          </div>
         </div>
       </DashboardLayout>
     );

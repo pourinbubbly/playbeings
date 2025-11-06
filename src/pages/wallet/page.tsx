@@ -23,14 +23,33 @@ export default function Wallet() {
 }
 
 function WalletContent() {
+  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
 
-  if (connectedWallet === undefined) {
+  if (connectedWallet === undefined || steamProfile === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
           <Skeleton className="h-32 w-full" />
           <Skeleton className="h-64 w-full" />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!steamProfile) {
+    return (
+      <DashboardLayout>
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+          <div className="w-16 h-16 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan mx-auto">
+            <span className="text-3xl">💼</span>
+          </div>
+          <div>
+            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Cüzdan bağlamak için önce Steam hesabınızı bağlamanız gerekiyor
+            </p>
+          </div>
         </div>
       </DashboardLayout>
     );

@@ -30,6 +30,7 @@ export default function Quests() {
 }
 
 function QuestsContent() {
+  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
   const questsData = useQuery(api.quests.getTodayQuests);
   const questStats = useQuery(api.quests.getUserQuestStats);
@@ -38,7 +39,7 @@ function QuestsContent() {
     initQuests();
   }, [initQuests]);
 
-  if (questsData === undefined || questStats === undefined) {
+  if (questsData === undefined || questStats === undefined || steamProfile === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -47,6 +48,22 @@ function QuestsContent() {
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-48" />
             ))}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  if (!steamProfile) {
+    return (
+      <DashboardLayout>
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+          <Target className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
+          <div>
+            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Günlük görevleri görmek için Steam hesabınızı bağlamanız gerekiyor
+            </p>
           </div>
         </div>
       </DashboardLayout>
