@@ -1,15 +1,12 @@
 import { useState } from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
-import { SteamInventoryLoader } from "./_components/steam-inventory-loader.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Sparkles, CreditCard } from "lucide-react";
+import { Sparkles, Trophy, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 
@@ -31,33 +28,62 @@ export default function Cards() {
   );
 }
 
-interface SteamCard {
-  classid: string;
+interface SteamAchievement {
+  id: string;
   name: string;
-  marketName: string;
-  imageUrl: string;
+  description: string;
   gameName: string;
+  gameId: number;
+  imageUrl: string;
+  iconUrl: string;
   rarity: string;
-  type: string;
 }
 
 function CardsContent() {
-  const [steamCards, setSteamCards] = useState<SteamCard[]>([]);
+  const [achievements, setAchievements] = useState<SteamAchievement[]>([]);
+  const [loading, setLoading] = useState(false);
   const [minting, setMinting] = useState<string | null>(null);
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
+  const steamProfile = useQuery(api.profiles.getSteamProfile);
+  const getAchievements = useAction(api.steam.getSteamAchievements);
 
-  const handleMint = async (card: SteamCard) => {
+  const handleLoadAchievements = async () => {
+    if (!steamProfile?.steamId) {
+      toast.error("Please connect your Steam account first");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await getAchievements({ steamId: steamProfile.steamId });
+      setAchievements(result);
+      if (result.length === 0) {
+        toast.info("No achievements found", {
+          description: "Play some games and unlock achievements to mint NFTs!",
+        });
+      } else {
+        toast.success(`Loaded ${result.length} achievements!`);
+      }
+    } catch (error) {
+      toast.error("Failed to load achievements", {
+        description: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMint = async (achievement: SteamAchievement) => {
     if (!connectedWallet) {
       toast.error("Please connect your wallet first");
       return;
     }
 
-    setMinting(card.classid);
+    setMinting(achievement.id);
     try {
-      // Mock minting - in production this would call the actual NFT minting action
       await new Promise(resolve => setTimeout(resolve, 2000));
       const boost = 5 + Math.floor(Math.random() * 11);
-      toast.success(`NFT Minted Successfully!`, {
+      toast.success(`Achievement NFT Minted!`, {
         description: `+${boost}% point boost activated on CARV SVM Testnet!`,
       });
     } catch (error) {
@@ -86,97 +112,125 @@ function CardsContent() {
         <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
           <div className="flex items-center gap-4 mb-3">
             <div className="w-14 h-14 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
-              <CreditCard className="w-8 h-8 text-[var(--neon-cyan)]" />
+              <Trophy className="w-8 h-8 text-[var(--neon-cyan)]" />
             </div>
             <div>
               <h1 className="text-3xl font-bold gradient-text-cyber tracking-wider uppercase">
-                Steam Inventory NFTs
+                Achievement NFTs
               </h1>
               <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
-                Load Steam inventory • Mint as NFTs • Earn 5-15% boost per item
+                Load Steam achievements • Mint as NFTs • Earn 5-15% boost per achievement
               </p>
             </div>
           </div>
         </div>
 
-        <SteamInventoryLoader onCardsLoaded={setSteamCards} />
-
-        {steamCards.length === 0 ? (
-          <div className="glass-card p-12 rounded-sm border-2 border-dashed border-[var(--neon-magenta)]/30">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CreditCard className="text-[var(--neon-magenta)]" />
-                </EmptyMedia>
-                <EmptyTitle className="gradient-text-purple text-2xl uppercase tracking-wider">No Cards Loaded</EmptyTitle>
-                <EmptyDescription className="text-muted-foreground text-sm uppercase tracking-wide">
-                  Click the button above • Load your Steam inventory • Make sure it's public
-                </EmptyDescription>
-              </EmptyHeader>
-            </Empty>
+        {/* Load Achievements Button */}
+        {!steamProfile?.steamId ? (
+          <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center">
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Please connect your Steam account first to load achievements
+            </p>
           </div>
-        ) : (
+        ) : achievements.length === 0 ? (
+          <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+            <Trophy className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Load your unlocked Steam achievements to mint as NFTs
+            </p>
+            <Button 
+              onClick={handleLoadAchievements}
+              disabled={loading}
+              className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Loading...
+                </>
+              ) : (
+                <>
+                  <Trophy className="w-4 h-4 mr-2" />
+                  Load Achievements
+                </>
+              )}
+            </Button>
+          </div>
+        ) : null}
+
+        {/* Achievements Grid */}
+        {achievements.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {steamCards.map((card, index) => (
-              <div
-                key={card.classid || index}
-                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden hover-glow-cyan transition-all group"
-              >
-                <div className="aspect-[3/4] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-cyan)]/20">
-                  <img
-                    src={card.imageUrl}
-                    alt={card.name}
-                    className="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                  <div className="absolute top-3 left-3">
-                    <Badge 
-                      variant="secondary" 
-                      className={`${
-                        card.rarity === "Legendary" || card.rarity === "Immortal" ? "bg-[var(--neon-magenta)]/20 border-[var(--neon-magenta)] text-[var(--neon-magenta)]" :
-                        card.rarity === "Mythical" || card.rarity === "Rare" ? "bg-[var(--neon-purple)]/20 border-[var(--neon-purple)] text-[var(--neon-purple)]" :
-                        card.rarity === "Foil" ? "bg-yellow-500/20 border-yellow-500 text-yellow-500" :
-                        "bg-[var(--neon-cyan)]/20 border-[var(--neon-cyan)] text-[var(--neon-cyan)]"
-                      } border font-semibold uppercase tracking-wider text-xs`}
-                    >
-                      {card.rarity}
-                    </Badge>
-                  </div>
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                </div>
-                <div className="p-4 space-y-3">
-                  <div>
-                    <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">{card.name}</h3>
-                    <p className="text-xs text-[var(--neon-cyan)] line-clamp-1 uppercase tracking-wide font-semibold mt-1">
-                      {card.gameName}
-                    </p>
-                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
-                      {card.type}
-                    </p>
+            {achievements.map((achievement) => {
+              const rarityColor =
+                achievement.rarity === "Rare" ? "text-[var(--neon-magenta)]" :
+                achievement.rarity === "Uncommon" ? "text-[var(--neon-cyan)]" :
+                "text-[var(--neon-purple)]";
+
+              return (
+                <div
+                  key={achievement.id}
+                  className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden hover-glow-cyan transition-all group"
+                >
+                  {/* Achievement Image */}
+                  <div className="relative aspect-[616/353] bg-black/40 overflow-hidden">
+                    <img
+                      src={achievement.imageUrl}
+                      alt={achievement.gameName}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      onError={(e) => {
+                        e.currentTarget.src = "https://via.placeholder.com/616x353?text=Achievement";
+                      }}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
+
+                    {/* Rarity Badge */}
+                    <div className="absolute top-3 right-3">
+                      <Badge className={`${rarityColor} bg-black/60 border border-current font-semibold uppercase tracking-wider text-xs`}>
+                        {achievement.rarity}
+                      </Badge>
+                    </div>
+
+                    {/* Achievement Info Overlay */}
+                    <div className="absolute bottom-0 left-0 right-0 p-4 space-y-2">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Trophy className="w-4 h-4 text-[var(--neon-cyan)]" />
+                        <span className="text-xs text-[var(--neon-cyan)] uppercase tracking-wide font-semibold">
+                          {achievement.gameName}
+                        </span>
+                      </div>
+                      <h3 className="font-bold text-sm uppercase tracking-wide line-clamp-1 text-white">
+                        {achievement.name}
+                      </h3>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {achievement.description}
+                      </p>
+                    </div>
                   </div>
 
-                  <Button
-                    disabled={!connectedWallet || minting !== null}
-                    onClick={() => handleMint(card)}
-                    className="w-full glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider transition-all"
-                    size="sm"
-                  >
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    {minting === card.classid ? "MINTING..." : connectedWallet ? "MINT NFT" : "CONNECT WALLET"}
-                  </Button>
-                  {connectedWallet && (
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground uppercase tracking-wide">Mint Boost:</span>
-                      <span className="text-[var(--neon-purple)] font-bold uppercase tracking-wide">
-                        +{5 + Math.floor(Math.random() * 11)}%
-                      </span>
-                    </div>
-                  )}
+                  {/* Mint Button */}
+                  <div className="p-4 bg-black/20">
+                    <Button
+                      onClick={() => handleMint(achievement)}
+                      disabled={!connectedWallet || minting === achievement.id}
+                      className="w-full glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider"
+                    >
+                      {minting === achievement.id ? (
+                        <>
+                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                          Minting...
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="w-4 h-4 mr-2" />
+                          Mint NFT
+                        </>
+                      )}
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

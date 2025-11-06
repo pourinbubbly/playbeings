@@ -46,7 +46,7 @@ export function GamesLibrary() {
               key={game._id}
               className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group min-w-[200px] flex-shrink-0"
             >
-              <div className="aspect-[460/215] bg-black/40 relative overflow-hidden">
+              <div className="aspect-[616/353] bg-black/40 relative overflow-hidden">
                 <img
                   src={game.imageUrl}
                   alt={game.name}

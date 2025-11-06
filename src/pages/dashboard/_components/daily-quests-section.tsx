@@ -5,18 +5,18 @@ import { Target, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress.tsx";
 
-// Quest icon to image mapping
+// Quest icon to image mapping - Her quest için farklı resim
 const questIconImages: Record<string, string> = {
   "🎯": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
   "🎮": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
   "🏆": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
-  "⚔️": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
-  "🎪": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
+  "⚔️": "https://images.unsplash.com/photo-1577905027671-c5cc33c825ed?w=400&h=300&fit=crop",
+  "🎪": "https://images.unsplash.com/flagged/photo-1580234820596-0876d136e6d5?w=400&h=300&fit=crop",
   "🔒": "https://images.unsplash.com/photo-1696013910376-c56f76dd8178?w=400&h=300&fit=crop",
-  "⭐": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
-  "💎": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
-  "🔥": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
-  "⚡": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
+  "⭐": "https://images.unsplash.com/photo-1705925716592-259267037a03?w=400&h=300&fit=crop",
+  "💎": "https://images.unsplash.com/photo-1578269174936-2709b6aeb913?w=400&h=300&fit=crop",
+  "🔥": "https://images.unsplash.com/photo-1580327344181-c1163234e5a0?w=400&h=300&fit=crop",
+  "⚡": "https://images.unsplash.com/photo-1554213352-5ffe6534af08?w=400&h=300&fit=crop",
 };
 
 export function DailyQuestsSection() {
