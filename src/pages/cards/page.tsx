@@ -33,6 +33,8 @@ interface SteamCard {
   marketName: string;
   imageUrl: string;
   gameName: string;
+  rarity: string;
+  type: string;
 }
 
 function CardsContent() {
@@ -84,10 +86,10 @@ function CardsContent() {
             </div>
             <div>
               <h1 className="text-3xl font-bold gradient-text-cyber tracking-wider uppercase">
-                NFT Trading Cards
+                Steam Inventory NFTs
               </h1>
               <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
-                Load Steam cards • Mint as NFTs • Earn 5-15% boost
+                Load Steam inventory • Mint as NFTs • Earn 5-15% boost per item
               </p>
             </div>
           </div>
@@ -128,18 +130,26 @@ function CardsContent() {
                   <div className="absolute top-3 left-3">
                     <Badge 
                       variant="secondary" 
-                      className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] font-semibold uppercase tracking-wider text-xs"
+                      className={`${
+                        card.rarity === "Legendary" || card.rarity === "Immortal" ? "bg-[var(--neon-magenta)]/20 border-[var(--neon-magenta)] text-[var(--neon-magenta)]" :
+                        card.rarity === "Mythical" || card.rarity === "Rare" ? "bg-[var(--neon-purple)]/20 border-[var(--neon-purple)] text-[var(--neon-purple)]" :
+                        card.rarity === "Foil" ? "bg-yellow-500/20 border-yellow-500 text-yellow-500" :
+                        "bg-[var(--neon-cyan)]/20 border-[var(--neon-cyan)] text-[var(--neon-cyan)]"
+                      } border font-semibold uppercase tracking-wider text-xs`}
                     >
-                      Trading Card
+                      {card.rarity}
                     </Badge>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                 </div>
-                <div className="p-4 space-y-4">
+                <div className="p-4 space-y-3">
                   <div>
                     <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">{card.name}</h3>
                     <p className="text-xs text-[var(--neon-cyan)] line-clamp-1 uppercase tracking-wide font-semibold mt-1">
                       {card.gameName}
+                    </p>
+                    <p className="text-xs text-muted-foreground line-clamp-1 mt-1">
+                      {card.type}
                     </p>
                   </div>
 
@@ -153,9 +163,12 @@ function CardsContent() {
                     {minting === card.classid ? "MINTING..." : connectedWallet ? "MINT NFT" : "CONNECT WALLET"}
                   </Button>
                   {connectedWallet && (
-                    <p className="text-xs text-center text-[var(--neon-purple)] font-semibold uppercase tracking-wide">
-                      +{5 + Math.floor(Math.random() * 11)}% Boost
-                    </p>
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground uppercase tracking-wide">Mint Boost:</span>
+                      <span className="text-[var(--neon-purple)] font-bold uppercase tracking-wide">
+                        +{5 + Math.floor(Math.random() * 11)}%
+                      </span>
+                    </div>
                   )}
                 </div>
               </div>

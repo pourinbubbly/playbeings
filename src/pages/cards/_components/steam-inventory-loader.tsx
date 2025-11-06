@@ -12,6 +12,8 @@ interface SteamCard {
   marketName: string;
   imageUrl: string;
   gameName: string;
+  rarity: string;
+  type: string;
 }
 
 export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards: SteamCard[]) => void }) {
@@ -33,12 +35,12 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
       onCardsLoaded(cards as SteamCard[]);
       
       if (cards.length === 0) {
-        toast.info("No trading cards found", {
-          description: "No tradable trading cards found. Make sure your inventory is public in Steam Privacy Settings and you have trading cards in your inventory.",
+        toast.info("No items found", {
+          description: "No tradable items found. Make sure your inventory is public in Steam Privacy Settings and you have items in your inventory.",
         });
       } else {
-        toast.success(`Found ${cards.length} trading cards!`, {
-          description: "Your Steam trading cards are ready to mint as NFTs on CARV SVM testnet",
+        toast.success(`Found ${cards.length} inventory items!`, {
+          description: "Your Steam items are ready to mint as NFTs on CARV SVM testnet",
         });
       }
     } catch (error) {
@@ -62,7 +64,7 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
             Load Steam Inventory
           </h3>
           <p className="text-sm text-muted-foreground uppercase tracking-wide">
-            Import your real Steam trading cards
+            Import ALL your Steam inventory items
           </p>
         </div>
 
@@ -80,7 +82,7 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
           ) : (
             <>
               <RefreshCw className="w-5 h-5 mr-2" />
-              LOAD STEAM CARDS
+              LOAD INVENTORY
             </>
           )}
         </Button>

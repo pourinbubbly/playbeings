@@ -101,7 +101,7 @@ export const seedRewards = internalMutation({
         pointsCost: 950,
         rewardType: "nintendo",
         rewardValue: 10,
-        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
+        imageUrl: "https://images.unsplash.com/photo-1562766868-0b345c5e3704?w=400",
         isActive: true,
       },
       {
@@ -110,7 +110,7 @@ export const seedRewards = internalMutation({
         pointsCost: 1850,
         rewardType: "nintendo",
         rewardValue: 20,
-        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
+        imageUrl: "https://images.unsplash.com/photo-1562766868-0b345c5e3704?w=400",
         isActive: true,
       },
       {
@@ -119,7 +119,7 @@ export const seedRewards = internalMutation({
         pointsCost: 3200,
         rewardType: "nintendo",
         rewardValue: 35,
-        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
+        imageUrl: "https://images.unsplash.com/photo-1562766868-0b345c5e3704?w=400",
         isActive: true,
       },
       {
@@ -128,7 +128,7 @@ export const seedRewards = internalMutation({
         pointsCost: 4500,
         rewardType: "nintendo",
         rewardValue: 50,
-        imageUrl: "https://images.unsplash.com/photo-1562766879-ce73e9394f94?w=400",
+        imageUrl: "https://images.unsplash.com/photo-1562766868-0b345c5e3704?w=400",
         isActive: true,
       },
       // PlayStation Store Cards

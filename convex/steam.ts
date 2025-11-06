@@ -4,7 +4,7 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
-const STEAM_API_KEY = "B6C8913398574139C759399DE0F12064";
+const STEAM_API_KEY = "F657064ABD094E1D28A61975D9A6AB37";
 
 export const linkSteamAccount = action({
   args: { steamId: v.string() },
@@ -123,7 +123,7 @@ export const getSteamInventory = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
     try {
-      console.log(`Fetching inventory for Steam ID: ${args.steamId}`);
+      console.log(`Fetching ALL inventory items for Steam ID: ${args.steamId}`);
       
       // First check profile privacy
       const profileResponse = await fetch(
@@ -187,8 +187,45 @@ export const getSteamInventory = action({
         return [];
       }
 
-      // Match assets with descriptions to get trading cards
-      console.log("Processing inventory items...");
+      // Helper function to determine rarity from tags and name color
+      const getRarity = (item: { 
+        tags?: Array<{ category?: string; name?: string; internal_name?: string }>;
+        name_color?: string;
+        type?: string;
+      }) => {
+        // Check tags for rarity
+        const rarityTag = item.tags?.find(tag => tag.category === "droprate" || tag.category === "rarity");
+        if (rarityTag?.name) {
+          return rarityTag.name;
+        }
+        
+        // Check name color (common pattern in Steam items)
+        if (item.name_color) {
+          const colorMap: Record<string, string> = {
+            "D2D2D2": "Common",
+            "B0C3D9": "Uncommon", 
+            "5E98D9": "Rare",
+            "4B69FF": "Mythical",
+            "8847FF": "Legendary",
+            "EB4B4B": "Immortal",
+            "CF6A32": "Unique",
+          };
+          const upperColor = item.name_color.toUpperCase();
+          if (colorMap[upperColor]) {
+            return colorMap[upperColor];
+          }
+        }
+        
+        // Check type for foil cards
+        if (item.type?.toLowerCase().includes("foil")) {
+          return "Foil";
+        }
+        
+        return "Common";
+      };
+
+      // Map ALL items from inventory
+      console.log("Processing ALL inventory items...");
       const allItems = inventoryData.assets.map((asset: { classid: string; instanceid: string; amount: string; assetid: string }) => {
         const description = inventoryData.descriptions.find(
           (desc: { classid: string; instanceid: string }) =>
@@ -199,53 +236,33 @@ export const getSteamInventory = action({
       
       console.log(`Total items in inventory: ${allItems.length}`);
       
-      // Filter for trading cards
-      const tradingCards = allItems.filter((item: { 
-        type?: string; 
-        tradable?: number; 
-        tags?: Array<{ category?: string; name?: string; internal_name?: string }>;
-      }) => {
-        if (!item) return false;
-        
-        // Check type field for "Trading Card"
-        const typeIsCard = item.type && item.type.toLowerCase().includes("trading card");
-        
-        // Check tags for item_class = Trading Card
-        const hasCardTag = item.tags?.some(tag => 
-          tag.category === "item_class" && (
-            tag.name === "Trading Card" || 
-            tag.internal_name === "item_class_2"
-          )
-        );
-        
-        // Must be tradable
-        const isTradable = item.tradable === 1;
-        
-        const isCard = (typeIsCard || hasCardTag) && isTradable;
-        
-        return isCard;
-      }).map((card: {
-        classid: string;
-        assetid: string;
-        name: string;
-        market_name?: string;
-        market_hash_name?: string;
-        icon_url: string;
-        type: string;
-        name_color?: string;
-        app_name?: string;
-      }) => ({
-        classid: card.classid,
-        assetid: card.assetid,
-        name: card.name,
-        marketName: card.market_name || card.market_hash_name || card.name,
-        imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
-        type: card.type,
-        gameName: card.app_name || "Steam Community",
-      }));
+      // Return ALL tradable items (not just trading cards)
+      const inventoryItems = allItems
+        .filter((item: { tradable?: number }) => item.tradable === 1)
+        .map((item: {
+          classid: string;
+          assetid: string;
+          name: string;
+          market_name?: string;
+          market_hash_name?: string;
+          icon_url: string;
+          type: string;
+          name_color?: string;
+          app_name?: string;
+          tags?: Array<{ category?: string; name?: string; internal_name?: string }>;
+        }) => ({
+          classid: item.classid,
+          assetid: item.assetid,
+          name: item.name,
+          marketName: item.market_name || item.market_hash_name || item.name,
+          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${item.icon_url}`,
+          type: item.type,
+          gameName: item.app_name || "Steam Community",
+          rarity: getRarity(item),
+        }));
 
-      console.log(`Found ${tradingCards.length} trading cards out of ${allItems.length} total items`);
-      return tradingCards;
+      console.log(`Returning ${inventoryItems.length} tradable items from inventory`);
+      return inventoryItems;
     } catch (error) {
       console.error("Failed to fetch Steam inventory:", error);
       if (error instanceof Error) {

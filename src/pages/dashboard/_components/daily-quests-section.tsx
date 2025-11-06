@@ -57,18 +57,18 @@ export function DailyQuestsSection() {
             return (
               <div
                 key={quest.id}
-                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 p-5 min-w-[280px] flex-shrink-0 space-y-4 hover-glow-cyan transition-all"
+                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 p-5 min-w-[300px] max-w-[320px] flex-shrink-0 space-y-4 hover-glow-cyan transition-all"
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
                     <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center text-2xl shrink-0">
                       {quest.icon}
                     </div>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <h3 className="font-bold text-sm uppercase tracking-wide truncate">
                         {quest.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">
                         +{quest.reward} PTS
                       </p>
                     </div>
