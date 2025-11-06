@@ -1,14 +1,16 @@
-import { ConvexError } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { v } from "convex/values";
+import { ConvexError, v } from "convex/values";
+import { mutation } from "./_generated/server";
 
-const CARD_RARITIES = ["Common", "Uncommon", "Rare", "Epic", "Legendary"];
-
-export const earnTradingCard = mutation({
+export const saveMinedNFT = mutation({
   args: {
     appId: v.number(),
     gameName: v.string(),
+    cardName: v.string(),
     imageUrl: v.string(),
+    rarity: v.string(),
+    nftAddress: v.string(),
+    nftTokenId: v.string(),
+    boostPercentage: v.number(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -22,7 +24,7 @@ export const earnTradingCard = mutation({
     const user = await ctx.db
       .query("users")
       .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
       )
       .unique();
 
@@ -33,202 +35,41 @@ export const earnTradingCard = mutation({
       });
     }
 
-    // Random rarity assignment
-    const rarityRoll = Math.random();
-    let rarity: string;
-    if (rarityRoll < 0.5) rarity = "Common";
-    else if (rarityRoll < 0.75) rarity = "Uncommon";
-    else if (rarityRoll < 0.9) rarity = "Rare";
-    else if (rarityRoll < 0.97) rarity = "Epic";
-    else rarity = "Legendary";
-
-    // Generate card name
-    const cardNames = [
-      "Hero",
-      "Warrior",
-      "Champion",
-      "Legend",
-      "Master",
-      "Elite",
-      "Guardian",
-      "Defender",
-    ];
-    const randomName =
-      cardNames[Math.floor(Math.random() * cardNames.length)];
-
-    const cardId = await ctx.db.insert("tradingCards", {
+    // Save the NFT card
+    await ctx.db.insert("tradingCards", {
       userId: user._id,
       appId: args.appId,
       gameName: args.gameName,
-      cardName: `${randomName} Card`,
+      cardName: args.cardName,
       imageUrl: args.imageUrl,
-      rarity,
-      mintedAsNft: false,
-      earnedAt: Date.now(),
-    });
-
-    // Award points based on rarity
-    const pointsByRarity: Record<string, number> = {
-      Common: 10,
-      Uncommon: 25,
-      Rare: 50,
-      Epic: 100,
-      Legendary: 250,
-    };
-
-    const points = pointsByRarity[rarity] || 10;
-    await ctx.db.patch(user._id, {
-      totalPoints: user.totalPoints + points,
-      level: Math.floor((user.totalPoints + points) / 500) + 1,
-    });
-
-    await ctx.db.insert("pointHistory", {
-      userId: user._id,
-      amount: points,
-      reason: `Earned ${rarity} trading card from ${args.gameName}`,
-      timestamp: Date.now(),
-    });
-
-    return {
-      cardId,
-      rarity,
-      points,
-    };
-  },
-});
-
-export const getUserCards = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return [];
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
-
-    if (!user) {
-      return [];
-    }
-
-    const cards = await ctx.db
-      .query("tradingCards")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .order("desc")
-      .collect();
-
-    return cards;
-  },
-});
-
-export const getCardById = query({
-  args: { cardId: v.id("tradingCards") },
-  handler: async (ctx, args) => {
-    const card = await ctx.db.get(args.cardId);
-    return card;
-  },
-});
-
-export const markCardAsMinted = mutation({
-  args: {
-    cardId: v.id("tradingCards"),
-    nftAddress: v.string(),
-    nftTokenId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw new ConvexError({
-        code: "UNAUTHENTICATED",
-        message: "User not logged in",
-      });
-    }
-
-    const card = await ctx.db.get(args.cardId);
-    if (!card) {
-      throw new ConvexError({
-        code: "NOT_FOUND",
-        message: "Card not found",
-      });
-    }
-
-    await ctx.db.patch(args.cardId, {
+      rarity: args.rarity,
       mintedAsNft: true,
       nftAddress: args.nftAddress,
       nftTokenId: args.nftTokenId,
+      earnedAt: Date.now(),
     });
 
-    // Award bonus points for minting
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
+    // Activate the boost
+    const existingBoost = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_nft", (q) => q.eq("nftAddress", args.nftAddress))
+      .filter((q) => q.eq(q.field("userId"), user._id))
       .unique();
 
-    if (user) {
-      const bonusPoints = 50;
-      await ctx.db.patch(user._id, {
-        totalPoints: user.totalPoints + bonusPoints,
-        level: Math.floor((user.totalPoints + bonusPoints) / 500) + 1,
+    if (existingBoost) {
+      await ctx.db.patch(existingBoost._id, {
+        boostPercentage: args.boostPercentage,
+        isActive: true,
       });
-
-      await ctx.db.insert("pointHistory", {
+    } else {
+      await ctx.db.insert("nftBoosts", {
         userId: user._id,
-        amount: bonusPoints,
-        reason: `Minted NFT: ${card.cardName}`,
-        timestamp: Date.now(),
+        nftAddress: args.nftAddress,
+        boostPercentage: args.boostPercentage,
+        isActive: true,
       });
     }
 
     return { success: true };
-  },
-});
-
-export const getCardStats = query({
-  args: {},
-  handler: async (ctx) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return null;
-    }
-
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
-
-    if (!user) {
-      return null;
-    }
-
-    const allCards = await ctx.db
-      .query("tradingCards")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .collect();
-
-    const mintedCards = allCards.filter((card) => card.mintedAsNft);
-
-    const rarityCount = CARD_RARITIES.reduce(
-      (acc, rarity) => {
-        acc[rarity] = allCards.filter((card) => card.rarity === rarity).length;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    return {
-      totalCards: allCards.length,
-      mintedCards: mintedCards.length,
-      unmintedCards: allCards.length - mintedCards.length,
-      rarityCount,
-    };
   },
 });

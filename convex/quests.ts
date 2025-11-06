@@ -271,23 +271,44 @@ export const completeQuest = mutation({
       claimed: true,
     });
 
+    // Get all active boosts
+    const boosts = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Calculate total boost percentage
+    const totalBoostPercentage = boosts.reduce(
+      (sum, boost) => sum + boost.boostPercentage,
+      0
+    );
+
+    // Apply boost: reward * (1 + totalBoost/100)
+    const boostedReward = Math.floor(
+      args.reward * (1 + totalBoostPercentage / 100)
+    );
+
     // Award points
     await ctx.db.patch(user._id, {
-      totalPoints: user.totalPoints + args.reward,
-      level: Math.floor((user.totalPoints + args.reward) / 500) + 1,
+      totalPoints: user.totalPoints + boostedReward,
+      level: Math.floor((user.totalPoints + boostedReward) / 500) + 1,
     });
 
     // Record point history
     await ctx.db.insert("pointHistory", {
       userId: user._id,
-      amount: args.reward,
-      reason: `Completed quest: ${args.questId}`,
+      amount: boostedReward,
+      reason: `Completed quest: ${args.questId}${totalBoostPercentage > 0 ? ` (+${totalBoostPercentage}% boost)` : ""}`,
       timestamp: Date.now(),
     });
 
     return {
       success: true,
-      newTotal: user.totalPoints + args.reward,
+      newTotal: user.totalPoints + boostedReward,
+      boostedPoints: boostedReward,
+      basePoints: args.reward,
+      boostPercentage: totalBoostPercentage,
     };
   },
 });

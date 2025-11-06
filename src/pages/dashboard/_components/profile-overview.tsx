@@ -89,7 +89,7 @@ function StatCard({
         {icon}
         <span>{label}</span>
       </div>
-      <div className="text-3xl font-bold text-foreground">{value}</div>
+      <div className="text-3xl font-bold text-foreground break-words overflow-hidden">{value}</div>
     </div>
   );
 }

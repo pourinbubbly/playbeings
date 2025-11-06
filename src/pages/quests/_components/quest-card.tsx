@@ -38,11 +38,25 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
 
   const handleClaim = async () => {
     try {
-      await completeQuest({
+      const result = await completeQuest({
         questId: quest.id,
         reward: quest.reward,
       });
-      toast.success(`Quest completed! +${quest.reward} points`);
+      
+      if (result.boostPercentage > 0) {
+        toast.success(`Quest completed!`, {
+          description: (
+            <div className="space-y-1">
+              <p className="font-semibold text-[var(--neon-cyan)]">+{result.boostedPoints} points earned!</p>
+              <p className="text-xs text-muted-foreground">
+                Base: {result.basePoints} pts + {result.boostPercentage}% NFT boost
+              </p>
+            </div>
+          ),
+        });
+      } else {
+        toast.success(`Quest completed! +${quest.reward} points`);
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to claim reward");
     }

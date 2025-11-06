@@ -69,10 +69,28 @@ export const performCheckIn = mutation({
       // Otherwise, streak is broken, reset to 1
     }
 
-    // Calculate points based on streak
+    // Calculate base points based on streak
     const basePoints = 10;
     const streakBonus = Math.min(Math.floor(newStreak / 7) * 5, 50); // +5 points per week, max +50
-    const totalPoints = basePoints + streakBonus;
+    const pointsBeforeBoost = basePoints + streakBonus;
+
+    // Get all active boosts
+    const boosts = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Calculate total boost percentage
+    const totalBoostPercentage = boosts.reduce(
+      (sum, boost) => sum + boost.boostPercentage,
+      0
+    );
+
+    // Apply boost: points * (1 + totalBoost/100)
+    const totalPoints = Math.floor(
+      pointsBeforeBoost * (1 + totalBoostPercentage / 100)
+    );
 
     // Create check-in record
     await ctx.db.insert("dailyCheckIns", {

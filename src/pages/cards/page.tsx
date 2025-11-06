@@ -83,6 +83,7 @@ function CardsContent() {
     try {
       // Dynamically import wallet functions
       const { mintNFTOnCARV } = await import("@/lib/wallet.ts");
+      const { useMutation } = await import("convex/react");
       
       toast.info("Approve transaction in Backpack...", {
         description: "Please confirm the transaction in your wallet",
@@ -95,7 +96,25 @@ function CardsContent() {
         achievement.imageUrl
       );
 
-      const boost = 5 + Math.floor(Math.random() * 11);
+      // Calculate boost: 5-15% based on rarity
+      let boost = 5;
+      if (achievement.rarity === "Rare") boost = 10;
+      else if (achievement.rarity === "Epic") boost = 15;
+      
+      // Save to database with boost
+      const saveNFT = await import("@/convex/_generated/api.js").then(m => m.api.cards.saveMinedNFT);
+      const convex = (await import("@/lib/convex.ts")).convex;
+      
+      await convex.mutation(saveNFT, {
+        appId: achievement.gameId,
+        gameName: achievement.gameName,
+        cardName: achievement.name,
+        imageUrl: achievement.imageUrl,
+        rarity: achievement.rarity,
+        nftAddress: mintAddress,
+        nftTokenId: signature,
+        boostPercentage: boost,
+      });
       
       toast.success(`Achievement NFT Minted!`, {
         description: (
@@ -114,6 +133,9 @@ function CardsContent() {
         ),
         duration: 10000,
       });
+
+      // Remove minted achievement from list
+      setAchievements(prev => prev.filter(a => a.id !== achievement.id));
     } catch (error) {
       console.error("Minting error:", error);
       toast.error("Minting failed", {

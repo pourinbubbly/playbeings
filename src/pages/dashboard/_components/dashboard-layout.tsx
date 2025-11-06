@@ -41,6 +41,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const moreNavItems = [
     { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
     { href: "/dashboard/cards", icon: CreditCard, label: "NFT Cards" },
+    { href: "/dashboard/nfts", icon: Zap, label: "My NFTs" },
     { href: "/dashboard/rewards", icon: Gift, label: "Rewards" },
     { href: "/dashboard/news", icon: Newspaper, label: "News" },
     { href: "/dashboard/analytics", icon: BarChart3, label: "Stats" },

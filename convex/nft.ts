@@ -1,66 +1,157 @@
-"use node";
+import { ConvexError, v } from "convex/values";
+import { mutation, query } from "./_generated/server";
 
-import { action } from "./_generated/server";
-import { v } from "convex/values";
-import { api } from "./_generated/api";
-
-// CARV SVM Testnet configuration
-const CARV_RPC_URL = "https://rpc-testnet.carv.io";
-
-export const mintSteamCardNFT = action({
-  args: {
-    steamCardClassId: v.string(),
-    steamCardName: v.string(),
-    steamCardImage: v.string(),
-    gameName: v.string(),
-    walletAddress: v.string(),
-  },
-  handler: async (ctx, args) => {
-    try {
-      console.log("=== Minting NFT on CARV SVM Testnet ===");
-      console.log("Wallet:", args.walletAddress);
-      console.log("Card:", args.steamCardName);
-      console.log("Game:", args.gameName);
-
-      // Simulate blockchain interaction delay
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-
-      // Generate mock CARV SVM transaction
-      const txHash = `carv:0x${Math.random().toString(16).substring(2, 66)}`;
-      const nftAddress = `carv:nft:${Math.random().toString(16).substring(2, 42)}`;
-      const tokenId = Math.floor(Math.random() * 100000).toString();
-
-      // Random boost between 5% and 15%
-      const boostPercentage = 5 + Math.floor(Math.random() * 11);
-
-      console.log("✅ NFT Minted Successfully!");
-      console.log("Transaction Hash:", txHash);
-      console.log("NFT Address:", nftAddress);
-      console.log("Token ID:", tokenId);
-      console.log("Boost Applied:", `+${boostPercentage}%`);
-
-      return {
-        success: true,
-        txHash,
-        nftAddress,
-        tokenId,
-        boostPercentage,
-        message: `Successfully minted on CARV SVM Testnet! +${boostPercentage}% point boost activated!`,
-      };
-    } catch (error) {
-      console.error("Minting failed:", error);
-      throw new Error(`Failed to mint NFT: ${error}`);
+export const getMintedNFTs = query({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
     }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const nfts = await ctx.db
+      .query("tradingCards")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("mintedAsNft"), true))
+      .order("desc")
+      .collect();
+
+    return nfts;
   },
 });
 
-export const estimateMintCost = action({
+export const getActiveBoosts = query({
   args: {},
-  handler: async () => {
-    return {
-      estimatedGas: "0.001",
-      currency: "CARV",
-      usdValue: "~$0.00 (testnet)",
-    };
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const boosts = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    return boosts;
+  },
+});
+
+export const calculatePointsWithBoost = query({
+  args: { basePoints: v.number() },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return args.basePoints;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      return args.basePoints;
+    }
+
+    // Get all active boosts
+    const boosts = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) => q.eq(q.field("isActive"), true))
+      .collect();
+
+    // Calculate total boost percentage
+    const totalBoostPercentage = boosts.reduce(
+      (sum, boost) => sum + boost.boostPercentage,
+      0
+    );
+
+    // Apply boost: basePoints * (1 + totalBoost/100)
+    const boostedPoints = Math.floor(
+      args.basePoints * (1 + totalBoostPercentage / 100)
+    );
+
+    return boostedPoints;
+  },
+});
+
+export const activateNFTBoost = mutation({
+  args: {
+    nftAddress: v.string(),
+    boostPercentage: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    // Check if boost already exists
+    const existingBoost = await ctx.db
+      .query("nftBoosts")
+      .withIndex("by_nft", (q) => q.eq("nftAddress", args.nftAddress))
+      .filter((q) => q.eq(q.field("userId"), user._id))
+      .unique();
+
+    if (existingBoost) {
+      // Update existing boost
+      await ctx.db.patch(existingBoost._id, {
+        boostPercentage: args.boostPercentage,
+        isActive: true,
+      });
+    } else {
+      // Create new boost
+      await ctx.db.insert("nftBoosts", {
+        userId: user._id,
+        nftAddress: args.nftAddress,
+        boostPercentage: args.boostPercentage,
+        isActive: true,
+      });
+    }
+
+    return { success: true };
   },
 });
