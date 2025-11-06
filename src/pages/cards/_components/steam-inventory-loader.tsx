@@ -52,10 +52,10 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
   };
 
   return (
-    <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 backdrop-blur-2xl glow-primary">
+    <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
       <CardHeader>
-        <CardTitle className="text-xl font-bold">Load Steam Trading Cards</CardTitle>
-        <CardDescription className="text-base">
+        <CardTitle className="text-lg font-semibold">Load Steam Trading Cards</CardTitle>
+        <CardDescription>
           Import your real Steam trading cards from your inventory
         </CardDescription>
       </CardHeader>
@@ -63,7 +63,7 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
         <Button
           onClick={handleLoadInventory}
           disabled={isLoading || !steamProfile}
-          className="w-full bg-gradient-to-r from-primary via-secondary to-accent hover:glow-primary transition-all"
+          className="w-full"
           size="lg"
         >
           {isLoading ? (

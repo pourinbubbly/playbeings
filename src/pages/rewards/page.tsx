@@ -64,22 +64,22 @@ function RewardsContent() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8">
+      <div className="space-y-6">
         {/* Header */}
-        <Card className="bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-2xl border-2 border-primary/30 glow-primary">
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
               <div>
-                <CardTitle className="text-4xl font-black bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                <CardTitle className="text-2xl font-bold">
                   Rewards Store
                 </CardTitle>
-                <CardDescription className="text-lg mt-2">
-                  Redeem your points for real rewards!
+                <CardDescription className="mt-1">
+                  Redeem your points for gift cards and rewards
                 </CardDescription>
               </div>
-              <div className="text-right">
-                <div className="flex items-center gap-2 text-3xl font-black text-primary glow-primary">
-                  <Coins className="w-8 h-8" />
+              <div className="text-left md:text-right">
+                <div className="flex items-center gap-2 text-2xl font-bold text-primary">
+                  <Coins className="w-6 h-6" />
                   {currentUser?.totalPoints || 0}
                 </div>
                 <p className="text-sm text-muted-foreground">Available Points</p>
@@ -89,16 +89,16 @@ function RewardsContent() {
         </Card>
 
         {/* Rewards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {rewards.map((reward) => {
             const canAfford = (currentUser?.totalPoints || 0) >= reward.pointsCost;
             return (
               <Card
                 key={reward._id}
-                className="overflow-hidden bg-card/60 backdrop-blur-2xl border-2 border-primary/20 hover:border-primary/40 transition-all hover:glow-primary"
+                className="overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="aspect-video bg-gradient-to-br from-primary/20 to-accent/20 flex items-center justify-center p-6">
-                  <Gift className="w-20 h-20 text-primary glow-primary" />
+                <div className="aspect-video bg-gradient-to-br from-primary/10 to-accent/10 flex items-center justify-center p-6">
+                  <Gift className="w-16 h-16 text-primary" />
                 </div>
                 <CardContent className="pt-6 space-y-4">
                   <div>
@@ -124,7 +124,6 @@ function RewardsContent() {
                     <Button
                       disabled={!canAfford || redeeming === reward._id}
                       onClick={() => handleRedeem(reward._id)}
-                      className="bg-gradient-to-r from-primary to-accent hover:glow-primary"
                       size="sm"
                     >
                       {redeeming === reward._id ? "Redeeming..." : "Redeem"}
@@ -145,9 +144,9 @@ function RewardsContent() {
 
         {/* Redemption History */}
         {redemptions.length > 0 && (
-          <Card className="bg-card/60 backdrop-blur-2xl border-2 border-primary/20">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-2xl font-bold">Recent Redemptions</CardTitle>
+              <CardTitle className="text-xl font-bold">Recent Redemptions</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-3">

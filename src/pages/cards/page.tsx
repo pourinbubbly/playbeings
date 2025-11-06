@@ -76,13 +76,13 @@ function CardsContent() {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <Card className="bg-gradient-to-br from-card/80 to-card/60 backdrop-blur-2xl border-2 border-primary/30 glow-primary">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-3xl font-black bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+            <CardTitle className="text-2xl font-bold">
               NFT Trading Cards
             </CardTitle>
-            <CardDescription className="text-lg">
-              Load your Steam trading cards and mint them as NFTs on CARV SVM Testnet
+            <CardDescription>
+              Load your Steam trading cards and mint them as NFTs on CARV SVM Testnet to earn point boosts
             </CardDescription>
           </CardHeader>
         </Card>
@@ -90,7 +90,7 @@ function CardsContent() {
         <SteamInventoryLoader onCardsLoaded={setSteamCards} />
 
         {steamCards.length === 0 ? (
-          <Card className="bg-card/60 backdrop-blur-2xl border-2 border-primary/20">
+          <Card>
             <CardContent className="pt-6">
               <Empty>
                 <EmptyHeader>
@@ -99,20 +99,20 @@ function CardsContent() {
                   </EmptyMedia>
                   <EmptyTitle>No trading cards loaded</EmptyTitle>
                   <EmptyDescription>
-                    Click the button above to load your Steam trading cards
+                    Click the button above to load your Steam trading cards. Make sure your Steam inventory is set to public.
                   </EmptyDescription>
                 </EmptyHeader>
               </Empty>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
             {steamCards.map((card, index) => (
               <Card
                 key={card.classid || index}
-                className="overflow-hidden bg-card/60 backdrop-blur-2xl border-2 border-primary/20 hover:border-primary/50 hover:glow-primary transition-all"
+                className="overflow-hidden hover:shadow-lg transition-shadow"
               >
-                <div className="aspect-[3/4] bg-gradient-to-br from-primary/10 to-accent/10 relative overflow-hidden">
+                <div className="aspect-[3/4] bg-gradient-to-br from-primary/5 to-accent/5 relative overflow-hidden">
                   <img
                     src={card.imageUrl}
                     alt={card.name}
@@ -121,15 +121,15 @@ function CardsContent() {
                       e.currentTarget.style.display = "none";
                     }}
                   />
-                  <div className="absolute top-3 left-3">
-                    <Badge className="bg-gradient-to-r from-primary to-accent text-white glow-primary">
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary">
                       Trading Card
                     </Badge>
                   </div>
                 </div>
                 <CardContent className="pt-4 space-y-3">
                   <div>
-                    <h3 className="font-bold line-clamp-1">{card.name}</h3>
+                    <h3 className="font-semibold line-clamp-1">{card.name}</h3>
                     <p className="text-sm text-muted-foreground line-clamp-1">
                       {card.gameName}
                     </p>
@@ -138,7 +138,7 @@ function CardsContent() {
                   <Button
                     disabled={!connectedWallet || minting !== null}
                     onClick={() => handleMint(card)}
-                    className="w-full bg-gradient-to-r from-primary via-secondary to-accent hover:glow-primary transition-all"
+                    className="w-full"
                     size="sm"
                   >
                     <Sparkles className="w-4 h-4 mr-2" />
