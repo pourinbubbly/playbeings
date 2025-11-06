@@ -58,14 +58,16 @@ export const followUser = mutation({
     });
 
     // Update counts
+    const currentFollowingCount = currentUser.followingCount ?? 0;
     await ctx.db.patch(currentUser._id, {
-      followingCount: currentUser.followingCount + 1,
+      followingCount: currentFollowingCount + 1,
     });
 
     const targetUser = await ctx.db.get(args.userId);
     if (targetUser) {
+      const targetFollowerCount = targetUser.followerCount ?? 0;
       await ctx.db.patch(args.userId, {
-        followerCount: targetUser.followerCount + 1,
+        followerCount: targetFollowerCount + 1,
       });
     }
 
@@ -115,14 +117,16 @@ export const unfollowUser = mutation({
     await ctx.db.delete(follow._id);
 
     // Update counts
+    const currentFollowingCount = currentUser.followingCount ?? 0;
     await ctx.db.patch(currentUser._id, {
-      followingCount: Math.max(0, currentUser.followingCount - 1),
+      followingCount: Math.max(0, currentFollowingCount - 1),
     });
 
     const targetUser = await ctx.db.get(args.userId);
     if (targetUser) {
+      const targetFollowerCount = targetUser.followerCount ?? 0;
       await ctx.db.patch(args.userId, {
-        followerCount: Math.max(0, targetUser.followerCount - 1),
+        followerCount: Math.max(0, targetFollowerCount - 1),
       });
     }
 

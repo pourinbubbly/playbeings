@@ -23,7 +23,7 @@ export const updateCurrentUser = mutation({
       return user._id;
     }
     // If it's a new identity, create a new User.
-    return await ctx.db.insert("users", {
+    const userId = await ctx.db.insert("users", {
       name: identity.name,
       email: identity.email,
       tokenIdentifier: identity.tokenIdentifier,
@@ -34,6 +34,8 @@ export const updateCurrentUser = mutation({
       currentStreak: 0,
       longestStreak: 0,
     });
+    
+    return userId;
   },
 });
 

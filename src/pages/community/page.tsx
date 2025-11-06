@@ -95,7 +95,7 @@ function CommunityContent() {
                     Followers
                   </p>
                   <p className="text-3xl font-bold text-[var(--neon-cyan)]">
-                    {currentUser.followerCount}
+                    {currentUser.followerCount ?? 0}
                   </p>
                 </div>
                 <Users className="w-10 h-10 text-[var(--neon-cyan)]/50" />
@@ -111,7 +111,7 @@ function CommunityContent() {
                     Following
                   </p>
                   <p className="text-3xl font-bold text-[var(--neon-magenta)]">
-                    {currentUser.followingCount}
+                    {currentUser.followingCount ?? 0}
                   </p>
                 </div>
                 <UserPlus className="w-10 h-10 text-[var(--neon-magenta)]/50" />
@@ -305,7 +305,7 @@ interface UserCardProps {
     avatar?: string;
     totalPoints: number;
     level: number;
-    followerCount: number;
+    followerCount?: number;
   };
   currentUserId: Id<"users">;
 }
@@ -363,7 +363,7 @@ function UserCard({ user, currentUserId }: UserCardProps) {
               </span>
               <span className="flex items-center gap-1">
                 <Users className="w-3 h-3" />
-                {user.followerCount} followers
+                {user.followerCount ?? 0} followers
               </span>
             </div>
           </div>

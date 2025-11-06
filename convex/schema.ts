@@ -21,10 +21,10 @@ export default defineSchema({
       youtube: v.optional(v.string()),
     })),
     // Stats
-    followerCount: v.number(),
-    followingCount: v.number(),
-    currentStreak: v.number(),
-    longestStreak: v.number(),
+    followerCount: v.optional(v.number()),
+    followingCount: v.optional(v.number()),
+    currentStreak: v.optional(v.number()),
+    longestStreak: v.optional(v.number()),
     lastCheckIn: v.optional(v.number()),
   })
     .index("by_token", ["tokenIdentifier"])

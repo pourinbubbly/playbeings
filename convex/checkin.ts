@@ -50,6 +50,7 @@ export const performCheckIn = mutation({
     // Calculate streak
     let newStreak = 1;
     const lastCheckIn = user.lastCheckIn;
+    const currentStreak = user.currentStreak ?? 0;
 
     if (lastCheckIn) {
       const lastCheckInDate = new Date(lastCheckIn).toISOString().split("T")[0];
@@ -59,11 +60,11 @@ export const performCheckIn = mutation({
 
       // If last check-in was yesterday, increment streak
       if (lastCheckInDate === yesterday) {
-        newStreak = user.currentStreak + 1;
+        newStreak = currentStreak + 1;
       }
       // If it was today (shouldn't happen due to check above), keep current
       else if (lastCheckInDate === today) {
-        newStreak = user.currentStreak;
+        newStreak = currentStreak;
       }
       // Otherwise, streak is broken, reset to 1
     }
@@ -86,7 +87,8 @@ export const performCheckIn = mutation({
 
     // Update user
     const newTotalPoints = user.totalPoints + totalPoints;
-    const newLongestStreak = Math.max(user.longestStreak, newStreak);
+    const longestStreak = user.longestStreak ?? 0;
+    const newLongestStreak = Math.max(longestStreak, newStreak);
 
     await ctx.db.patch(user._id, {
       currentStreak: newStreak,
@@ -155,13 +157,17 @@ export const getCheckInStatus = query({
       )
       .unique();
 
+    // Provide default values for optional fields
+    const currentStreak = user.currentStreak ?? 0;
+    const longestStreak = user.longestStreak ?? 0;
+
     return {
       canCheckIn: !todayCheckIn,
       hasCheckedInToday: !!todayCheckIn,
-      currentStreak: user.currentStreak,
-      longestStreak: user.longestStreak,
+      currentStreak,
+      longestStreak,
       lastCheckIn: user.lastCheckIn,
-      nextCheckInPoints: calculateNextCheckInPoints(user.currentStreak, !!todayCheckIn),
+      nextCheckInPoints: calculateNextCheckInPoints(currentStreak, !!todayCheckIn),
     };
   },
 });
