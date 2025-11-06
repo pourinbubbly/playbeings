@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as analytics from "../analytics.js";
 import type * as cards from "../cards.js";
 import type * as initQuests from "../initQuests.js";
 import type * as leaderboard from "../leaderboard.js";
@@ -33,6 +34,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  analytics: typeof analytics;
   cards: typeof cards;
   initQuests: typeof initQuests;
   leaderboard: typeof leaderboard;
