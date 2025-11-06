@@ -11,6 +11,7 @@ import Wallet from "./pages/wallet/page.tsx";
 import Cards from "./pages/cards/page.tsx";
 import Rewards from "./pages/rewards/page.tsx";
 import Analytics from "./pages/analytics/page.tsx";
+import News from "./pages/news/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 export default function App() {
@@ -27,6 +28,7 @@ export default function App() {
           <Route path="/dashboard/cards" element={<Cards />} />
           <Route path="/dashboard/rewards" element={<Rewards />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
+          <Route path="/dashboard/news" element={<News />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

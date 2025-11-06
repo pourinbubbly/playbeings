@@ -6,6 +6,18 @@ import { api } from "./_generated/api";
 
 const STEAM_API_KEY = "F657064ABD094E1D28A61975D9A6AB37";
 
+interface SteamNewsItem {
+  gid: string;
+  title: string;
+  url: string;
+  author: string;
+  contents: string;
+  feedlabel: string;
+  date: number;
+  feedname: string;
+  appid: number;
+}
+
 export const linkSteamAccount = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
@@ -338,6 +350,77 @@ export const getSteamInventory = action({
         throw error;
       }
       throw new Error("Failed to load inventory. Make sure your Steam profile and inventory are set to public.");
+    }
+  },
+});
+
+export const getSteamNews = action({
+  args: { steamId: v.string() },
+  handler: async (ctx, args) => {
+    try {
+      console.log("Fetching Steam news for user's top games...");
+      
+      // Get user's owned games
+      const gamesResponse = await fetch(
+        `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${args.steamId}&include_appinfo=1`
+      );
+      const gamesData = await gamesResponse.json();
+      
+      if (!gamesData.response.games || gamesData.response.games.length === 0) {
+        return [];
+      }
+
+      // Get top 10 most played games
+      const topGames = gamesData.response.games
+        .sort((a: { playtime_forever: number }, b: { playtime_forever: number }) => 
+          b.playtime_forever - a.playtime_forever
+        )
+        .slice(0, 10);
+
+      console.log("Fetching news for top games:", topGames.map((g: { name: string }) => g.name));
+
+      // Fetch news for each game
+      const newsPromises = topGames.map(async (game: { appid: number; name: string; img_icon_url: string }) => {
+        try {
+          const newsResponse = await fetch(
+            `https://api.steampowered.com/ISteamNews/GetNewsForApp/v0002/?appid=${game.appid}&count=3&maxlength=300`
+          );
+          const newsData = await newsResponse.json();
+          
+          if (newsData.appnews?.newsitems) {
+            return newsData.appnews.newsitems.map((item: SteamNewsItem) => ({
+              id: item.gid,
+              title: item.title,
+              url: item.url,
+              author: item.author,
+              content: item.contents,
+              date: item.date,
+              feedName: item.feedname,
+              appId: game.appid,
+              gameName: game.name,
+              gameIcon: `https://media.steampowered.com/steamcommunity/public/images/apps/${game.appid}/${game.img_icon_url}.jpg`,
+            }));
+          }
+          return [];
+        } catch (error) {
+          console.error(`Failed to fetch news for game ${game.appid}:`, error);
+          return [];
+        }
+      });
+
+      const allNews = await Promise.all(newsPromises);
+      const flatNews = allNews.flat();
+      
+      // Sort by date (newest first) and return top 30
+      const sortedNews = flatNews
+        .sort((a, b) => b.date - a.date)
+        .slice(0, 30);
+
+      console.log(`Returning ${sortedNews.length} news items`);
+      return sortedNews;
+    } catch (error) {
+      console.error("Failed to fetch Steam news:", error);
+      throw new Error("Failed to load Steam news. Please try again.");
     }
   },
 });

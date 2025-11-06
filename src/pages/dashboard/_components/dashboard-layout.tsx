@@ -15,6 +15,7 @@ import {
   Gift,
   Menu,
   ChevronDown,
+  Newspaper,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,6 +39,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
     { href: "/dashboard/cards", icon: CreditCard, label: "NFT Cards" },
     { href: "/dashboard/rewards", icon: Gift, label: "Rewards" },
+    { href: "/dashboard/news", icon: Newspaper, label: "News" },
     { href: "/dashboard/analytics", icon: BarChart3, label: "Stats" },
   ];
 

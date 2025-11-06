@@ -225,6 +225,7 @@ export default function Index() {
                 <li><Link to="/dashboard" className="hover:text-foreground transition-colors">Dashboard</Link></li>
                 <li><Link to="/dashboard/quests" className="hover:text-foreground transition-colors">Quests</Link></li>
                 <li><Link to="/dashboard/leaderboard" className="hover:text-foreground transition-colors">Leaderboard</Link></li>
+                <li><Link to="/dashboard/news" className="hover:text-foreground transition-colors">News</Link></li>
                 <li><Link to="/dashboard/rewards" className="hover:text-foreground transition-colors">Rewards</Link></li>
               </ul>
             </div>
