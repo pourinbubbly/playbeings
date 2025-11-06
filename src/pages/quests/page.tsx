@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
 import { Target } from "lucide-react";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
-import { Button } from "@/components/ui/button.tsx";
 
 export default function Quests() {
   return (
@@ -31,7 +30,6 @@ export default function Quests() {
 }
 
 function QuestsContent() {
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
   const questsData = useQuery(api.quests.getTodayQuests);
   const questStats = useQuery(api.quests.getUserQuestStats);
@@ -40,7 +38,7 @@ function QuestsContent() {
     initQuests();
   }, [initQuests]);
 
-  if (questsData === undefined || questStats === undefined || steamProfile === undefined) {
+  if (questsData === undefined || questStats === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -50,27 +48,6 @@ function QuestsContent() {
               <Skeleton key={i} className="h-48" />
             ))}
           </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!steamProfile) {
-    return (
-      <DashboardLayout>
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-6">
-          <Target className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
-            <p className="text-muted-foreground uppercase tracking-wide">
-              Günlük görevleri görmek için Steam hesabınızı bağlamanız gerekiyor
-            </p>
-          </div>
-          <a href="/dashboard">
-            <Button className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider">
-              Dashboard'a Git
-            </Button>
-          </a>
         </div>
       </DashboardLayout>
     );

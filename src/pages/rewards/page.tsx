@@ -32,7 +32,6 @@ export default function Rewards() {
 }
 
 function RewardsContent() {
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const rewards = useQuery(api.rewards.getAvailableRewards);
   const redemptions = useQuery(api.rewards.getUserRedemptions);
   const currentUser = useQuery(api.users.getCurrentUser);
@@ -82,32 +81,11 @@ function RewardsContent() {
     }
   };
 
-  if (rewards === undefined || redemptions === undefined || currentUser === undefined || steamProfile === undefined) {
+  if (rewards === undefined || redemptions === undefined || currentUser === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
           <Skeleton className="h-32 w-full" />
-        </div>
-      </DashboardLayout>
-    );
-  }
-
-  if (!steamProfile) {
-    return (
-      <DashboardLayout>
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-6">
-          <Gift className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
-            <p className="text-muted-foreground uppercase tracking-wide">
-              Ödül mağazasını görmek için Steam hesabınızı bağlamanız gerekiyor
-            </p>
-          </div>
-          <a href="/dashboard">
-            <Button className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider">
-              Dashboard'a Git
-            </Button>
-          </a>
         </div>
       </DashboardLayout>
     );

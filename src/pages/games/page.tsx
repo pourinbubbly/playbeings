@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
 import { Gamepad2, Clock, Calendar } from "lucide-react";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Button } from "@/components/ui/button.tsx";
 
 export default function Games() {
   return (
@@ -25,10 +24,9 @@ export default function Games() {
 }
 
 function GamesContent() {
-  const steamProfile = useQuery(api.profiles.getSteamProfile);
   const games = useQuery(api.profiles.getUserGames);
 
-  if (games === undefined || steamProfile === undefined) {
+  if (games === undefined) {
     return (
       <DashboardLayout>
         <div className="space-y-6">
@@ -43,23 +41,24 @@ function GamesContent() {
     );
   }
 
-  if (!steamProfile || games.length === 0) {
+  if (games.length === 0) {
     return (
       <DashboardLayout>
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-6">
-          <Gamepad2 className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
-          <div>
-            <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
-            <p className="text-muted-foreground uppercase tracking-wide">
-              Oyun kütüphanenizi görmek için Steam hesabınızı bağlamanız gerekiyor
-            </p>
-          </div>
-          <a href="/dashboard">
-            <Button className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider">
-              Dashboard'a Git
-            </Button>
-          </a>
-        </div>
+        <Card>
+          <CardContent className="pt-6">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <Gamepad2 />
+                </EmptyMedia>
+                <EmptyTitle>No games found</EmptyTitle>
+                <EmptyDescription>
+                  Connect your Steam account to see your game library
+                </EmptyDescription>
+              </EmptyHeader>
+            </Empty>
+          </CardContent>
+        </Card>
       </DashboardLayout>
     );
   }
