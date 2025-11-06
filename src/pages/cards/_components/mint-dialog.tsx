@@ -136,7 +136,7 @@ export function MintDialog({ card, wallet, onClose }: MintDialogProps) {
                 asChild
               >
                 <a
-                  href={`https://explorer-testnet.carv.io/tx/${txHash}`}
+                  href={`https://explorer.testnet.carv.io/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >

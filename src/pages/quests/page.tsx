@@ -5,7 +5,6 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { QuestCard } from "./_components/quest-card.tsx";
 import { QuestStats } from "./_components/quest-stats.tsx";
-import { SimulateProgress } from "./_components/simulate-progress.tsx";
 import { useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
@@ -83,14 +82,12 @@ function QuestsContent() {
           <CardHeader>
             <CardTitle>Daily Quests</CardTitle>
             <CardDescription>
-              Complete quests to earn points and climb the leaderboard
+              Complete quests by playing your Steam games to earn points and climb the leaderboard
             </CardDescription>
           </CardHeader>
         </Card>
 
         <QuestStats stats={questStats} />
-
-        <SimulateProgress />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {questsData.quests.map((quest: { id: string; type: string; title: string; description: string; requirement: number; reward: number; icon: string }) => {

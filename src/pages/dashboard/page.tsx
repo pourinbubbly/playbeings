@@ -1,11 +1,13 @@
 import { Authenticated, AuthLoading } from "convex/react";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { SteamConnect } from "./_components/steam-connect.tsx";
 import { DashboardLayout } from "./_components/dashboard-layout.tsx";
 import { ProfileOverview } from "./_components/profile-overview.tsx";
 import { GamesLibrary } from "./_components/games-library.tsx";
+import { DailyQuestsSection } from "./_components/daily-quests-section.tsx";
+import { useEffect } from "react";
 
 export default function Dashboard() {
   return (
@@ -25,6 +27,11 @@ export default function Dashboard() {
 function DashboardContent() {
   const steamProfile = useQuery(api.profiles.getSteamProfile);
   const currentUser = useQuery(api.users.getCurrentUser);
+  const initQuests = useMutation(api.initQuests.initializeTodayQuests);
+
+  useEffect(() => {
+    initQuests();
+  }, [initQuests]);
 
   if (steamProfile === undefined || currentUser === undefined) {
     return (
@@ -40,8 +47,9 @@ function DashboardContent() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-6">
+      <div className="space-y-8">
         <ProfileOverview profile={steamProfile} user={currentUser} />
+        <DailyQuestsSection />
         <GamesLibrary />
       </div>
     </DashboardLayout>

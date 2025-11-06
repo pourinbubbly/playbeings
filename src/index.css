@@ -359,4 +359,47 @@
     border: 2px solid var(--neon-magenta);
     box-shadow: inset 0 0 10px var(--neon-magenta), 0 0 10px var(--neon-magenta);
   }
+
+  /* Hover Glow Effects */
+  .hover-glow-cyan:hover {
+    box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+  }
+  
+  .hover-glow-magenta:hover {
+    box-shadow: 0 0 20px var(--neon-magenta), 0 0 40px var(--neon-magenta);
+  }
+  
+  .hover-glow-purple:hover {
+    box-shadow: 0 0 20px var(--neon-purple), 0 0 40px var(--neon-purple);
+  }
+  
+  .hover-glow-pink:hover {
+    box-shadow: 0 0 20px var(--neon-pink), 0 0 40px var(--neon-pink);
+  }
+  
+  /* Custom Scrollbar for horizontal sections */
+  .scrollbar-custom {
+    scrollbar-width: thin;
+    scrollbar-color: var(--neon-cyan) transparent;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar {
+    height: 8px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 4px;
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb {
+    background: var(--neon-cyan);
+    border-radius: 4px;
+    box-shadow: 0 0 10px var(--neon-cyan);
+  }
+  
+  .scrollbar-custom::-webkit-scrollbar-thumb:hover {
+    background: var(--neon-magenta);
+    box-shadow: 0 0 15px var(--neon-magenta);
+  }
 }

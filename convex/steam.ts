@@ -70,7 +70,7 @@ export const linkSteamAccount = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+          imageUrl: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/library_600x900.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
       };
@@ -107,7 +107,7 @@ export const syncSteamData = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
+          imageUrl: `https://steamcdn-a.akamaihd.net/steam/apps/${game.appid}/library_600x900.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
         totalPlaytime,
@@ -123,36 +123,64 @@ export const getSteamInventory = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
     try {
+      // First check profile privacy
+      const profileResponse = await fetch(
+        `https://api.steampowered.com/ISteamUser/GetPlayerSummaries/v0002/?key=${STEAM_API_KEY}&steamids=${args.steamId}`
+      );
+      const profileData = await profileResponse.json();
+      
+      if (!profileData.response.players || profileData.response.players.length === 0) {
+        throw new Error("Steam profile not found");
+      }
+
+      const player = profileData.response.players[0];
+      console.log("Profile visibility:", player.communityvisibilitystate);
+
       // Try multiple contexts for Steam inventory
-      const contexts = [3, 6, 1];
+      const contexts = [6, 3, 1]; // Context 6 is for trading cards
       let inventoryData = null;
+      let lastError = null;
       
       for (const context of contexts) {
         try {
           const inventoryResponse = await fetch(
-            `https://steamcommunity.com/inventory/${args.steamId}/753/${context}?l=english&count=5000`
+            `https://steamcommunity.com/inventory/${args.steamId}/753/${context}?l=english&count=5000`,
+            {
+              headers: {
+                'User-Agent': 'Mozilla/5.0',
+              }
+            }
           );
+          
+          if (inventoryResponse.status === 403) {
+            throw new Error("Steam inventory is private. Please set your inventory to public in Steam Privacy Settings.");
+          }
           
           if (inventoryResponse.ok) {
             const data = await inventoryResponse.json();
-            if (data.assets && data.descriptions) {
+            if (data.assets && data.descriptions && data.assets.length > 0) {
               inventoryData = data;
+              console.log(`Found inventory data in context ${context} with ${data.assets.length} items`);
               break;
             }
           }
         } catch (e) {
-          console.log(`Failed to fetch with context ${context}, trying next...`);
+          lastError = e;
+          console.log(`Failed to fetch with context ${context}:`, e);
         }
       }
       
       if (!inventoryData || !inventoryData.assets || !inventoryData.descriptions) {
-        console.log("No inventory data found");
+        if (lastError instanceof Error && lastError.message.includes("private")) {
+          throw lastError;
+        }
+        console.log("No inventory data found - inventory may be empty or private");
         return [];
       }
 
       // Match assets with descriptions to get trading cards
       const tradingCards = inventoryData.assets
-        .map((asset: { classid: string; instanceid: string; amount: string }) => {
+        .map((asset: { classid: string; instanceid: string; amount: string; assetid: string }) => {
           const description = inventoryData.descriptions.find(
             (desc: { classid: string; instanceid: string }) =>
               desc.classid === asset.classid && desc.instanceid === asset.instanceid
@@ -161,18 +189,22 @@ export const getSteamInventory = action({
         })
         .filter((item: { type?: string; tradable?: number; tags?: Array<{ category?: string; name?: string }> }) => {
           if (!item) return false;
-          // Check if it's a trading card using multiple methods
+          // Check if it's a trading card
           const isCard = item.type && (
-            item.type.includes("Trading Card") || 
-            item.type.includes("Card")
+            item.type.toLowerCase().includes("trading card") || 
+            item.type.toLowerCase().includes("card")
           );
           const hasCardTag = item.tags?.some(tag => 
-            tag.category === "item_class" && tag.name === "Trading Card"
+            tag.category === "item_class" && (
+              tag.name === "Trading Card" || 
+              tag.name?.toLowerCase().includes("card")
+            )
           );
           return (isCard || hasCardTag) && item.tradable === 1;
         })
         .map((card: {
           classid: string;
+          assetid: string;
           name: string;
           market_name: string;
           icon_url: string;
@@ -181,9 +213,10 @@ export const getSteamInventory = action({
           market_hash_name?: string;
         }) => ({
           classid: card.classid,
+          assetid: card.assetid,
           name: card.name,
           marketName: card.market_name || card.market_hash_name || card.name,
-          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}/330x192`,
+          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
           type: card.type,
           gameName: card.app_name || "Steam Community",
         }));
@@ -192,7 +225,10 @@ export const getSteamInventory = action({
       return tradingCards;
     } catch (error) {
       console.error("Failed to fetch Steam inventory:", error);
-      return [];
+      if (error instanceof Error) {
+        throw error;
+      }
+      throw new Error("Failed to load inventory. Make sure your Steam profile and inventory are set to public.");
     }
   },
 });

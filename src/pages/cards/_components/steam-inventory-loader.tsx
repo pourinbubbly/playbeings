@@ -34,16 +34,19 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
       
       if (cards.length === 0) {
         toast.info("No trading cards found", {
-          description: "Your Steam inventory doesn't have any tradable trading cards. You may need to make your inventory public in Steam settings.",
+          description: "No tradable trading cards found. Make sure your inventory is public in Steam Privacy Settings and you have trading cards in your inventory.",
         });
       } else {
         toast.success(`Found ${cards.length} trading cards!`, {
-          description: "Your Steam trading cards are ready to mint as NFTs",
+          description: "Your Steam trading cards are ready to mint as NFTs on CARV SVM testnet",
         });
       }
     } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
       toast.error("Failed to load Steam inventory", {
-        description: "Make sure your Steam inventory is set to public in your Steam privacy settings.",
+        description: errorMessage.includes("private") 
+          ? "Your Steam inventory is private. Please set it to public in Steam Privacy Settings."
+          : "Make sure your Steam profile and inventory are set to public in your Steam privacy settings.",
       });
       console.error("Inventory load error:", error);
     } finally {
