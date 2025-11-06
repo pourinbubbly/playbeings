@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "convex/react";
+import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
@@ -31,7 +31,6 @@ const ICON_MAP = {
 
 export function QuestCard({ quest, progress, completed, claimed }: QuestCardProps) {
   const completeQuest = useMutation(api.quests.completeQuest);
-  const currentUser = useQuery(api.users.getCurrentUser);
 
   const Icon = ICON_MAP[quest.icon as keyof typeof ICON_MAP] || Target;
   const progressPercentage = Math.min((progress / quest.requirement) * 100, 100);
@@ -39,7 +38,7 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
 
   const handleClaim = async () => {
     try {
-      const result = await completeQuest({
+      await completeQuest({
         questId: quest.id,
         reward: quest.reward,
       });

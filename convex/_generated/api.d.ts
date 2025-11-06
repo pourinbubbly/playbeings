@@ -9,6 +9,7 @@
  */
 
 import type * as initQuests from "../initQuests.js";
+import type * as leaderboard from "../leaderboard.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
 import type * as steam from "../steam.js";
@@ -30,6 +31,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   initQuests: typeof initQuests;
+  leaderboard: typeof leaderboard;
   profiles: typeof profiles;
   quests: typeof quests;
   steam: typeof steam;
