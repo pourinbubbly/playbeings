@@ -14,6 +14,7 @@ import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
 import type * as steam from "../steam.js";
 import type * as users from "../users.js";
+import type * as wallets from "../wallets.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   quests: typeof quests;
   steam: typeof steam;
   users: typeof users;
+  wallets: typeof wallets;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

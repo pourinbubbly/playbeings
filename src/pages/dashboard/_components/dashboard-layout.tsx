@@ -8,6 +8,7 @@ import {
   Target,
   Trophy,
   Wallet,
+  CreditCard,
   BarChart3,
   LogOut,
 } from "lucide-react";
@@ -21,7 +22,8 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard/games", icon: Library, label: "Games" },
     { href: "/dashboard/quests", icon: Target, label: "Quests" },
     { href: "/dashboard/leaderboard", icon: Trophy, label: "Leaderboard" },
-    { href: "/dashboard/cards", icon: Wallet, label: "Trading Cards" },
+    { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
+    { href: "/dashboard/cards", icon: CreditCard, label: "Trading Cards" },
     { href: "/dashboard/analytics", icon: BarChart3, label: "Analytics" },
   ];
 
