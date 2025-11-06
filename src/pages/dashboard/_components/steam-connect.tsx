@@ -70,8 +70,8 @@ export function SteamConnect() {
       toast.success("Steam account connected successfully!", {
         description: `Welcome ${data.personaName}!`
       });
-      // Redirect to dashboard after successful connection
-      window.location.href = '/dashboard';
+      // Reload page to refresh auth state
+      window.location.reload();
     } catch (error) {
       toast.error("Failed to connect Steam account", {
         description: error instanceof Error ? error.message : "Please check your Steam ID and try again"
