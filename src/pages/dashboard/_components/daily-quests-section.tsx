@@ -5,6 +5,20 @@ import { Target, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress.tsx";
 
+// Quest icon to image mapping
+const questIconImages: Record<string, string> = {
+  "🎯": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
+  "🎮": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
+  "🏆": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
+  "⚔️": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
+  "🎪": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
+  "🔒": "https://images.unsplash.com/photo-1696013910376-c56f76dd8178?w=400&h=300&fit=crop",
+  "⭐": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
+  "💎": "https://images.unsplash.com/photo-1650089603011-a1d7a512430a?w=400&h=300&fit=crop",
+  "🔥": "https://images.unsplash.com/photo-1709708458773-348597b3d5b9?w=400&h=300&fit=crop",
+  "⚡": "https://images.unsplash.com/photo-1660211983492-9df0c82ba9ae?w=400&h=300&fit=crop",
+};
+
 export function DailyQuestsSection() {
   const questsData = useQuery(api.quests.getTodayQuests);
 
@@ -57,30 +71,33 @@ export function DailyQuestsSection() {
             return (
               <div
                 key={quest.id}
-                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 p-5 min-w-[300px] max-w-[320px] flex-shrink-0 space-y-4 hover-glow-cyan transition-all"
+                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden min-w-[300px] max-w-[320px] flex-shrink-0 hover-glow-cyan transition-all"
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-3 min-w-0 flex-1 overflow-hidden">
-                    <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center text-2xl shrink-0">
-                      {quest.icon}
-                    </div>
-                    <div className="min-w-0 flex-1 overflow-hidden">
-                      <h3 className="font-bold text-sm uppercase tracking-wide truncate">
-                        {quest.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide truncate">
-                        +{quest.reward} PTS
-                      </p>
-                    </div>
-                  </div>
+                {/* Quest Image */}
+                <div className="relative h-32 bg-black/40 overflow-hidden">
+                  <img 
+                    src={questIconImages[quest.icon] || questIconImages["🎯"]}
+                    alt={quest.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   {completed && (
-                    <div className="px-2 py-1 rounded-sm bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] text-xs font-bold uppercase shrink-0">
-                      ✓
+                    <div className="absolute top-3 right-3 px-3 py-1.5 rounded-sm bg-[var(--neon-cyan)] text-black text-xs font-bold uppercase neon-glow-cyan">
+                      ✓ COMPLETE
                     </div>
                   )}
+                  <div className="absolute bottom-3 left-3 right-3">
+                    <h3 className="font-bold text-sm uppercase tracking-wide truncate text-white">
+                      {quest.title}
+                    </h3>
+                    <p className="text-xs text-[var(--neon-cyan)] uppercase tracking-wide font-semibold mt-1">
+                      +{quest.reward} PTS
+                    </p>
+                  </div>
                 </div>
-
-                <div className="space-y-2">
+                
+                {/* Quest Progress */}
+                <div className="p-4 space-y-2">
                   <div className="flex items-center justify-between text-xs font-semibold uppercase tracking-wide">
                     <span className="text-muted-foreground">Progress</span>
                     <span className="text-[var(--neon-cyan)]">

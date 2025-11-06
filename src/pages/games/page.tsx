@@ -92,7 +92,7 @@ function GamesContent() {
               key={game._id} 
               className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group"
             >
-              <div className="aspect-video bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
+              <div className="aspect-[460/215] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
                 <img
                   src={game.imageUrl}
                   alt={game.name}

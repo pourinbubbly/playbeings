@@ -70,7 +70,7 @@ export const linkSteamAccount = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/library_600x900_2x.jpg`,
+          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
       };
@@ -107,7 +107,7 @@ export const syncSteamData = action({
           appId: game.appid,
           name: game.name,
           playtime: game.playtime_forever,
-          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/library_600x900_2x.jpg`,
+          imageUrl: `https://cdn.cloudflare.steamstatic.com/steam/apps/${game.appid}/header.jpg`,
           lastPlayed: game.rtime_last_played || 0,
         })),
         totalPlaytime,
