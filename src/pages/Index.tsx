@@ -32,7 +32,7 @@ export default function Index() {
             <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan transition-all group-hover:neon-glow-magenta">
               <Zap className="w-7 h-7 text-[var(--neon-cyan)] group-hover:text-[var(--neon-magenta)] transition-colors" />
             </div>
-            <span className="text-3xl font-bold gradient-text-cyber tracking-wider glitch-text-slow">PLAYBEINGS</span>
+            <span className="text-3xl font-bold gradient-text-cyber tracking-wider">PLAYBEINGS</span>
           </Link>
           <div className="flex items-center gap-4">
             <Authenticated>
@@ -56,8 +56,8 @@ export default function Index() {
               <span className="text-sm font-bold uppercase tracking-wider text-[var(--neon-cyan)]">CARV SVM Blockchain Powered</span>
             </div>
 
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-wider uppercase">
-              Turn Gaming Into <span className="gradient-text-cyber glitch-text-slow">Real Rewards</span>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-wider uppercase text-foreground">
+              Turn Gaming Into <span className="gradient-text-cyber">Real Rewards</span>
             </h1>
 
             <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto uppercase tracking-wide">

@@ -201,65 +201,58 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Neon glow effects */
+  /* Neon glow effects - SUBTLE FOR READABILITY */
   .neon-glow-cyan {
-    box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan), 0 0 30px var(--neon-cyan);
+    box-shadow: 0 0 5px rgba(0, 255, 255, 0.3), 0 0 10px rgba(0, 255, 255, 0.2);
   }
   
   .neon-glow-magenta {
-    box-shadow: 0 0 10px var(--neon-magenta), 0 0 20px var(--neon-magenta), 0 0 30px var(--neon-magenta);
+    box-shadow: 0 0 5px rgba(255, 0, 255, 0.3), 0 0 10px rgba(255, 0, 255, 0.2);
   }
   
   .neon-glow-purple {
-    box-shadow: 0 0 10px var(--neon-purple), 0 0 20px var(--neon-purple), 0 0 30px var(--neon-purple);
+    box-shadow: 0 0 5px rgba(138, 43, 226, 0.3), 0 0 10px rgba(138, 43, 226, 0.2);
   }
   
   .neon-glow-pink {
-    box-shadow: 0 0 10px var(--neon-pink), 0 0 20px var(--neon-pink), 0 0 30px var(--neon-pink);
+    box-shadow: 0 0 5px rgba(255, 20, 147, 0.3), 0 0 10px rgba(255, 20, 147, 0.2);
   }
 
-  /* Hover glow - intensifies on hover */
+  /* Hover glow - subtle hover effect */
   .hover-glow-cyan:hover {
-    box-shadow: 0 0 15px var(--neon-cyan), 0 0 30px var(--neon-cyan), 0 0 45px var(--neon-cyan), 0 0 60px var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), 0 0 25px rgba(0, 255, 255, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
   }
   
   .hover-glow-magenta:hover {
-    box-shadow: 0 0 15px var(--neon-magenta), 0 0 30px var(--neon-magenta), 0 0 45px var(--neon-magenta), 0 0 60px var(--neon-magenta);
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.4), 0 0 25px rgba(255, 0, 255, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
   }
   
   .hover-glow-purple:hover {
-    box-shadow: 0 0 15px var(--neon-purple), 0 0 30px var(--neon-purple), 0 0 45px var(--neon-purple), 0 0 60px var(--neon-purple);
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.4), 0 0 25px rgba(138, 43, 226, 0.2);
     transform: translateY(-2px);
     transition: all 0.3s ease;
   }
 
-  /* Gradient text - cyan to magenta */
+  /* Gradient text - cyan to magenta - READABLE VERSION */
   .gradient-text-cyber {
-    background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-magenta) 50%, var(--neon-pink) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    animation: gradient-shift 3s ease infinite;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
   }
   
-  /* Gradient text - purple to pink */
+  /* Gradient text - purple to pink - READABLE VERSION */
   .gradient-text-purple {
-    background: linear-gradient(135deg, var(--neon-purple) 0%, var(--neon-pink) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--neon-purple);
+    text-shadow: 0 0 8px rgba(138, 43, 226, 0.3);
   }
   
-  /* Gradient text - blue to cyan */
+  /* Gradient text - blue to cyan - READABLE VERSION */
   .gradient-text-blue {
-    background: linear-gradient(135deg, var(--neon-blue) 0%, var(--neon-cyan) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+    color: var(--neon-cyan);
+    text-shadow: 0 0 8px rgba(0, 255, 255, 0.3);
   }
 
   /* Glassmorphism card */
@@ -275,28 +268,19 @@
     border: 1px solid rgba(255, 0, 255, 0.1);
   }
 
-  /* Glitch animation */
+  /* Glitch animation - DISABLED FOR READABILITY */
   @keyframes glitch {
     0%, 100% {
       transform: translate(0);
-      text-shadow: 0.05em 0 0 var(--neon-cyan), -0.05em 0 0 var(--neon-magenta);
-    }
-    14%, 28%, 42%, 56%, 70%, 84% {
-      transform: translate(-0.03em, 0.02em);
-      text-shadow: 0.05em 0 0 var(--neon-magenta), -0.05em 0 0 var(--neon-cyan);
-    }
-    21%, 35%, 49%, 63%, 77%, 91% {
-      transform: translate(0.03em, -0.02em);
-      text-shadow: 0.05em 0 0 var(--neon-cyan), -0.05em 0 0 var(--neon-pink);
     }
   }
   
   .glitch-text {
-    animation: glitch 1s ease-in-out infinite;
+    /* Disabled for readability */
   }
   
   .glitch-text-slow {
-    animation: glitch 3s ease-in-out infinite;
+    /* Disabled for readability */
   }
 
   /* Pulse glow animation */
@@ -360,21 +344,21 @@
     box-shadow: inset 0 0 10px var(--neon-magenta), 0 0 10px var(--neon-magenta);
   }
 
-  /* Hover Glow Effects */
+  /* Hover Glow Effects - SUBTLE VERSION */
   .hover-glow-cyan:hover {
-    box-shadow: 0 0 20px var(--neon-cyan), 0 0 40px var(--neon-cyan);
+    box-shadow: 0 0 15px rgba(0, 255, 255, 0.4), 0 0 25px rgba(0, 255, 255, 0.2);
   }
   
   .hover-glow-magenta:hover {
-    box-shadow: 0 0 20px var(--neon-magenta), 0 0 40px var(--neon-magenta);
+    box-shadow: 0 0 15px rgba(255, 0, 255, 0.4), 0 0 25px rgba(255, 0, 255, 0.2);
   }
   
   .hover-glow-purple:hover {
-    box-shadow: 0 0 20px var(--neon-purple), 0 0 40px var(--neon-purple);
+    box-shadow: 0 0 15px rgba(138, 43, 226, 0.4), 0 0 25px rgba(138, 43, 226, 0.2);
   }
   
   .hover-glow-pink:hover {
-    box-shadow: 0 0 20px var(--neon-pink), 0 0 40px var(--neon-pink);
+    box-shadow: 0 0 15px rgba(255, 20, 147, 0.4), 0 0 25px rgba(255, 20, 147, 0.2);
   }
   
   /* Custom Scrollbar for horizontal sections */

@@ -92,7 +92,7 @@ export function WalletInfo({ wallet }: WalletInfoProps) {
               asChild
             >
               <a
-                href={`https://explorer.solana.com/address/${wallet.walletAddress}?cluster=custom&customUrl=https://rpc.testnet.carv.io/rpc`}
+                href={`https://explorer.testnet.carv.io/address/${wallet.walletAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >

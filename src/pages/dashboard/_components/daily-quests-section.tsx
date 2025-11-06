@@ -59,22 +59,22 @@ export function DailyQuestsSection() {
                 key={quest.id}
                 className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 p-5 min-w-[280px] flex-shrink-0 space-y-4 hover-glow-cyan transition-all"
               >
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center text-2xl">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center text-2xl shrink-0">
                       {quest.icon}
                     </div>
-                    <div>
-                      <h3 className="font-bold text-sm uppercase tracking-wide line-clamp-1">
+                    <div className="min-w-0 flex-1">
+                      <h3 className="font-bold text-sm uppercase tracking-wide truncate">
                         {quest.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground uppercase tracking-wide">
+                      <p className="text-xs text-muted-foreground uppercase tracking-wide whitespace-nowrap">
                         +{quest.reward} PTS
                       </p>
                     </div>
                   </div>
                   {completed && (
-                    <div className="px-2 py-1 rounded-sm bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] text-xs font-bold uppercase">
+                    <div className="px-2 py-1 rounded-sm bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] text-xs font-bold uppercase shrink-0">
                       ✓
                     </div>
                   )}

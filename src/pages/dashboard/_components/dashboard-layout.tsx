@@ -57,7 +57,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
             <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan transition-all group-hover:neon-glow-magenta">
               <Zap className="w-7 h-7 text-[var(--neon-cyan)] group-hover:text-[var(--neon-magenta)] transition-colors" />
             </div>
-            <span className="text-3xl font-bold gradient-text-cyber tracking-wider glitch-text-slow">
+            <span className="text-3xl font-bold gradient-text-cyber tracking-wider">
               PLAYBEINGS
             </span>
           </Link>
