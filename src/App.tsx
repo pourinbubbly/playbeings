@@ -8,6 +8,7 @@ import Quests from "./pages/quests/page.tsx";
 import Leaderboard from "./pages/leaderboard/page.tsx";
 import Wallet from "./pages/wallet/page.tsx";
 import Cards from "./pages/cards/page.tsx";
+import Rewards from "./pages/rewards/page.tsx";
 import Analytics from "./pages/analytics/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
@@ -23,6 +24,7 @@ export default function App() {
           <Route path="/dashboard/leaderboard" element={<Leaderboard />} />
           <Route path="/dashboard/wallet" element={<Wallet />} />
           <Route path="/dashboard/cards" element={<Cards />} />
+          <Route path="/dashboard/rewards" element={<Rewards />} />
           <Route path="/dashboard/analytics" element={<Analytics />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

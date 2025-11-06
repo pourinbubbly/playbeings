@@ -12,6 +12,7 @@ import {
   BarChart3,
   LogOut,
   Zap,
+  Gift,
 } from "lucide-react";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -25,34 +26,42 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
     { href: "/dashboard/leaderboard", icon: Trophy, label: "Ranks" },
     { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
     { href: "/dashboard/cards", icon: CreditCard, label: "Cards" },
+    { href: "/dashboard/rewards", icon: Gift, label: "Rewards" },
     { href: "/dashboard/analytics", icon: BarChart3, label: "Stats" },
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-primary/5">
-      {/* Top Bar - PlayStation/Steam Deck style */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-card/80 border-b border-primary/20">
-        <div className="container mx-auto px-6 h-16 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-lg shadow-primary/50">
-              <Zap className="w-6 h-6 text-primary-foreground" />
+    <div className="min-h-screen relative overflow-hidden">
+      {/* Animated glow background */}
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-accent/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-1/2 left-1/2 w-96 h-96 bg-secondary/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '2s' }} />
+      </div>
+
+      {/* Top Bar - Futuristic glowing style */}
+      <header className="sticky top-0 z-50 backdrop-blur-2xl bg-card/60 border-b border-primary/30 glow-primary">
+        <div className="container mx-auto px-6 h-20 flex items-center justify-between">
+          <Link to="/" className="flex items-center gap-4 group">
+            <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-primary via-secondary to-accent flex items-center justify-center glow-primary transition-all group-hover:scale-110">
+              <Zap className="w-7 h-7 text-white" />
             </div>
-            <span className="text-xl font-bold bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
-              CARV QUEST
+            <span className="text-3xl font-black bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent text-glow gradient-animate">
+              PlayBeings
             </span>
           </Link>
           
           <div className="flex items-center gap-4">
             {user && (
-              <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/20">
-                <span className="text-sm font-medium">{user.profile.name}</span>
+              <div className="hidden md:flex items-center gap-3 px-5 py-2.5 rounded-2xl bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/30 glow-primary backdrop-blur-xl">
+                <span className="text-sm font-semibold text-foreground">{user.profile.name}</span>
               </div>
             )}
             <Button 
               variant="ghost" 
               size="sm" 
               onClick={() => signoutRedirect()}
-              className="hover:bg-destructive/10 hover:text-destructive"
+              className="hover:bg-destructive/20 hover:text-destructive rounded-xl px-4 py-2 transition-all hover:glow-accent"
             >
               <LogOut className="w-4 h-4 mr-2" />
               Exit
@@ -61,39 +70,39 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <div className="container mx-auto px-6 py-8">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Sidebar - Console style navigation */}
-          <aside className="lg:w-64 space-y-2">
-            <div className="p-4 rounded-2xl bg-card/50 backdrop-blur-sm border border-primary/10 space-y-1">
+      <div className="container mx-auto px-6 py-10">
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Sidebar - Futuristic navigation */}
+          <aside className="lg:w-72 space-y-3">
+            <div className="p-5 rounded-3xl bg-card/60 backdrop-blur-2xl border border-primary/20 glow-primary space-y-2">
               {navItems.map((item) => {
                 const isActive = location.pathname === item.href;
                 return (
                   <Link key={item.href} to={item.href}>
                     <div
                       className={cn(
-                        "flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200",
+                        "flex items-center gap-4 px-5 py-4 rounded-2xl transition-all duration-300",
                         isActive
-                          ? "bg-gradient-to-r from-primary/20 to-accent/20 border border-primary/30 shadow-lg shadow-primary/20"
-                          : "hover:bg-primary/5 border border-transparent"
+                          ? "bg-gradient-to-r from-primary/30 to-accent/30 border-2 border-primary/50 glow-primary"
+                          : "hover:bg-primary/10 border-2 border-transparent hover:border-primary/20"
                       )}
                     >
                       <div className={cn(
-                        "w-9 h-9 rounded-lg flex items-center justify-center transition-all",
+                        "w-11 h-11 rounded-xl flex items-center justify-center transition-all",
                         isActive 
-                          ? "bg-primary/20 text-primary shadow-inner" 
-                          : "bg-muted/50 text-muted-foreground"
+                          ? "bg-gradient-to-br from-primary to-accent text-white glow-primary" 
+                          : "bg-muted/30 text-muted-foreground"
                       )}>
-                        <item.icon className="w-5 h-5" />
+                        <item.icon className="w-6 h-6" />
                       </div>
                       <span className={cn(
-                        "font-medium text-sm",
+                        "font-bold text-base",
                         isActive ? "text-foreground" : "text-muted-foreground"
                       )}>
                         {item.label}
                       </span>
                       {isActive && (
-                        <div className="ml-auto w-1.5 h-6 rounded-full bg-gradient-to-b from-primary to-accent" />
+                        <div className="ml-auto w-2 h-8 rounded-full bg-gradient-to-b from-primary via-secondary to-accent glow-accent animate-pulse" />
                       )}
                     </div>
                   </Link>

@@ -31,18 +31,23 @@ const RARITY_COLORS: Record<string, string> = {
 export function MintDialog({ card, wallet, onClose }: MintDialogProps) {
   const [isMinting, setIsMinting] = useState(false);
   const [txHash, setTxHash] = useState<string | null>(null);
-  const mintNFT = useAction(api.nft.mintTradingCardNFT);
+  const [boostPercentage, setBoostPercentage] = useState<number>(0);
+  const mintNFT = useAction(api.nft.mintSteamCardNFT);
 
   const handleMint = async () => {
     setIsMinting(true);
     try {
       const result = await mintNFT({
-        cardId: card._id,
+        steamCardClassId: card._id.toString(),
+        steamCardName: card.cardName,
+        steamCardImage: card.imageUrl,
+        gameName: card.gameName,
         walletAddress: wallet.walletAddress,
       });
 
       setTxHash(result.txHash);
-      toast.success("NFT minted successfully! +50 bonus points");
+      setBoostPercentage(result.boostPercentage);
+      toast.success(`NFT minted successfully! +${result.boostPercentage}% point boost activated!`);
       
       // Close after 3 seconds
       setTimeout(() => {
@@ -101,8 +106,8 @@ export function MintDialog({ card, wallet, onClose }: MintDialogProps) {
                 <span className="font-medium">~0.001 CARV</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Bonus Points</span>
-                <span className="font-medium text-primary">+50 points</span>
+                <span className="text-muted-foreground">Point Boost</span>
+                <span className="font-medium text-primary">+5-15% boost</span>
               </div>
             </div>
           )}
@@ -113,6 +118,11 @@ export function MintDialog({ card, wallet, onClose }: MintDialogProps) {
               <p className="text-sm font-semibold text-green-600 dark:text-green-400">
                 NFT Minted Successfully!
               </p>
+              {boostPercentage > 0 && (
+                <p className="text-sm font-semibold text-primary">
+                  +{boostPercentage}% Point Boost Activated!
+                </p>
+              )}
               <div className="space-y-1">
                 <p className="text-xs text-muted-foreground">Transaction Hash:</p>
                 <code className="text-xs break-all block bg-background p-2 rounded">
@@ -126,11 +136,11 @@ export function MintDialog({ card, wallet, onClose }: MintDialogProps) {
                 asChild
               >
                 <a
-                  href={`https://explorer.solana.com/tx/${txHash}?cluster=custom&customUrl=https://rpc.testnet.carv.io/rpc`}
+                  href={`https://explorer-testnet.carv.io/tx/${txHash}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  View on Explorer
+                  View on CARV Explorer
                   <ExternalLink className="w-3 h-3 ml-1" />
                 </a>
               </Button>

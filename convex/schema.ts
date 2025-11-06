@@ -80,6 +80,34 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_nft_status", ["mintedAsNft"]),
 
+  nftBoosts: defineTable({
+    userId: v.id("users"),
+    nftAddress: v.string(),
+    boostPercentage: v.number(),
+    isActive: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_nft", ["nftAddress"]),
+
+  rewards: defineTable({
+    name: v.string(),
+    description: v.string(),
+    pointsCost: v.number(),
+    rewardType: v.string(), // "steam_wallet", "amazon", "nintendo"
+    rewardValue: v.number(),
+    imageUrl: v.string(),
+    isActive: v.boolean(),
+  }),
+
+  rewardRedemptions: defineTable({
+    userId: v.id("users"),
+    rewardName: v.string(),
+    pointsSpent: v.number(),
+    code: v.string(),
+    status: v.string(), // "pending", "delivered", "claimed"
+    redeemedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
   pointHistory: defineTable({
     userId: v.id("users"),
     amount: v.number(),

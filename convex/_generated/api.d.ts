@@ -11,10 +11,12 @@
 import type * as analytics from "../analytics.js";
 import type * as cards from "../cards.js";
 import type * as initQuests from "../initQuests.js";
+import type * as initRewards from "../initRewards.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as nft from "../nft.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
+import type * as rewards from "../rewards.js";
 import type * as steam from "../steam.js";
 import type * as users from "../users.js";
 import type * as wallets from "../wallets.js";
@@ -37,10 +39,12 @@ declare const fullApi: ApiFromModules<{
   analytics: typeof analytics;
   cards: typeof cards;
   initQuests: typeof initQuests;
+  initRewards: typeof initRewards;
   leaderboard: typeof leaderboard;
   nft: typeof nft;
   profiles: typeof profiles;
   quests: typeof quests;
+  rewards: typeof rewards;
   steam: typeof steam;
   users: typeof users;
   wallets: typeof wallets;

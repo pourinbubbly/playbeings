@@ -21,7 +21,9 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
 
   const handleLoadInventory = async () => {
     if (!steamProfile?.steamId) {
-      toast.error("Please connect your Steam account first");
+      toast.error("Please connect your Steam account first", {
+        description: "Go to the Home page to connect your Steam account",
+      });
       return;
     }
 
@@ -29,19 +31,31 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
     try {
       const cards = await getSteamInventory({ steamId: steamProfile.steamId });
       onCardsLoaded(cards as SteamCard[]);
-      toast.success(`Found ${cards.length} trading cards in your inventory`);
+      
+      if (cards.length === 0) {
+        toast.info("No trading cards found", {
+          description: "Your Steam inventory doesn't have any tradable trading cards. You may need to make your inventory public in Steam settings.",
+        });
+      } else {
+        toast.success(`Found ${cards.length} trading cards!`, {
+          description: "Your Steam trading cards are ready to mint as NFTs",
+        });
+      }
     } catch (error) {
-      toast.error("Failed to load Steam inventory");
+      toast.error("Failed to load Steam inventory", {
+        description: "Make sure your Steam inventory is set to public in your Steam privacy settings.",
+      });
+      console.error("Inventory load error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Card className="border-dashed border-2 border-primary/30 bg-card/50">
+    <Card className="border-dashed border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5 backdrop-blur-2xl glow-primary">
       <CardHeader>
-        <CardTitle className="text-lg">Load Steam Trading Cards</CardTitle>
-        <CardDescription>
+        <CardTitle className="text-xl font-bold">Load Steam Trading Cards</CardTitle>
+        <CardDescription className="text-base">
           Import your real Steam trading cards from your inventory
         </CardDescription>
       </CardHeader>
@@ -49,23 +63,31 @@ export function SteamInventoryLoader({ onCardsLoaded }: { onCardsLoaded: (cards:
         <Button
           onClick={handleLoadInventory}
           disabled={isLoading || !steamProfile}
-          className="w-full"
+          className="w-full bg-gradient-to-r from-primary via-secondary to-accent hover:glow-primary transition-all"
+          size="lg"
         >
           {isLoading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
               Loading Inventory...
             </>
           ) : (
             <>
-              <RefreshCw className="w-4 h-4 mr-2" />
+              <RefreshCw className="w-5 h-5 mr-2" />
               Load Trading Cards from Steam
             </>
           )}
         </Button>
         {!steamProfile && (
-          <p className="text-sm text-muted-foreground mt-2 text-center">
-            Connect your Steam account first
+          <div className="mt-4 p-3 rounded-lg bg-destructive/10 border border-destructive/30">
+            <p className="text-sm text-destructive font-medium text-center">
+              ⚠️ Connect your Steam account first from the Home page
+            </p>
+          </div>
+        )}
+        {steamProfile && (
+          <p className="text-xs text-muted-foreground mt-3 text-center">
+            Make sure your Steam inventory is set to public
           </p>
         )}
       </CardContent>

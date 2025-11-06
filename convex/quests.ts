@@ -5,51 +5,83 @@ import { v } from "convex/values";
 const QUEST_TEMPLATES = [
   {
     type: "playtime",
-    title: "Gaming Marathon",
-    description: "Play games for 3 hours today",
-    requirement: 180, // minutes
-    reward: 150,
-    icon: "clock",
+    title: "Morning Warrior",
+    description: "Play games for 30 minutes before noon",
+    requirement: 30,
+    reward: 75,
+    icon: "sunrise",
+  },
+  {
+    type: "playtime",
+    title: "Evening Grind",
+    description: "Play games for 2 hours in the evening",
+    requirement: 120,
+    reward: 200,
+    icon: "moon",
   },
   {
     type: "game_count",
-    title: "Game Hopper",
-    description: "Play 3 different games today",
+    title: "Genre Explorer",
+    description: "Play games from 3 different genres today",
     requirement: 3,
-    reward: 100,
-    icon: "gamepad",
+    reward: 150,
+    icon: "compass",
   },
   {
-    type: "new_achievement",
-    title: "Achievement Hunter",
-    description: "Unlock 5 achievements today",
+    type: "achievement",
+    title: "Achievement Sprint",
+    description: "Unlock 3 achievements in a single session",
+    requirement: 3,
+    reward: 180,
+    icon: "medal",
+  },
+  {
+    type: "playtime",
+    title: "Weekend Marathon",
+    description: "Play games for 5 hours total today",
+    requirement: 300,
+    reward: 400,
+    icon: "flame",
+  },
+  {
+    type: "game_count",
+    title: "Library Diversity",
+    description: "Play 5 different games today",
     requirement: 5,
-    reward: 200,
+    reward: 250,
+    icon: "library",
+  },
+  {
+    type: "achievement",
+    title: "Trophy Collector",
+    description: "Unlock 10 achievements today",
+    requirement: 10,
+    reward: 500,
     icon: "trophy",
   },
   {
     type: "playtime",
-    title: "Quick Session",
-    description: "Play games for 1 hour today",
-    requirement: 60,
-    reward: 50,
-    icon: "clock",
-  },
-  {
-    type: "game_count",
-    title: "Try Something New",
-    description: "Play 5 different games today",
-    requirement: 5,
-    reward: 150,
-    icon: "gamepad",
-  },
-  {
-    type: "long_session",
-    title: "Dedication",
-    description: "Play a single game for 2 hours",
-    requirement: 120,
+    title: "Speed Runner",
+    description: "Complete a game session under 45 minutes",
+    requirement: 45,
     reward: 100,
-    icon: "target",
+    icon: "zap",
+  },
+  {
+    type: "social",
+    title: "Multiplayer Master",
+    description: "Play 2 multiplayer games today",
+    requirement: 2,
+    reward: 150,
+    icon: "users",
+  },
+  {
+    type: "consistency",
+    title: "Daily Dedication",
+    description: "Log in and play for 3 days in a row",
+    requirement: 3,
+    reward: 300,
+    icon: "calendar",
   },
 ];
 
@@ -66,9 +98,9 @@ export const generateDailyQuests = internalMutation({
       return existing._id;
     }
 
-    // Generate 3 random quests
+    // Generate 5 random quests (increased from 3)
     const shuffled = [...QUEST_TEMPLATES].sort(() => Math.random() - 0.5);
-    const selectedQuests = shuffled.slice(0, 3).map((quest, index) => ({
+    const selectedQuests = shuffled.slice(0, 5).map((quest, index) => ({
       id: `quest_${args.date}_${index}`,
       ...quest,
     }));

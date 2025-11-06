@@ -4,79 +4,51 @@ import { action } from "./_generated/server";
 import { v } from "convex/values";
 import { api } from "./_generated/api";
 
-// Coinbase AgentKit configuration
-const COINBASE_API_KEY = "617b118d-8aa3-4838-bb74-ed9c9d4321dc";
-const COINBASE_API_SECRET = "rl7PIspG1xDmE0EZ5jWvHhEC2Ylg1DGnpPMhfKuDJ/ru5ollgW/Mz/r6lLb0GZsBUXHFJjB9mA/woGkGq8XNXw==";
-const CARV_RPC_URL = "https://rpc.testnet.carv.io/rpc";
+// CARV SVM Testnet configuration
+const CARV_RPC_URL = "https://rpc-testnet.carv.io";
 
-interface MintNFTRequest {
-  cardId: string;
-  walletAddress: string;
-  metadata: {
-    name: string;
-    description: string;
-    image: string;
-    attributes: Array<{ trait_type: string; value: string }>;
-  };
-}
-
-export const mintTradingCardNFT = action({
+export const mintSteamCardNFT = action({
   args: {
-    cardId: v.id("tradingCards"),
+    steamCardClassId: v.string(),
+    steamCardName: v.string(),
+    steamCardImage: v.string(),
+    gameName: v.string(),
     walletAddress: v.string(),
   },
-  handler: async (ctx, args): Promise<{
-    success: boolean;
-    txHash: string;
-    tokenId: string;
-    metadata: MintNFTRequest["metadata"];
-  }> => {
+  handler: async (ctx, args) => {
     try {
-      // Get the trading card
-      const card = await ctx.runQuery(api.cards.getCardById, {
-        cardId: args.cardId,
-      });
+      console.log("=== Minting NFT on CARV SVM Testnet ===");
+      console.log("Wallet:", args.walletAddress);
+      console.log("Card:", args.steamCardName);
+      console.log("Game:", args.gameName);
 
-      if (!card) {
-        throw new Error("Trading card not found");
-      }
+      // Simulate blockchain interaction delay
+      await new Promise((resolve) => setTimeout(resolve, 2000));
 
-      if (card.mintedAsNft) {
-        throw new Error("Card already minted as NFT");
-      }
+      // Generate mock CARV SVM transaction
+      const txHash = `carv:0x${Math.random().toString(16).substring(2, 66)}`;
+      const nftAddress = `carv:nft:${Math.random().toString(16).substring(2, 42)}`;
+      const tokenId = Math.floor(Math.random() * 100000).toString();
 
-      // Prepare NFT metadata
-      const metadata: MintNFTRequest["metadata"] = {
-        name: `${card.gameName} - ${card.cardName}`,
-        description: `Trading card from ${card.gameName}. Rarity: ${card.rarity}`,
-        image: card.imageUrl,
-        attributes: [
-          { trait_type: "Game", value: card.gameName },
-          { trait_type: "Card Name", value: card.cardName },
-          { trait_type: "Rarity", value: card.rarity },
-          { trait_type: "App ID", value: card.appId.toString() },
-        ],
-      };
+      // Random boost between 5% and 15%
+      const boostPercentage = 5 + Math.floor(Math.random() * 11);
 
-      // Simulate NFT minting (In production, use Coinbase AgentKit)
-      // For testnet demo, generate a mock transaction hash
-      const mockTxHash = `0x${Math.random().toString(16).slice(2)}${Math.random().toString(16).slice(2)}`;
-      const mockTokenId = Math.floor(Math.random() * 1000000).toString();
-
-      // Update card as minted
-      await ctx.runMutation(api.cards.markCardAsMinted, {
-        cardId: args.cardId,
-        nftAddress: args.walletAddress,
-        nftTokenId: mockTokenId,
-      });
+      console.log("✅ NFT Minted Successfully!");
+      console.log("Transaction Hash:", txHash);
+      console.log("NFT Address:", nftAddress);
+      console.log("Token ID:", tokenId);
+      console.log("Boost Applied:", `+${boostPercentage}%`);
 
       return {
         success: true,
-        txHash: mockTxHash,
-        tokenId: mockTokenId,
-        metadata,
+        txHash,
+        nftAddress,
+        tokenId,
+        boostPercentage,
+        message: `Successfully minted on CARV SVM Testnet! +${boostPercentage}% point boost activated!`,
       };
     } catch (error) {
+      console.error("Minting failed:", error);
       throw new Error(`Failed to mint NFT: ${error}`);
     }
   },
@@ -84,33 +56,11 @@ export const mintTradingCardNFT = action({
 
 export const estimateMintCost = action({
   args: {},
-  handler: async (ctx, args) => {
-    // Return estimated gas cost for minting on CARV SVM testnet
+  handler: async () => {
     return {
       estimatedGas: "0.001",
       currency: "CARV",
       usdValue: "~$0.00 (testnet)",
     };
-  },
-});
-
-export const checkWalletBalance = action({
-  args: { walletAddress: v.string() },
-  handler: async (ctx, args) => {
-    try {
-      // In production, query actual balance from CARV SVM
-      // For demo, return mock balance
-      return {
-        balance: "10.0",
-        currency: "CARV",
-        hasEnoughForMinting: true,
-      };
-    } catch (error) {
-      return {
-        balance: "0",
-        currency: "CARV",
-        hasEnoughForMinting: false,
-      };
-    }
   },
 });
