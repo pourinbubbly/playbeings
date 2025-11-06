@@ -90,7 +90,7 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
 
     const transaction = new Transaction();
 
-    // Small transfer to self (0.001 SOL) with check-in memo
+    // Small transfer to self (0.001 SOL)
     const lamports = 1000000; // 0.001 SOL
     
     transaction.add(
@@ -101,17 +101,19 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
       })
     );
 
-    // Add check-in metadata as memo
+    // Add check-in metadata as memo (using TextEncoder instead of Buffer)
     const checkInData = JSON.stringify({
       type: "DAILY_CHECK_IN",
       timestamp: new Date().toISOString(),
       app: "PlayBeings",
     });
     
+    const memoData = new TextEncoder().encode(checkInData);
+    
     transaction.add({
       keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
       programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(checkInData, "utf-8"),
+      data: Buffer.from(memoData),
     });
 
     // Set transaction metadata
@@ -126,13 +128,22 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
     
     console.log("Check-in transaction submitted! Tx:", signature);
 
-    // Wait for confirmation
-    await connection.confirmTransaction({
+    // Verify transaction on-chain (with timeout)
+    const confirmationPromise = connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, "confirmed");
+    
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000);
+    });
+    
+    await Promise.race([confirmationPromise, timeoutPromise]);
 
+    console.log("Check-in transaction confirmed!");
+    
     const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
     
     return { 
