@@ -15,6 +15,36 @@ export function DailyCheckInCard() {
   
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
+  // Show loading state while data is loading
+  if (checkInStatus === undefined) {
+    return (
+      <Card className="glass-card border-2 border-[var(--neon-purple)]/30">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-purple)] flex items-center justify-center">
+              <Calendar className="w-6 h-6 text-[var(--neon-purple)]" />
+            </div>
+            <div>
+              <CardTitle className="text-xl text-[var(--neon-purple)] uppercase tracking-wider">
+                Daily Check-In
+              </CardTitle>
+              <CardDescription className="uppercase tracking-wide text-xs">
+                Loading...
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-3 gap-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="glass-card p-4 border border-[var(--neon-cyan)]/20 h-24 animate-pulse" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const handleCheckIn = async () => {
     const walletAddress = getConnectedWallet();
     
@@ -73,10 +103,6 @@ export function DailyCheckInCard() {
       setIsCheckingIn(false);
     }
   };
-
-  if (!checkInStatus) {
-    return null;
-  }
 
   return (
     <Card className="glass-card border-2 border-[var(--neon-purple)]/30">

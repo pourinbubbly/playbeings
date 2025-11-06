@@ -122,7 +122,8 @@ export const getCheckInStatus = query({
         hasCheckedInToday: false,
         currentStreak: 0,
         longestStreak: 0,
-        lastCheckIn: null,
+        lastCheckIn: undefined,
+        nextCheckInPoints: 10,
       };
     }
 
@@ -139,7 +140,8 @@ export const getCheckInStatus = query({
         hasCheckedInToday: false,
         currentStreak: 0,
         longestStreak: 0,
-        lastCheckIn: null,
+        lastCheckIn: undefined,
+        nextCheckInPoints: 10,
       };
     }
 
