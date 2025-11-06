@@ -260,6 +260,7 @@ export const addComment = mutation({
   args: {
     profileUserId: v.id("users"),
     content: v.string(),
+    txHash: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -295,6 +296,7 @@ export const addComment = mutation({
       profileUserId: args.profileUserId,
       authorId: currentUser._id,
       content: args.content,
+      txHash: args.txHash,
       createdAt: Date.now(),
     });
 

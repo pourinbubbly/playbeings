@@ -73,6 +73,94 @@ export function getConnectedWallet(): string | null {
 // CARV SVM Testnet RPC URL
 const CARV_RPC_URL = "https://rpc.testnet.carv.io/rpc";
 
+export async function createProfileCommentTransaction(
+  profileUsername: string,
+  commentContent: string
+): Promise<{ signature: string; explorerUrl: string }> {
+  if (!window.backpack) {
+    throw new Error("Backpack wallet not found");
+  }
+
+  if (!window.backpack.publicKey) {
+    throw new Error("Wallet not connected");
+  }
+
+  try {
+    const connection = new Connection(CARV_RPC_URL, "confirmed");
+    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+    console.log("Creating profile comment transaction on CARV SVM...");
+
+    const transaction = new Transaction();
+
+    // Small transfer to self (0.001 SOL)
+    const lamports = 1000000; // 0.001 SOL
+    
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: walletPubkey,
+        toPubkey: walletPubkey,
+        lamports,
+      })
+    );
+
+    // Add comment metadata as memo
+    const commentData = JSON.stringify({
+      type: "PROFILE_COMMENT",
+      timestamp: new Date().toISOString(),
+      profileUsername,
+      comment: commentContent.substring(0, 200), // Limit comment length in tx
+      app: "PlayBeings",
+    });
+    
+    const memoData = new TextEncoder().encode(commentData);
+    
+    transaction.add({
+      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      data: Buffer.from(memoData),
+    });
+
+    // Set transaction metadata
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    console.log("Requesting Backpack approval for comment...");
+    
+    // Sign and send with Backpack
+    const { signature } = await window.backpack.signAndSendTransaction(transaction);
+    
+    console.log("Comment transaction submitted! Tx:", signature);
+
+    // Verify transaction on-chain (with timeout)
+    const confirmationPromise = connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, "confirmed");
+    
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000);
+    });
+    
+    await Promise.race([confirmationPromise, timeoutPromise]);
+
+    console.log("Comment transaction confirmed!");
+    
+    const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
+    
+    return { 
+      signature, 
+      explorerUrl,
+    };
+  } catch (error) {
+    console.error("Profile comment transaction failed:", error);
+    throw error;
+  }
+}
+
 export async function performDailyCheckInTransaction(): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
     throw new Error("Backpack wallet not found");

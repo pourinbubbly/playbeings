@@ -157,6 +157,7 @@ export default defineSchema({
     profileUserId: v.id("users"),
     authorId: v.id("users"),
     content: v.string(),
+    txHash: v.optional(v.string()),
     createdAt: v.number(),
   })
     .index("by_profile", ["profileUserId"])

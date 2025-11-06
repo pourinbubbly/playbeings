@@ -3,6 +3,7 @@ import React from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
+import type { Doc, Id } from "@/convex/_generated/dataModel.d.ts";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -10,9 +11,10 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { User, Image, ImageIcon, Save, Upload } from "lucide-react";
+import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
+import { getConnectedWallet, createProfileCommentTransaction } from "@/lib/wallet.ts";
 
 export default function Profile() {
   return (
@@ -312,7 +314,218 @@ function ProfileContent() {
             )}
           </Button>
         </div>
+
+        {/* Profile Comments Section */}
+        {currentUser && <ProfileCommentsSection currentUser={currentUser} />}
       </div>
     </DashboardLayout>
+  );
+}
+
+interface ProfileCommentsSectionProps {
+  currentUser: Doc<"users">;
+}
+
+function ProfileCommentsSection({ currentUser }: ProfileCommentsSectionProps) {
+  const comments = useQuery(api.community.getProfileComments, { userId: currentUser._id });
+  const addCommentMutation = useMutation(api.community.addComment);
+  const deleteCommentMutation = useMutation(api.community.deleteComment);
+  
+  const [commentText, setCommentText] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  const handleAddComment = async () => {
+    if (!commentText.trim()) {
+      toast.error("Comment cannot be empty");
+      return;
+    }
+    
+    const walletAddress = getConnectedWallet();
+    if (!walletAddress) {
+      toast.error("Please connect your Backpack wallet first");
+      return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+      // Show transaction prompt
+      toast.info("Approve transaction in Backpack", {
+        description: "Confirm the comment transaction to continue",
+      });
+      
+      // Perform CARV SVM transaction
+      const { signature, explorerUrl } = await createProfileCommentTransaction(
+        currentUser.username || currentUser.name || "User",
+        commentText
+      );
+      
+      console.log("Comment transaction confirmed:", signature);
+      
+      // Save comment to database
+      await addCommentMutation({
+        profileUserId: currentUser._id,
+        content: commentText,
+        txHash: signature,
+      });
+      
+      toast.success("Comment posted successfully!", {
+        description: "View transaction",
+        action: {
+          label: "View TX",
+          onClick: () => window.open(explorerUrl, "_blank"),
+        },
+      });
+      
+      setCommentText("");
+    } catch (error) {
+      console.error("Comment submission error:", error);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed")) {
+          toast.error("Transaction cancelled");
+        } else {
+          toast.error("Failed to post comment", {
+            description: error.message,
+          });
+        }
+      } else {
+        toast.error("Failed to post comment");
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleDeleteComment = async (commentId: Id<"profileComments">) => {
+    try {
+      await deleteCommentMutation({ commentId });
+      toast.success("Comment deleted");
+    } catch (error) {
+      console.error("Delete comment error:", error);
+      toast.error("Failed to delete comment");
+    }
+  };
+  
+  return (
+    <Card className="glass-card border-2 border-[var(--neon-cyan)]/20">
+      <CardHeader>
+        <CardTitle className="text-xl font-bold gradient-text-cyber uppercase tracking-wider flex items-center gap-3">
+          <MessageSquare className="w-6 h-6" />
+          Profile Comments
+        </CardTitle>
+        <CardDescription className="uppercase tracking-wide">
+          Leave a comment on your profile (requires CARV SVM transaction)
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        {/* Comment Input */}
+        <div className="space-y-3">
+          <Textarea
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Write your comment..."
+            className="glass-card border-2 border-[var(--neon-purple)]/30 min-h-[100px]"
+            disabled={isSubmitting}
+          />
+          <div className="flex justify-end">
+            <Button
+              onClick={handleAddComment}
+              disabled={isSubmitting || !commentText.trim()}
+              className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 hover:neon-glow-cyan font-bold uppercase tracking-wider"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Posting...
+                </>
+              ) : (
+                <>
+                  <Send className="w-4 h-4 mr-2" />
+                  Post Comment
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+        
+        {/* Comments List */}
+        <div className="space-y-4">
+          {comments === undefined ? (
+            <div className="space-y-3">
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-24 w-full" />
+              ))}
+            </div>
+          ) : comments.length === 0 ? (
+            <div className="text-center py-12">
+              <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground uppercase tracking-wide">
+                No comments yet
+              </p>
+            </div>
+          ) : (
+            comments.map((comment) => (
+              <div
+                key={comment._id}
+                className="glass-card p-4 border border-[var(--neon-purple)]/20 space-y-3"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-black border-2 border-[var(--neon-cyan)] overflow-hidden flex-shrink-0">
+                      {comment.author.avatar ? (
+                        <img 
+                          src={comment.author.avatar} 
+                          alt={comment.author.name || "User"} 
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                          <User className="w-5 h-5 text-[var(--neon-cyan)]" />
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-[var(--neon-cyan)]">
+                        {comment.author.username || comment.author.name || "Anonymous"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString()}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {comment.authorId === currentUser._id && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteComment(comment._id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+                
+                <p className="text-foreground pl-13">{comment.content}</p>
+                
+                {comment.txHash && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-[var(--neon-purple)]/10">
+                    <ExternalLink className="w-3 h-3 text-[var(--neon-cyan)]" />
+                    <a
+                      href={`https://explorer.testnet.carv.io/tx/${comment.txHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-[var(--neon-cyan)] hover:underline uppercase tracking-wide"
+                    >
+                      View on CARV Explorer
+                    </a>
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+      </CardContent>
+    </Card>
   );
 }

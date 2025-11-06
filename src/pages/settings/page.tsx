@@ -35,14 +35,14 @@ function SettingsContent() {
     setIsDeleting(true);
     try {
       await deleteAccount({});
-      toast.success("Hesabınız başarıyla silindi");
+      toast.success("Account deleted successfully");
       // Sign out and redirect to home
       setTimeout(() => {
         signoutRedirect();
       }, 1000);
     } catch (error) {
       console.error("Account deletion error:", error);
-      toast.error("Hesap silinirken bir hata oluştu");
+      toast.error("Failed to delete account");
     } finally {
       setIsDeleting(false);
     }
@@ -62,10 +62,10 @@ function SettingsContent() {
       {/* Header */}
       <div className="space-y-2">
         <h1 className="text-4xl font-bold gradient-text-cyber tracking-wider uppercase">
-          Ayarlar
+          Settings
         </h1>
         <p className="text-muted-foreground">
-          Hesabınızı ve tercihlerinizi yönetin
+          Manage your account and preferences
         </p>
       </div>
 
@@ -74,47 +74,47 @@ function SettingsContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-xl text-[var(--neon-cyan)] uppercase tracking-wider">
             <User className="w-6 h-6" />
-            Hesap Bilgileri
+            Account Information
           </CardTitle>
           <CardDescription>
-            Hesabınızla ilgili temel bilgiler
+            Your basic account details
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
           <div className="space-y-2">
             <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Ad
+              Name
             </Label>
             <div className="glass-card p-4 border border-[var(--neon-cyan)]/30">
               <p className="text-foreground font-medium">
-                {currentUser.name || "Belirtilmemiş"}
+                {currentUser.name || "Not specified"}
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              E-posta
+              Email
             </Label>
             <div className="glass-card p-4 border border-[var(--neon-cyan)]/30 flex items-center gap-3">
               <Mail className="w-5 h-5 text-[var(--neon-cyan)]" />
               <p className="text-foreground font-medium">
-                {currentUser.email || "Belirtilmemiş"}
+                {currentUser.email || "Not specified"}
               </p>
             </div>
           </div>
 
           <div className="space-y-2">
             <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Kullanıcı Adı
+              Username
             </Label>
             <div className="glass-card p-4 border border-[var(--neon-cyan)]/30">
               <p className="text-foreground font-medium">
-                {currentUser.username || "Belirtilmemiş"}
+                {currentUser.username || "Not specified"}
               </p>
             </div>
             <p className="text-xs text-muted-foreground">
-              Kullanıcı adınızı değiştirmek için profil sayfasını kullanın
+              Use the profile page to change your username
             </p>
           </div>
 
@@ -122,7 +122,7 @@ function SettingsContent() {
             onClick={() => navigate("/profile")}
             className="glass-card neon-border-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10 hover:neon-glow-magenta font-semibold uppercase tracking-wider"
           >
-            Profili Düzenle
+            Edit Profile
           </Button>
         </CardContent>
       </Card>
@@ -132,38 +132,38 @@ function SettingsContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-xl text-[var(--neon-purple)] uppercase tracking-wider">
             <Shield className="w-6 h-6" />
-            Gizlilik Ayarları
+            Privacy Settings
           </CardTitle>
           <CardDescription>
-            Profil görünürlüğü ve gizlilik tercihleri
+            Profile visibility and privacy preferences
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-purple)]/30">
             <div className="space-y-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
-                Profil Görünürlüğü
+                Profile Visibility
               </p>
               <p className="text-sm text-muted-foreground">
-                Profiliniz tüm kullanıcılar tarafından görülebilir
+                Your profile is visible to all users
               </p>
             </div>
             <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              Herkese Açık
+              Public
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-purple)]/30">
             <div className="space-y-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
-                Steam Profili
+                Steam Profile
               </p>
               <p className="text-sm text-muted-foreground">
-                Steam profiliniz kontrol panelinde görüntülenir
+                Your Steam profile is displayed on dashboard
               </p>
             </div>
             <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              {currentUser.steamId ? "Bağlı" : "Bağlı Değil"}
+              {currentUser.steamId ? "Connected" : "Not Connected"}
             </div>
           </div>
         </CardContent>
@@ -174,52 +174,52 @@ function SettingsContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-xl text-[var(--neon-cyan)] uppercase tracking-wider">
             <Bell className="w-6 h-6" />
-            Bildirim Tercihleri
+            Notification Preferences
           </CardTitle>
           <CardDescription>
-            Bildirim ayarlarınızı yönetin
+            Manage your notification settings
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
             <div className="space-y-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
-                Quest Bildirimleri
+                Quest Notifications
               </p>
               <p className="text-sm text-muted-foreground">
-                Yeni günlük görevler için bildirim al
+                Get notified about new daily quests
               </p>
             </div>
             <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              Açık
+              On
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
             <div className="space-y-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
-                Ödül Bildirimleri
+                Reward Notifications
               </p>
               <p className="text-sm text-muted-foreground">
-                Ödül durumu güncellemeleri için bildirim al
+                Get notified about reward status updates
               </p>
             </div>
             <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              Açık
+              On
             </div>
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
             <div className="space-y-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
-                Sosyal Bildirimler
+                Social Notifications
               </p>
               <p className="text-sm text-muted-foreground">
-                Yeni takipçiler ve yorumlar için bildirim al
+                Get notified about new followers and comments
               </p>
             </div>
             <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              Açık
+              On
             </div>
           </div>
         </CardContent>
@@ -230,20 +230,20 @@ function SettingsContent() {
         <CardHeader>
           <CardTitle className="flex items-center gap-3 text-xl text-destructive uppercase tracking-wider">
             <AlertCircle className="w-6 h-6" />
-            Tehlikeli Bölge
+            Danger Zone
           </CardTitle>
           <CardDescription>
-            Geri alınamaz eylemler
+            Irreversible actions
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="p-4 glass-card border border-destructive/30 space-y-4">
             <div className="space-y-2">
               <p className="font-semibold text-destructive uppercase tracking-wide">
-                Hesabı Sil
+                Delete Account
               </p>
               <p className="text-sm text-muted-foreground">
-                Hesabınızı ve tüm verilerinizi kalıcı olarak silin. Bu işlem geri alınamaz.
+                Permanently delete your account and all your data. This action cannot be undone.
               </p>
             </div>
 
@@ -257,39 +257,39 @@ function SettingsContent() {
                   disabled={isDeleting}
                 >
                   <Trash2 className="w-4 h-4 mr-2" />
-                  Hesabı Kalıcı Olarak Sil
+                  Permanently Delete Account
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent className="glass-card border-2 border-destructive/50">
                 <AlertDialogHeader>
                   <AlertDialogTitle className="text-2xl text-destructive uppercase tracking-wider">
-                    Emin misiniz?
+                    Are you sure?
                   </AlertDialogTitle>
                   <AlertDialogDescription className="text-base">
-                    Bu işlem geri alınamaz. Hesabınız ve aşağıdaki tüm verileriniz kalıcı olarak silinecek:
+                    This action cannot be undone. Your account and all of the following data will be permanently deleted:
                     <ul className="list-disc list-inside mt-4 space-y-2 text-muted-foreground">
-                      <li>Steam profili ve oyun verileri</li>
-                      <li>Quest geçmişi ve ilerlemesi</li>
-                      <li>Trading kartları ve NFT'ler</li>
-                      <li>Puan geçmişi ve liderlik sıralaması</li>
-                      <li>Wallet bağlantıları</li>
-                      <li>Takipçiler ve takip ettikleriniz</li>
-                      <li>Profil yorumları</li>
-                      <li>Günlük giriş streak'i</li>
-                      <li>Ödül satın alımları</li>
+                      <li>Steam profile and game data</li>
+                      <li>Quest history and progress</li>
+                      <li>Trading cards and NFTs</li>
+                      <li>Points history and leaderboard ranking</li>
+                      <li>Wallet connections</li>
+                      <li>Followers and following</li>
+                      <li>Profile comments</li>
+                      <li>Daily check-in streak</li>
+                      <li>Reward purchases</li>
                     </ul>
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel className="glass-card neon-border-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider">
-                    İptal
+                    Cancel
                   </AlertDialogCancel>
                   <AlertDialogAction
                     onClick={handleDeleteAccount}
                     disabled={isDeleting}
                     className="bg-destructive hover:bg-destructive/90 text-destructive-foreground font-semibold uppercase tracking-wider"
                   >
-                    {isDeleting ? "Siliniyor..." : "Evet, Hesabı Sil"}
+                    {isDeleting ? "Deleting..." : "Yes, Delete Account"}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -311,10 +311,10 @@ export default function Settings() {
         <div className="flex flex-col items-center justify-center py-20 text-center space-y-4">
           <Shield className="w-16 h-16 text-[var(--neon-cyan)] neon-glow-cyan" />
           <h2 className="text-2xl font-bold text-foreground uppercase tracking-wider">
-            Giriş Yapmanız Gerekiyor
+            Sign In Required
           </h2>
           <p className="text-muted-foreground">
-            Ayarlarınızı görüntülemek için lütfen giriş yapın
+            Please sign in to view your settings
           </p>
         </div>
       </Unauthenticated>
