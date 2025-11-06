@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Trophy, DollarSign } from "lucide-react";
 import { Badge } from "@/components/ui/badge.tsx";
+import { Button } from "@/components/ui/button.tsx";
 
 export default function Leaderboard() {
   return (
@@ -46,7 +47,7 @@ function LeaderboardContent() {
   if (!steamProfile) {
     return (
       <DashboardLayout>
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-6">
           <Trophy className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
           <div>
             <h2 className="text-xl font-bold uppercase tracking-wider mb-2">Steam hesabınızı bağlayın</h2>
@@ -54,6 +55,11 @@ function LeaderboardContent() {
               Liderlik tablosunu görmek için Steam hesabınızı bağlamanız gerekiyor
             </p>
           </div>
+          <a href="/dashboard">
+            <Button className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider">
+              Dashboard'a Git
+            </Button>
+          </a>
         </div>
       </DashboardLayout>
     );
