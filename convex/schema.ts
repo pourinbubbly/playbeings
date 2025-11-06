@@ -9,10 +9,28 @@ export default defineSchema({
     steamId: v.optional(v.string()),
     totalPoints: v.number(),
     level: v.number(),
+    // Profile fields
+    username: v.optional(v.string()),
+    avatar: v.optional(v.string()),
+    banner: v.optional(v.string()),
+    bio: v.optional(v.string()),
+    socialLinks: v.optional(v.object({
+      twitter: v.optional(v.string()),
+      discord: v.optional(v.string()),
+      twitch: v.optional(v.string()),
+      youtube: v.optional(v.string()),
+    })),
+    // Stats
+    followerCount: v.number(),
+    followingCount: v.number(),
+    currentStreak: v.number(),
+    longestStreak: v.number(),
+    lastCheckIn: v.optional(v.number()),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_steam_id", ["steamId"])
-    .index("by_points", ["totalPoints"]),
+    .index("by_points", ["totalPoints"])
+    .index("by_username", ["username"]),
 
   steamProfiles: defineTable({
     userId: v.id("users"),
@@ -125,4 +143,35 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_address", ["walletAddress"]),
+
+  follows: defineTable({
+    followerId: v.id("users"),
+    followingId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_follower", ["followerId"])
+    .index("by_following", ["followingId"])
+    .index("by_follower_following", ["followerId", "followingId"]),
+
+  profileComments: defineTable({
+    profileUserId: v.id("users"),
+    authorId: v.id("users"),
+    content: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_profile", ["profileUserId"])
+    .index("by_author", ["authorId"]),
+
+  dailyCheckIns: defineTable({
+    userId: v.id("users"),
+    date: v.string(),
+    points: v.number(),
+    streakDay: v.number(),
+    txHash: v.optional(v.string()),
+    txStatus: v.string(), // "pending", "confirmed", "failed"
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_date", ["date"]),
 });

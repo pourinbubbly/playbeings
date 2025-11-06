@@ -16,6 +16,9 @@ import {
   Menu,
   ChevronDown,
   Newspaper,
+  User,
+  Settings,
+  Users,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -68,19 +71,48 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           
           <div className="flex items-center gap-4">
             {user && (
-              <div className="hidden md:flex items-center gap-2 px-5 py-2.5 rounded glass-card neon-border-cyan">
-                <span className="text-sm font-semibold text-[var(--neon-cyan)] uppercase tracking-wide">{user.profile.name}</span>
-              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    className="glass-card neon-border-cyan px-5 py-2.5 h-auto hover:neon-glow-cyan"
+                  >
+                    <User className="w-4 h-4 mr-2" />
+                    <span className="text-sm font-semibold text-[var(--neon-cyan)] uppercase tracking-wide">
+                      {user.profile.name}
+                    </span>
+                    <ChevronDown className="w-4 h-4 ml-2" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="glass-card border-2 border-[var(--neon-cyan)]/30 min-w-[200px]">
+                  <Link to="/profile">
+                    <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-muted-foreground hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10">
+                      <User className="w-4 h-4" />
+                      <span>Edit Profile</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link to="/settings">
+                    <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-muted-foreground hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10">
+                      <Settings className="w-4 h-4" />
+                      <span>Settings</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <Link to="/community">
+                    <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-muted-foreground hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10">
+                      <Users className="w-4 h-4" />
+                      <span>Community</span>
+                    </DropdownMenuItem>
+                  </Link>
+                  <DropdownMenuItem 
+                    onClick={() => signoutRedirect()}
+                    className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-destructive hover:bg-destructive/10"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Exit</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => signoutRedirect()}
-              className="glass-card border border-destructive/30 hover:neon-glow-pink hover:border-destructive text-destructive font-semibold uppercase tracking-wider"
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              EXIT
-            </Button>
           </div>
         </div>
       </header>
