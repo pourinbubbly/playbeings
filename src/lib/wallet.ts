@@ -127,9 +127,9 @@ export async function mintNFTOnCARV(
     const initMintData = Buffer.alloc(67);
     initMintData[0] = 0; // InitializeMint instruction
     initMintData[1] = 0; // 0 decimals (NFT)
-    walletPubkey.toBuffer().copy(initMintData, 2); // Mint authority
+    new Uint8Array(initMintData.buffer).set(walletPubkey.toBuffer(), 2); // Mint authority
     initMintData[34] = 1; // Option: Some
-    walletPubkey.toBuffer().copy(initMintData, 35); // Freeze authority
+    new Uint8Array(initMintData.buffer).set(walletPubkey.toBuffer(), 35); // Freeze authority
 
     createMintTx.add({
       keys: [

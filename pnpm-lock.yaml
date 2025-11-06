@@ -107,6 +107,9 @@ importers:
       '@vitejs/plugin-react-swc':
         specifier: ^4.1.0
         version: 4.1.0(@swc/helpers@0.5.17)(vite@7.1.12(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.30.2))
+      buffer:
+        specifier: ^6.0.3
+        version: 6.0.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
