@@ -118,3 +118,61 @@ export const syncSteamData = action({
     }
   },
 });
+
+export const getSteamInventory = action({
+  args: { steamId: v.string() },
+  handler: async (ctx, args) => {
+    try {
+      // Get Steam inventory (753 is Steam Community item appid)
+      const inventoryResponse = await fetch(
+        `https://steamcommunity.com/inventory/${args.steamId}/753/6?l=english&count=5000`
+      );
+      
+      if (!inventoryResponse.ok) {
+        throw new Error("Failed to fetch inventory");
+      }
+
+      const inventoryData = await inventoryResponse.json();
+      
+      if (!inventoryData.assets || !inventoryData.descriptions) {
+        return [];
+      }
+
+      // Match assets with descriptions to get trading cards
+      const tradingCards = inventoryData.assets
+        .map((asset: { classid: string; instanceid: string; amount: string }) => {
+          const description = inventoryData.descriptions.find(
+            (desc: { classid: string; instanceid: string }) =>
+              desc.classid === asset.classid && desc.instanceid === asset.instanceid
+          );
+          return description ? { ...asset, ...description } : null;
+        })
+        .filter((item: { type?: string; tradable?: number }) => 
+          item && 
+          item.type && 
+          item.type.includes("Trading Card") &&
+          item.tradable === 1
+        )
+        .map((card: {
+          classid: string;
+          name: string;
+          market_name: string;
+          icon_url: string;
+          type: string;
+          app_name?: string;
+        }) => ({
+          classid: card.classid,
+          name: card.name,
+          marketName: card.market_name,
+          imageUrl: `https://community.cloudflare.steamstatic.com/economy/image/${card.icon_url}`,
+          type: card.type,
+          gameName: card.app_name || "Unknown Game",
+        }));
+
+      return tradingCards;
+    } catch (error) {
+      console.error("Failed to fetch Steam inventory:", error);
+      return [];
+    }
+  },
+});

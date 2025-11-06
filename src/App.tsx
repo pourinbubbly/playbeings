@@ -3,6 +3,7 @@ import { DefaultProviders } from "./components/providers/default.tsx";
 import AuthCallback from "./pages/auth/Callback.tsx";
 import Index from "./pages/Index.tsx";
 import Dashboard from "./pages/dashboard/page.tsx";
+import Games from "./pages/games/page.tsx";
 import Quests from "./pages/quests/page.tsx";
 import Leaderboard from "./pages/leaderboard/page.tsx";
 import Wallet from "./pages/wallet/page.tsx";
@@ -17,6 +18,7 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/dashboard/games" element={<Games />} />
           <Route path="/dashboard/quests" element={<Quests />} />
           <Route path="/dashboard/leaderboard" element={<Leaderboard />} />
           <Route path="/dashboard/wallet" element={<Wallet />} />
