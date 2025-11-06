@@ -73,7 +73,7 @@ function QuestsContent() {
   }
 
   const progressMap = new Map(
-    questsData.userProgress.map((p) => [p.questId, p])
+    questsData.userProgress.map((p: { questId: string; progress: number; completed: boolean; claimed: boolean }) => [p.questId, p])
   );
 
   return (
@@ -93,8 +93,8 @@ function QuestsContent() {
         <SimulateProgress />
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {questsData.quests.map((quest) => {
-            const userProgress = progressMap.get(quest.id);
+          {questsData.quests.map((quest: { id: string; type: string; title: string; description: string; requirement: number; reward: number; icon: string }) => {
+            const userProgress = progressMap.get(quest.id) as { progress: number; completed: boolean; claimed: boolean } | undefined;
             return (
               <QuestCard
                 key={quest.id}
