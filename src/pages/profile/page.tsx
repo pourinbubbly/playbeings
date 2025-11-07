@@ -512,7 +512,7 @@ function ProfileCommentsSection({ currentUser }: ProfileCommentsSectionProps) {
                   <div className="flex items-center gap-2 pt-2 border-t border-[var(--neon-purple)]/10">
                     <ExternalLink className="w-3 h-3 text-[var(--neon-cyan)]" />
                     <a
-                      href={`https://explorer.testnet.carv.io/tx/${comment.txHash}`}
+                      href={`http://explorer.testnet.carv.io/tx/${comment.txHash}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs text-[var(--neon-cyan)] hover:underline uppercase tracking-wide"

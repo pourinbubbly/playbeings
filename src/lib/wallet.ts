@@ -149,7 +149,7 @@ export async function createProfileCommentTransaction(
 
     console.log("Comment transaction confirmed!");
     
-    const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     
     return { 
       signature, 
@@ -232,7 +232,7 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
 
     console.log("Check-in transaction confirmed!");
     
-    const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     
     return { 
       signature, 
@@ -392,7 +392,7 @@ export async function mintNFTOnCARV(
       lastValidBlockHeight,
     }, "confirmed");
 
-    const explorerUrl = `https://explorer.testnet.carv.io/tx/${signature}`;
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     
     return { 
       signature, 

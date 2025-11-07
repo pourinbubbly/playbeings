@@ -217,8 +217,8 @@ export default function Documentation() {
               <InfoItem label="Network" value="CARV SVM Testnet" />
               <InfoItem label="RPC URL" value="https://rpc.testnet.carv.io/rpc" />
               <InfoItem label="Explorer" value={
-                <a href="https://scan-testnet.carv.io" target="_blank" rel="noopener noreferrer" className="text-[var(--neon-cyan)] hover:underline">
-                  scan-testnet.carv.io
+                <a href="http://explorer.testnet.carv.io/" target="_blank" rel="noopener noreferrer" className="text-[var(--neon-cyan)] hover:underline">
+                  explorer.testnet.carv.io
                 </a>
               } />
               <InfoItem label="Wallet" value="Backpack Wallet (recommended)" />

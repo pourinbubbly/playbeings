@@ -198,7 +198,7 @@ function NFTsContent() {
                       {nft.nftTokenId && (
                         <div className="pt-2 border-t border-[var(--neon-cyan)]/20">
                           <a
-                            href={`https://explorer.testnet.carv.io/address/${nft.nftAddress}`}
+                            href={`http://explorer.testnet.carv.io/address/${nft.nftAddress}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="flex items-center gap-2 text-xs text-[var(--neon-cyan)] hover:text-[var(--neon-magenta)] transition-colors uppercase tracking-wider font-semibold"

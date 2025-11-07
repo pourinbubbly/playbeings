@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
 
             <Section title="Blockchain and NFTs">
               <p>
-                PlayBeings uses the CARV SVM blockchain for NFT minting and transactions. Blockchain data is public and permanent. Your wallet address and transaction history will be visible on the CARV SVM testnet explorer at scan-testnet.carv.io.
+                PlayBeings uses the CARV SVM blockchain for NFT minting and transactions. Blockchain data is public and permanent. Your wallet address and transaction history will be visible on the CARV SVM testnet explorer at explorer.testnet.carv.io.
               </p>
             </Section>
 

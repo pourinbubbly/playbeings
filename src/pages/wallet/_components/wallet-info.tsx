@@ -92,7 +92,7 @@ export function WalletInfo({ wallet }: WalletInfoProps) {
               asChild
             >
               <a
-                href={`https://explorer.testnet.carv.io/address/${wallet.walletAddress}`}
+                href={`http://explorer.testnet.carv.io/address/${wallet.walletAddress}`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
