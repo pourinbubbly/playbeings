@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge.tsx";
 import { Clock, Gamepad2, Trophy, Target, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Celebration } from "@/components/ui/celebration.tsx";
+import { completeQuestTransaction } from "@/lib/wallet.ts";
 
 interface QuestCardProps {
   quest: {
@@ -42,14 +43,41 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
 
   const handleClaim = async () => {
     try {
+      toast.info("Creating CARV SVM transaction...");
+      
+      // First, create blockchain transaction
+      const { signature, explorerUrl } = await completeQuestTransaction(
+        quest.title,
+        quest.reward
+      );
+
+      toast.success("Transaction confirmed on blockchain!");
+
+      // Then, complete quest in database with tx signature
       const result = await completeQuest({
         questId: quest.id,
+        questTitle: quest.title,
         reward: quest.reward,
+        txSignature: signature,
       });
       
       // Show celebration
       setCelebrationPoints(result.boostedPoints);
       setShowCelebration(true);
+      
+      toast.success(
+        <div>
+          <div>Quest completed! +{result.boostedPoints} points</div>
+          <a 
+            href={explorerUrl} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="text-xs underline"
+          >
+            View on CARV Explorer
+          </a>
+        </div>
+      );
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to claim reward");
     }

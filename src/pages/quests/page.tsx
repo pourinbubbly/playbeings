@@ -1,5 +1,5 @@
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { useQuery, useMutation } from "convex/react";
+import { useQuery, useMutation, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
@@ -32,13 +32,20 @@ export default function Quests() {
 function QuestsContent() {
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
   const syncProgress = useMutation(api.quests.syncQuestProgress);
+  const syncAchievements = useAction(api.quests.syncAchievements);
   const questsData = useQuery(api.quests.getTodayQuests);
   const questStats = useQuery(api.quests.getUserQuestStats);
 
   useEffect(() => {
-    initQuests();
-    syncProgress();
-  }, [initQuests, syncProgress]);
+    const init = async () => {
+      await initQuests();
+      // First sync Steam achievements
+      await syncAchievements();
+      // Then sync quest progress
+      await syncProgress();
+    };
+    init();
+  }, [initQuests, syncProgress, syncAchievements]);
 
   if (questsData === undefined || questStats === undefined) {
     return (

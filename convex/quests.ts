@@ -1,6 +1,7 @@
 import { ConvexError } from "convex/values";
-import { mutation, query, internalMutation } from "./_generated/server";
+import { mutation, query, internalMutation, internalQuery, action } from "./_generated/server";
 import { v } from "convex/values";
+import { api, internal } from "./_generated/api";
 
 const QUEST_TEMPLATES = [
   {
@@ -221,6 +222,48 @@ export const syncQuestProgress = mutation({
 
     const todayPlaytimeMinutes = todayPlayedGames.reduce((sum, g) => sum + (g.playtime || 0), 0);
 
+    // Get all achievement records from today for achievement counting
+    const todayTimestamp = new Date(today).getTime();
+    const tomorrowTimestamp = new Date(today);
+    tomorrowTimestamp.setDate(tomorrowTimestamp.getDate() + 1);
+    const tomorrowTime = tomorrowTimestamp.getTime();
+    
+    const todayAchievements = await ctx.db
+      .query("tradingCards")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter(q => 
+        q.and(
+          q.gte(q.field("earnedAt"), todayTimestamp),
+          q.lt(q.field("earnedAt"), tomorrowTime)
+        )
+      )
+      .collect();
+
+    // Calculate user's streak for consistency quests
+    const checkIns = await ctx.db
+      .query("dailyCheckIns")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .order("desc")
+      .take(30);
+
+    let currentStreak = 0;
+    if (checkIns.length > 0) {
+      const dates = checkIns.map(c => c.date).sort().reverse();
+      const today = new Date().toISOString().split("T")[0];
+      
+      for (let i = 0; i < dates.length; i++) {
+        const expectedDate = new Date();
+        expectedDate.setDate(expectedDate.getDate() - i);
+        const expectedDateStr = expectedDate.toISOString().split("T")[0];
+        
+        if (dates[i] === expectedDateStr) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+    }
+
     // Update progress for each quest based on type
     for (const quest of dailyQuests.quests) {
       const existingProgress = userProgress.find(p => p.questId === quest.id);
@@ -234,10 +277,13 @@ export const syncQuestProgress = mutation({
         // For game count quests, count unique games played today
         calculatedProgress = todayPlayedGames.length;
       } else if (quest.type === "achievement") {
-        // For achievement quests, use existing progress (would need Steam API integration for real data)
-        calculatedProgress = existingProgress?.progress || 0;
-      } else if (quest.type === "social" || quest.type === "consistency") {
-        // For social/consistency quests, use existing progress
+        // For achievement quests, count today's achievements (trading cards)
+        calculatedProgress = todayAchievements.length;
+      } else if (quest.type === "consistency") {
+        // For consistency quests, use current streak
+        calculatedProgress = currentStreak;
+      } else if (quest.type === "social") {
+        // For social quests, use existing progress
         calculatedProgress = existingProgress?.progress || 0;
       }
 
@@ -329,7 +375,9 @@ export const updateQuestProgress = mutation({
 export const completeQuest = mutation({
   args: {
     questId: v.string(),
+    questTitle: v.string(),
     reward: v.number(),
+    txSignature: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -407,11 +455,11 @@ export const completeQuest = mutation({
       level: Math.floor((user.totalPoints + boostedReward) / 500) + 1,
     });
 
-    // Record point history
+    // Record point history with transaction hash
     await ctx.db.insert("pointHistory", {
       userId: user._id,
       amount: boostedReward,
-      reason: `Completed quest: ${args.questId}${totalBoostPercentage > 0 ? ` (+${totalBoostPercentage}% boost)` : ""}`,
+      reason: `Completed quest: ${args.questTitle}${totalBoostPercentage > 0 ? ` (+${totalBoostPercentage}% boost)` : ""} | Tx: ${args.txSignature}`,
       timestamp: Date.now(),
     });
 
@@ -422,6 +470,124 @@ export const completeQuest = mutation({
       basePoints: args.reward,
       boostPercentage: totalBoostPercentage,
     };
+  },
+});
+
+export const syncAchievements = action({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.runQuery(internal.quests.getUserBySub, {
+      sub: identity.tokenIdentifier,
+    });
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    const steamProfile = await ctx.runQuery(internal.quests.getSteamProfile, {
+      userId: user._id,
+    });
+
+    if (!steamProfile) {
+      return { success: false, message: "Steam profile not found" };
+    }
+
+    // Fetch achievements from Steam API
+    const steamAchievements = await ctx.runAction(api.steam.getSteamAchievements, {
+      steamId: steamProfile.steamId,
+    });
+
+    // Get existing achievements
+    const existingCards = await ctx.runQuery(internal.quests.getUserCards, {
+      userId: user._id,
+    });
+
+    const existingAchievementIds = new Set(
+      existingCards.map((a: { appId: number; cardName: string }) => `${a.appId}_${a.cardName}`)
+    );
+
+    // Add new achievements to tradingCards
+    let addedCount = 0;
+    for (const achievement of steamAchievements) {
+      const achievementId = `${achievement.gameId}_${achievement.name}`;
+      if (!existingAchievementIds.has(achievementId)) {
+        await ctx.runMutation(internal.quests.addAchievementCard, {
+          userId: user._id,
+          appId: achievement.gameId,
+          gameName: achievement.gameName,
+          cardName: achievement.name,
+          imageUrl: achievement.imageUrl,
+          rarity: achievement.rarity,
+        });
+        addedCount++;
+      }
+    }
+
+    return { success: true, addedCount };
+  },
+});
+
+export const getUserBySub = internalQuery({
+  args: { sub: v.string() },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) => q.eq("tokenIdentifier", args.sub))
+      .unique();
+  },
+});
+
+export const getSteamProfile = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("steamProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .unique();
+  },
+});
+
+export const getUserCards = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("tradingCards")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
+      .collect();
+  },
+});
+
+export const addAchievementCard = internalMutation({
+  args: {
+    userId: v.id("users"),
+    appId: v.number(),
+    gameName: v.string(),
+    cardName: v.string(),
+    imageUrl: v.string(),
+    rarity: v.string(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.insert("tradingCards", {
+      userId: args.userId,
+      appId: args.appId,
+      gameName: args.gameName,
+      cardName: args.cardName,
+      imageUrl: args.imageUrl,
+      rarity: args.rarity,
+      mintedAsNft: false,
+      earnedAt: Date.now(),
+    });
   },
 });
 
