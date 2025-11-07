@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { Authenticated, Unauthenticated } from "convex/react";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api.js";
 import { SignInButton } from "@/components/ui/signin.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import {
@@ -16,6 +18,8 @@ import {
 } from "lucide-react";
 
 export default function Index() {
+  const stats = useQuery(api.stats.getPlatformStats);
+
   return (
     <div className="min-h-screen bg-background cyber-grid-animated relative">
       {/* Animated background gradients */}
@@ -104,10 +108,10 @@ export default function Index() {
       <section className="py-16 relative z-10">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
-            <StatItem label="Active Players" value="0" color="cyan" />
-            <StatItem label="Quests Completed" value="0" color="magenta" />
-            <StatItem label="NFTs Minted" value="0" color="purple" />
-            <StatItem label="Rewards Distributed" value="$0" color="cyan" />
+            <StatItem label="Active Players" value={stats?.activePlayers.toString() || "0"} color="cyan" />
+            <StatItem label="Quests Completed" value={stats?.questsCompleted.toString() || "0"} color="magenta" />
+            <StatItem label="NFTs Minted" value={stats?.nftsMinted.toString() || "0"} color="purple" />
+            <StatItem label="Rewards Distributed" value={`$${stats?.rewardsDistributed || 0}`} color="cyan" />
           </div>
         </div>
       </section>

@@ -31,12 +31,14 @@ export default function Quests() {
 
 function QuestsContent() {
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
+  const syncProgress = useMutation(api.quests.syncQuestProgress);
   const questsData = useQuery(api.quests.getTodayQuests);
   const questStats = useQuery(api.quests.getUserQuestStats);
 
   useEffect(() => {
     initQuests();
-  }, [initQuests]);
+    syncProgress();
+  }, [initQuests, syncProgress]);
 
   if (questsData === undefined || questStats === undefined) {
     return (

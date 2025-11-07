@@ -155,6 +155,118 @@ export const getTodayQuests = query({
   },
 });
 
+export const syncQuestProgress = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+
+    const dailyQuests = await ctx.db
+      .query("dailyQuests")
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .unique();
+
+    if (!dailyQuests) {
+      return { success: false, message: "No quests for today" };
+    }
+
+    // Get user progress for today's quests
+    const userProgress = await ctx.db
+      .query("userQuests")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id).eq("date", today))
+      .collect();
+
+    // Calculate real-time progress based on Steam data
+    const steamProfile = await ctx.db
+      .query("steamProfiles")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .unique();
+
+    if (!steamProfile) {
+      return { success: false, message: "Steam profile not found" };
+    }
+
+    // Get user's games
+    const userGames = await ctx.db
+      .query("games")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    // Calculate today's playtime (simplified: using lastPlayed timestamp as proxy)
+    const todayPlayedGames = userGames.filter(g => {
+      const lastPlayedDate = g.lastPlayed ? new Date(g.lastPlayed * 1000).toISOString().split("T")[0] : null;
+      return lastPlayedDate === today;
+    });
+
+    const todayPlaytimeMinutes = todayPlayedGames.reduce((sum, g) => sum + (g.playtime || 0), 0);
+
+    // Update progress for each quest based on type
+    for (const quest of dailyQuests.quests) {
+      const existingProgress = userProgress.find(p => p.questId === quest.id);
+      
+      let calculatedProgress = 0;
+
+      if (quest.type === "playtime") {
+        // For playtime quests, use total playtime from all games played today
+        calculatedProgress = todayPlaytimeMinutes;
+      } else if (quest.type === "game_count") {
+        // For game count quests, count unique games played today
+        calculatedProgress = todayPlayedGames.length;
+      } else if (quest.type === "achievement") {
+        // For achievement quests, use existing progress (would need Steam API integration for real data)
+        calculatedProgress = existingProgress?.progress || 0;
+      } else if (quest.type === "social" || quest.type === "consistency") {
+        // For social/consistency quests, use existing progress
+        calculatedProgress = existingProgress?.progress || 0;
+      }
+
+      // Update or create progress entry
+      if (existingProgress) {
+        // Only update if calculated progress is higher
+        if (calculatedProgress > existingProgress.progress && !existingProgress.claimed) {
+          await ctx.db.patch(existingProgress._id, {
+            progress: calculatedProgress,
+            completed: calculatedProgress >= quest.requirement,
+          });
+        }
+      } else if (calculatedProgress > 0) {
+        // Create new progress entry
+        await ctx.db.insert("userQuests", {
+          userId: user._id,
+          questId: quest.id,
+          date: today,
+          progress: calculatedProgress,
+          completed: calculatedProgress >= quest.requirement,
+          claimed: false,
+        });
+      }
+    }
+
+    return { success: true };
+  },
+});
+
 export const updateQuestProgress = mutation({
   args: {
     questId: v.string(),

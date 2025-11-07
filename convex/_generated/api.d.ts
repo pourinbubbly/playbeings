@@ -20,6 +20,7 @@ import type * as nft from "../nft.js";
 import type * as profiles from "../profiles.js";
 import type * as quests from "../quests.js";
 import type * as rewards from "../rewards.js";
+import type * as stats from "../stats.js";
 import type * as steam from "../steam.js";
 import type * as users from "../users.js";
 import type * as wallets from "../wallets.js";
@@ -51,6 +52,7 @@ declare const fullApi: ApiFromModules<{
   profiles: typeof profiles;
   quests: typeof quests;
   rewards: typeof rewards;
+  stats: typeof stats;
   steam: typeof steam;
   users: typeof users;
   wallets: typeof wallets;
