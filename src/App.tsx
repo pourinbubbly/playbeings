@@ -17,6 +17,11 @@ import Settings from "./pages/settings/page.tsx";
 import Community from "./pages/community/page.tsx";
 import MyNFTs from "./pages/nfts/page.tsx";
 import UserProfile from "./pages/user/page.tsx";
+import Documentation from "./pages/docs/page.tsx";
+import FAQ from "./pages/faq/page.tsx";
+import PrivacyPolicy from "./pages/privacy/page.tsx";
+import TermsOfService from "./pages/terms/page.tsx";
+import CookiePolicy from "./pages/cookies/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
 
 export default function App() {
@@ -39,6 +44,11 @@ export default function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/user/:userId" element={<UserProfile />} />
           <Route path="/dashboard/nfts" element={<MyNFTs />} />
+          <Route path="/docs" element={<Documentation />} />
+          <Route path="/faq" element={<FAQ />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<TermsOfService />} />
+          <Route path="/cookies" element={<CookiePolicy />} />
           <Route path="/auth/callback" element={<AuthCallback />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
