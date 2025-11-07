@@ -95,13 +95,13 @@ export default function Index() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 glass-card border-y-2 border-[var(--neon-cyan)]/20 relative z-10">
+      <section className="py-16 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8 max-w-5xl mx-auto">
-            <StatItem label="Active Players" value="0" />
-            <StatItem label="Quests Completed" value="0" />
-            <StatItem label="NFTs Minted" value="0" />
-            <StatItem label="Rewards Distributed" value="$0" />
+          <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
+            <StatItem label="Active Players" value="0" color="cyan" />
+            <StatItem label="Quests Completed" value="0" color="magenta" />
+            <StatItem label="NFTs Minted" value="0" color="purple" />
+            <StatItem label="Rewards Distributed" value="$0" color="cyan" />
           </div>
         </div>
       </section>
@@ -109,73 +109,82 @@ export default function Index() {
       {/* Features Section */}
       <section id="features" className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text-cyber uppercase tracking-wider">Everything You Need</h2>
-            <p className="text-xl text-muted-foreground uppercase tracking-wide">
+          <div className="max-w-3xl mx-auto text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text-cyber uppercase tracking-wider">Everything You Need</h2>
+            <p className="text-xl text-muted-foreground tracking-wide">
               Complete platform to earn, collect, and compete
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <FeatureCard
-              icon={<Gamepad2 className="w-8 h-8" />}
+              icon={<Gamepad2 className="w-6 h-6" />}
               title="Steam Integration"
-              description="Automatically sync your game library, playtime, achievements, and trading cards from Steam."
+              description="Sync your game library, playtime, and achievements automatically"
+              color="cyan"
             />
             <FeatureCard
-              icon={<Target className="w-8 h-8" />}
+              icon={<Target className="w-6 h-6" />}
               title="Daily Quests"
-              description="Complete 5 fresh challenges every day based on your gaming activity and earn points."
+              description="Complete 5 fresh challenges every day and earn points"
+              color="magenta"
             />
             <FeatureCard
-              icon={<Trophy className="w-8 h-8" />}
+              icon={<Trophy className="w-6 h-6" />}
               title="NFT Trading Cards"
-              description="Mint your Steam trading cards as NFTs on CARV SVM blockchain with bonus point multipliers."
+              description="Mint achievements as NFTs with bonus point multipliers"
+              color="purple"
             />
             <FeatureCard
-              icon={<DollarSign className="w-8 h-8" />}
+              icon={<DollarSign className="w-6 h-6" />}
               title="Real Rewards"
-              description="Redeem your points for Steam wallet codes, Amazon gift cards, and Nintendo eShop credits."
+              description="Redeem points for gift cards and game credits"
+              color="cyan"
             />
             <FeatureCard
-              icon={<TrendingUp className="w-8 h-8" />}
+              icon={<TrendingUp className="w-6 h-6" />}
               title="Global Leaderboard"
-              description="Compete with players worldwide for a $1,000 monthly prize pool for top 100 players."
+              description="Compete for $1,000 monthly prize pool"
+              color="magenta"
             />
             <FeatureCard
-              icon={<Shield className="w-8 h-8" />}
-              title="Secure & Transparent"
-              description="Built on CARV SVM blockchain for secure, verifiable, and transparent transactions."
+              icon={<Shield className="w-6 h-6" />}
+              title="Blockchain Powered"
+              description="Secure and transparent CARV SVM transactions"
+              color="purple"
             />
           </div>
         </div>
       </section>
 
       {/* How It Works Section */}
-      <section className="py-20 md:py-32 glass-card relative z-10">
+      <section className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
-          <div className="max-w-3xl mx-auto text-center mb-16">
-            <h2 className="text-4xl md:text-5xl font-bold mb-4 gradient-text-cyber uppercase tracking-wider">How It Works</h2>
-            <p className="text-xl text-muted-foreground uppercase tracking-wide">
+          <div className="max-w-3xl mx-auto text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text-cyber uppercase tracking-wider">How It Works</h2>
+            <p className="text-xl text-muted-foreground tracking-wide">
               Start earning from gaming in three simple steps
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             <StepCard
               number="1"
               title="Connect Steam"
-              description="Link your Steam account to automatically sync your games and achievements."
+              description="Link your Steam account to sync games and achievements"
+              color="cyan"
             />
             <StepCard
               number="2"
               title="Complete Quests"
-              description="Play games and complete daily quests to earn points and climb the leaderboard."
+              description="Play games and complete daily challenges to earn points"
+              color="magenta"
             />
             <StepCard
               number="3"
               title="Earn Rewards"
-              description="Redeem your points for gift cards or mint NFTs with bonus multipliers."
+              description="Redeem points for gift cards or mint NFTs with bonuses"
+              color="purple"
             />
           </div>
         </div>
@@ -263,18 +272,30 @@ function FeatureCard({
   icon,
   title,
   description,
+  color,
 }: {
   icon: React.ReactNode;
   title: string;
   description: string;
+  color: "cyan" | "magenta" | "purple";
 }) {
+  const colorClasses = {
+    cyan: "border-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)]/30 group-hover:text-[var(--neon-cyan)]",
+    magenta: "border-[var(--neon-magenta)]/10 hover:border-[var(--neon-magenta)]/30 group-hover:text-[var(--neon-magenta)]",
+    purple: "border-[var(--neon-purple)]/10 hover:border-[var(--neon-purple)]/30 group-hover:text-[var(--neon-purple)]",
+  };
+
   return (
-    <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 space-y-4 hover-glow-cyan transition-all relative z-10">
-      <div className="w-14 h-14 bg-black/40 rounded border-2 border-[var(--neon-cyan)] flex items-center justify-center text-[var(--neon-cyan)] neon-glow-cyan">
-        {icon}
+    <div className={`group glass-card p-6 rounded-sm border-2 ${colorClasses[color]} transition-all duration-300 hover:-translate-y-1`}>
+      <div className="flex items-start gap-4">
+        <div className={`text-${color === "cyan" ? "[var(--neon-cyan)]" : color === "magenta" ? "[var(--neon-magenta)]" : "[var(--neon-purple)]"} transition-colors`}>
+          {icon}
+        </div>
+        <div className="space-y-2">
+          <h3 className="text-lg font-bold tracking-wide text-foreground">{title}</h3>
+          <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
+        </div>
       </div>
-      <h3 className="text-xl font-bold uppercase tracking-wider gradient-text-purple">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">{description}</p>
     </div>
   );
 }
@@ -283,27 +304,43 @@ function StepCard({
   number,
   title,
   description,
+  color,
 }: {
   number: string;
   title: string;
   description: string;
+  color: "cyan" | "magenta" | "purple";
 }) {
+  const colorClasses = {
+    cyan: "border-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)]/30 text-[var(--neon-cyan)]",
+    magenta: "border-[var(--neon-magenta)]/10 hover:border-[var(--neon-magenta)]/30 text-[var(--neon-magenta)]",
+    purple: "border-[var(--neon-purple)]/10 hover:border-[var(--neon-purple)]/30 text-[var(--neon-purple)]",
+  };
+
   return (
-    <div className="relative glass-card p-8 rounded-sm border-2 border-[var(--neon-magenta)]/20 space-y-4 hover-glow-magenta transition-all">
-      <div className="w-14 h-14 bg-black/40 rounded border-2 border-[var(--neon-magenta)] flex items-center justify-center text-3xl font-bold text-[var(--neon-magenta)] neon-glow-magenta">
-        {number}
+    <div className={`relative glass-card p-6 rounded-sm border-2 ${colorClasses[color]} transition-all duration-300 hover:-translate-y-1`}>
+      <div className="space-y-4">
+        <div className={`text-5xl font-bold ${color === "cyan" ? "text-[var(--neon-cyan)]" : color === "magenta" ? "text-[var(--neon-magenta)]" : "text-[var(--neon-purple)]"}`}>
+          {number}
+        </div>
+        <h3 className="text-xl font-bold tracking-wide text-foreground">{title}</h3>
+        <p className="text-sm text-muted-foreground leading-relaxed">{description}</p>
       </div>
-      <h3 className="text-xl font-bold uppercase tracking-wider gradient-text-cyber">{title}</h3>
-      <p className="text-muted-foreground leading-relaxed uppercase tracking-wide text-sm">{description}</p>
     </div>
   );
 }
 
-function StatItem({ label, value }: { label: string; value: string }) {
+function StatItem({ label, value, color }: { label: string; value: string; color: "cyan" | "magenta" | "purple" }) {
+  const colorClasses = {
+    cyan: "border-[var(--neon-cyan)]/10 hover:border-[var(--neon-cyan)]/30",
+    magenta: "border-[var(--neon-magenta)]/10 hover:border-[var(--neon-magenta)]/30",
+    purple: "border-[var(--neon-purple)]/10 hover:border-[var(--neon-purple)]/30",
+  };
+
   return (
-    <div className="text-center glass-card p-6 rounded-sm border-2 border-[var(--neon-purple)]/20 hover-glow-purple">
-      <div className="text-4xl md:text-5xl font-bold gradient-text-cyber mb-3">{value}</div>
-      <div className="text-sm text-muted-foreground uppercase tracking-wider font-semibold">{label}</div>
+    <div className={`text-center glass-card p-6 rounded-sm border-2 ${colorClasses[color]} transition-all duration-300 hover:-translate-y-1`}>
+      <div className="text-4xl md:text-5xl font-bold gradient-text-cyber mb-2">{value}</div>
+      <div className="text-sm text-muted-foreground tracking-wide">{label}</div>
     </div>
   );
 }
