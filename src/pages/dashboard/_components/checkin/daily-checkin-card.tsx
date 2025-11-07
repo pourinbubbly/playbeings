@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Calendar, Flame, Trophy, Zap, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { performDailyCheckInTransaction, getConnectedWallet } from "@/lib/wallet.ts";
+import { Celebration } from "@/components/ui/celebration.tsx";
 
 export function DailyCheckInCard() {
   const checkInStatus = useQuery(api.checkin.getCheckInStatus);
@@ -14,6 +15,8 @@ export function DailyCheckInCard() {
   const updateTxStatus = useMutation(api.checkin.updateCheckInTxStatus);
   
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationPoints, setCelebrationPoints] = useState(0);
 
   // Show loading state while data is loading
   if (checkInStatus === undefined) {
@@ -71,13 +74,9 @@ export function DailyCheckInCard() {
       // Record check-in in database
       const result = await performCheckIn({ txHash: signature });
 
-      toast.success(`Check-in successful! +${result.points} points`, {
-        description: `Day ${result.streak} streak! View transaction`,
-        action: {
-          label: "View TX",
-          onClick: () => window.open(explorerUrl, "_blank"),
-        },
-      });
+      // Show celebration
+      setCelebrationPoints(result.points);
+      setShowCelebration(true);
 
       // Update transaction status
       const today = new Date().toISOString().split("T")[0];
@@ -105,7 +104,17 @@ export function DailyCheckInCard() {
   };
 
   return (
-    <Card className="glass-card border-2 border-[var(--neon-purple)]/30">
+    <>
+      <Celebration
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        title="Congratulations!"
+        message={`Day ${checkInStatus?.currentStreak || 1} streak! Keep it going!`}
+        type="checkin"
+        points={celebrationPoints}
+      />
+      
+      <Card className="glass-card border-2 border-[var(--neon-purple)]/30">
       <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -238,5 +247,6 @@ export function DailyCheckInCard() {
         )}
       </CardContent>
     </Card>
+    </>
   );
 }

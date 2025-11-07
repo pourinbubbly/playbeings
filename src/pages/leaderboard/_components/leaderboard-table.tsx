@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import { Card, CardContent } from "@/components/ui/card.tsx";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx";
@@ -20,6 +21,8 @@ interface LeaderboardTableProps {
 }
 
 export function LeaderboardTable({ leaderboard, currentUserId }: LeaderboardTableProps) {
+  const navigate = useNavigate();
+
   return (
     <Card>
       <CardContent className="p-0">
@@ -32,9 +35,16 @@ export function LeaderboardTable({ leaderboard, currentUserId }: LeaderboardTabl
               <div
                 key={entry.userId}
                 className={cn(
-                  "flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors",
+                  "flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer",
                   isCurrentUser && "bg-primary/5 border-l-4 border-primary"
                 )}
+                onClick={() => {
+                  if (isCurrentUser) {
+                    navigate("/profile");
+                  } else {
+                    navigate(`/user/${entry.userId}`);
+                  }
+                }}
               >
                 {/* Rank */}
                 <div className="w-12 flex-shrink-0 text-center">

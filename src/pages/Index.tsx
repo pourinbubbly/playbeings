@@ -77,8 +77,14 @@ export default function Index() {
                 <Unauthenticated>
                   <SignInButton className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14" />
                 </Unauthenticated>
-                <Button asChild variant="ghost" className="glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14">
-                  <a href="#features">LEARN MORE</a>
+                <Button 
+                  variant="ghost" 
+                  className="glass-card border-2 border-[var(--neon-purple)] hover:neon-glow-purple text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider text-lg px-10 h-14"
+                  onClick={() => {
+                    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth' });
+                  }}
+                >
+                  LEARN MORE
                 </Button>
               </div>
             </div>

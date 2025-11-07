@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Button } from "@/components/ui/button.tsx";
@@ -6,6 +7,7 @@ import { Progress } from "@/components/ui/progress.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Clock, Gamepad2, Trophy, Target, Check } from "lucide-react";
 import { toast } from "sonner";
+import { Celebration } from "@/components/ui/celebration.tsx";
 
 interface QuestCardProps {
   quest: {
@@ -31,6 +33,8 @@ const ICON_MAP = {
 
 export function QuestCard({ quest, progress, completed, claimed }: QuestCardProps) {
   const completeQuest = useMutation(api.quests.completeQuest);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationPoints, setCelebrationPoints] = useState(0);
 
   const Icon = ICON_MAP[quest.icon as keyof typeof ICON_MAP] || Target;
   const progressPercentage = Math.min((progress / quest.requirement) * 100, 100);
@@ -43,27 +47,26 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
         reward: quest.reward,
       });
       
-      if (result.boostPercentage > 0) {
-        toast.success(`Quest completed!`, {
-          description: (
-            <div className="space-y-1">
-              <p className="font-semibold text-[var(--neon-cyan)]">+{result.boostedPoints} points earned!</p>
-              <p className="text-xs text-muted-foreground">
-                Base: {result.basePoints} pts + {result.boostPercentage}% NFT boost
-              </p>
-            </div>
-          ),
-        });
-      } else {
-        toast.success(`Quest completed! +${quest.reward} points`);
-      }
+      // Show celebration
+      setCelebrationPoints(result.boostedPoints);
+      setShowCelebration(true);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to claim reward");
     }
   };
 
   return (
-    <Card className={claimed ? "bg-muted/50" : ""}>
+    <>
+      <Celebration
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        title="Quest Complete!"
+        message={quest.title}
+        type="quest"
+        points={celebrationPoints}
+      />
+      
+      <Card className={claimed ? "bg-muted/50" : ""}>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
@@ -103,5 +106,6 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
         )}
       </CardContent>
     </Card>
+    </>
   );
 }
