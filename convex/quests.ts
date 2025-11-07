@@ -377,6 +377,7 @@ export const completeQuest = mutation({
     questId: v.string(),
     questTitle: v.string(),
     reward: v.number(),
+    requirement: v.number(),
     txSignature: v.string(),
   },
   handler: async (ctx, args) => {
@@ -414,14 +415,21 @@ export const completeQuest = mutation({
     if (!userQuest) {
       throw new ConvexError({
         code: "NOT_FOUND",
-        message: "Quest progress not found",
+        message: "Quest progress not found. Please refresh the page and try again.",
       });
     }
 
     if (userQuest.claimed) {
       throw new ConvexError({
         code: "BAD_REQUEST",
-        message: "Quest already claimed",
+        message: "Quest reward already claimed.",
+      });
+    }
+
+    if (userQuest.progress < args.requirement) {
+      throw new ConvexError({
+        code: "BAD_REQUEST",
+        message: "Quest not completed yet. Progress: " + userQuest.progress + " / " + args.requirement,
       });
     }
 

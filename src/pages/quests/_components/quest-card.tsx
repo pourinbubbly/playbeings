@@ -43,6 +43,12 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
 
   const handleClaim = async () => {
     try {
+      // Check if Backpack wallet is connected
+      if (!window.backpack?.publicKey) {
+        toast.error("Please connect your Backpack wallet first!");
+        return;
+      }
+
       toast.info("Creating CARV SVM transaction...");
       
       // First, create blockchain transaction
@@ -58,6 +64,7 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
         questId: quest.id,
         questTitle: quest.title,
         reward: quest.reward,
+        requirement: quest.requirement,
         txSignature: signature,
       });
       
@@ -79,7 +86,9 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
         </div>
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to claim reward");
+      console.error("Quest claim error:", error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to claim reward";
+      toast.error(errorMessage);
     }
   };
 
