@@ -620,20 +620,29 @@ export const getUserQuestStats = query({
 
     const today = new Date().toISOString().split("T")[0];
 
-    const todayQuests = await ctx.db
+    // Get today's available quests from dailyQuests table
+    const dailyQuests = await ctx.db
+      .query("dailyQuests")
+      .withIndex("by_date", (q) => q.eq("date", today))
+      .unique();
+
+    const todayTotal = dailyQuests?.quests?.length || 0;
+
+    // Get user's progress/completion status
+    const todayUserQuests = await ctx.db
       .query("userQuests")
       .withIndex("by_user_and_date", (q) => q.eq("userId", user._id).eq("date", today))
       .collect();
 
-    const allQuests = await ctx.db
+    const allUserQuests = await ctx.db
       .query("userQuests")
       .withIndex("by_user_and_date", (q) => q.eq("userId", user._id))
       .collect();
 
     return {
-      todayCompleted: todayQuests.filter((q) => q.completed).length,
-      todayTotal: todayQuests.length,
-      totalCompleted: allQuests.filter((q) => q.completed).length,
+      todayCompleted: todayUserQuests.filter((q) => q.claimed).length,
+      todayTotal: todayTotal,
+      totalCompleted: allUserQuests.filter((q) => q.claimed).length,
     };
   },
 });

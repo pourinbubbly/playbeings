@@ -86,7 +86,10 @@ export async function createProfileCommentTransaction(
   }
 
   try {
-    const connection = new Connection(CARV_RPC_URL, "confirmed");
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
     const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
 
     console.log("Creating profile comment transaction on CARV SVM...");
@@ -176,7 +179,10 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
   }
 
   try {
-    const connection = new Connection(CARV_RPC_URL, "confirmed");
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
     const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
 
     console.log("Creating daily check-in transaction on CARV SVM...");
@@ -266,85 +272,109 @@ export async function completeQuestTransaction(
     throw new Error("Wallet not connected");
   }
 
-  try {
-    const connection = new Connection(CARV_RPC_URL, "confirmed");
-    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+  let retryCount = 0;
+  const maxRetries = 2;
 
-    console.log("Creating quest completion transaction on CARV SVM...");
-
-    const transaction = new Transaction();
-
-    // Small transfer to self (0.001 SOL)
-    const lamports = 1000000; // 0.001 SOL
-    
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: walletPubkey,
-        lamports,
-      })
-    );
-
-    // Add quest completion metadata as memo
-    const questData = JSON.stringify({
-      type: "QUEST_COMPLETED",
-      timestamp: new Date().toISOString(),
-      questTitle,
-      pointsEarned,
-      app: "PlayBeings",
-    });
-    
-    const memoData = new TextEncoder().encode(questData);
-    
-    transaction.add({
-      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData),
-    });
-
-    // Set transaction metadata
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubkey;
-
-    console.log("Requesting Backpack approval for quest completion...");
-    
-    // Sign and send with Backpack
-    const { signature } = await window.backpack.signAndSendTransaction(transaction);
-    
-    console.log("Quest completion transaction submitted! Tx:", signature);
-
-    // Verify transaction on-chain (with extended timeout)
-    const confirmationPromise = connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-    
-    // Add timeout to prevent hanging (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
-    });
-    
+  while (retryCount <= maxRetries) {
     try {
-      await Promise.race([confirmationPromise, timeoutPromise]);
-      console.log("Quest completion transaction confirmed!");
-    } catch (confirmError) {
-      // Transaction submitted but confirmation timed out
-      // It might still be processing - return signature anyway
-      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating quest completion transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Small transfer to self (0.001 SOL)
+      const lamports = 1000000; // 0.001 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: walletPubkey,
+          lamports,
+        })
+      );
+
+      // Add quest completion metadata as memo
+      const questData = JSON.stringify({
+        type: "QUEST_COMPLETED",
+        timestamp: new Date().toISOString(),
+        questTitle,
+        pointsEarned,
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(questData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for quest completion...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Quest completion transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Quest completion transaction confirmed!");
+      } catch (confirmError) {
+        // Transaction submitted but confirmation timed out
+        // It might still be processing - return signature anyway
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Quest completion transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error && 
+          (error.message.includes("Plugin Closed") || 
+           error.message.includes("User rejected"))) {
+        throw error;
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
-    
-    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
-    
-    return { 
-      signature, 
-      explorerUrl,
-    };
-  } catch (error) {
-    console.error("Quest completion transaction failed:", error);
-    throw error;
   }
+
+  throw new Error("Failed to complete quest transaction after multiple attempts");
 }
 
 // Helper to create a transaction signer for Backpack
@@ -371,7 +401,10 @@ export async function mintNFTOnCARV(
   }
 
   try {
-    const connection = new Connection(CARV_RPC_URL, "confirmed");
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
     const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
 
     console.log("Minting Achievement NFT on CARV SVM...");
