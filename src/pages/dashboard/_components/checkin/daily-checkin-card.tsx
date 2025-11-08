@@ -69,7 +69,12 @@ export function DailyCheckInCard() {
       // Perform CARV SVM transaction
       const { signature, explorerUrl } = await performDailyCheckInTransaction();
       
-      console.log("Check-in transaction confirmed:", signature);
+      console.log("Check-in transaction submitted:", signature);
+
+      // Show success toast immediately after transaction is submitted
+      toast.success("Transaction submitted successfully!", {
+        description: "Recording your check-in...",
+      });
 
       // Record check-in in database
       const result = await performCheckIn({ txHash: signature });
@@ -88,15 +93,23 @@ export function DailyCheckInCard() {
       if (error instanceof Error) {
         if (error.message.includes("Already checked in")) {
           toast.error("Already checked in today");
-        } else if (error.message.includes("Plugin Closed")) {
-          toast.error("Transaction cancelled");
+        } else if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+          toast.error("Transaction cancelled", {
+            description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Wallet not connected")) {
+          toast.error("Wallet not connected", {
+            description: "Please connect your Backpack wallet first",
+          });
         } else {
           toast.error("Check-in failed", {
-            description: error.message,
+            description: "Please try again or refresh the page",
           });
         }
       } else {
-        toast.error("Failed to check in");
+        toast.error("Failed to check in", {
+          description: "An unexpected error occurred",
+        });
       }
     } finally {
       setIsCheckingIn(false);

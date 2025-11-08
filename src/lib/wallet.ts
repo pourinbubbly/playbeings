@@ -133,21 +133,26 @@ export async function createProfileCommentTransaction(
     
     console.log("Comment transaction submitted! Tx:", signature);
 
-    // Verify transaction on-chain (with timeout)
+    // Verify transaction on-chain (with extended timeout)
     const confirmationPromise = connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, "confirmed");
     
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (60 seconds)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000);
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
     });
     
-    await Promise.race([confirmationPromise, timeoutPromise]);
-
-    console.log("Comment transaction confirmed!");
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Comment transaction confirmed!");
+    } catch (confirmError) {
+      // Transaction submitted but confirmation timed out
+      // It might still be processing - return signature anyway
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
     
     const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     
@@ -216,21 +221,26 @@ export async function performDailyCheckInTransaction(): Promise<{ signature: str
     
     console.log("Check-in transaction submitted! Tx:", signature);
 
-    // Verify transaction on-chain (with timeout)
+    // Verify transaction on-chain (with extended timeout)
     const confirmationPromise = connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, "confirmed");
     
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (60 seconds)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000);
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
     });
     
-    await Promise.race([confirmationPromise, timeoutPromise]);
-
-    console.log("Check-in transaction confirmed!");
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Check-in transaction confirmed!");
+    } catch (confirmError) {
+      // Transaction submitted but confirmation timed out
+      // It might still be processing - return signature anyway
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
     
     const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     
@@ -304,21 +314,26 @@ export async function completeQuestTransaction(
     
     console.log("Quest completion transaction submitted! Tx:", signature);
 
-    // Verify transaction on-chain (with timeout)
+    // Verify transaction on-chain (with extended timeout)
     const confirmationPromise = connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, "confirmed");
     
-    // Add timeout to prevent hanging
+    // Add timeout to prevent hanging (60 seconds)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 30000);
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
     });
     
-    await Promise.race([confirmationPromise, timeoutPromise]);
-
-    console.log("Quest completion transaction confirmed!");
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Quest completion transaction confirmed!");
+    } catch (confirmError) {
+      // Transaction submitted but confirmation timed out
+      // It might still be processing - return signature anyway
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
     
     const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
     

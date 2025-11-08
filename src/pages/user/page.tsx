@@ -494,6 +494,11 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
         commentText
       );
       
+      // Show success toast immediately after transaction is submitted
+      toast.success("Transaction submitted!", {
+        description: "Posting your comment...",
+      });
+      
       await addCommentMutation({
         profileUserId: targetUser._id,
         content: commentText,
@@ -501,7 +506,7 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
       });
       
       toast.success("Comment posted successfully!", {
-        description: "View transaction",
+        description: "View on CARV Explorer",
         action: {
           label: "View TX",
           onClick: () => window.open(explorerUrl, "_blank"),
@@ -513,15 +518,23 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
       console.error("Comment submission error:", error);
       
       if (error instanceof Error) {
-        if (error.message.includes("Plugin Closed")) {
-          toast.error("Transaction cancelled");
+        if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+          toast.error("Transaction cancelled", {
+            description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Wallet not connected")) {
+          toast.error("Wallet not connected", {
+            description: "Please connect your Backpack wallet first",
+          });
         } else {
           toast.error("Failed to post comment", {
-            description: error.message,
+            description: "Please try again or refresh the page",
           });
         }
       } else {
-        toast.error("Failed to post comment");
+        toast.error("Failed to post comment", {
+          description: "An unexpected error occurred",
+        });
       }
     } finally {
       setIsSubmitting(false);
