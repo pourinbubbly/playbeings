@@ -102,7 +102,7 @@ Leaderboard Rewards (Monthly):
 
 ---
 
-## 🧠 Built on CARV SVM
+## 🧠 Built on CARV SVM Testnet
 
 | Component | Info |
 |:-----------|:----|
@@ -126,10 +126,57 @@ Leaderboard Rewards (Monthly):
 
 ## 🛠️ Tech Stack
 
-- **Frontend:** React + Vite + TailwindCSS  
-- **Backend:** Convex / Node.js  
-- **Blockchain:** CARV SVM Testnet  
-- **Integrations:** Steam API, Coinbase AgentKit  
+### 🧩 Frontend
+- ⚛️ **React 19** — Modern UI framework  
+- 🟦 **TypeScript 5+** — Type-safe JavaScript for scalability  
+- ⚡ **Vite 6** — Ultra-fast build tool & dev server  
+- 🧭 **React Router v7** — Client-side routing  
+- 🎨 **Tailwind CSS 4** — Utility-first CSS framework  
+- 🧱 **shadcn/ui** — Elegant component library  
+- 💫 **Framer Motion** — Smooth UI animations  
+- 🧩 **Lucide React** — Icon library  
+
+---
+
+### 🧠 Backend & Database
+- 🪄 **Convex** — Serverless backend (Node.js runtime)  
+- 🗄️ **Convex Database** — Real-time document database  
+- 🧰 **TypeScript** — Strongly typed backend functions  
+
+---
+
+### 🔗 Blockchain & Web3
+- 🔵 **Solana Web3.js** — Blockchain interaction library  
+- 🪐 **CARV SVM Testnet** — On-chain NFT minting and reward layer  
+- 💼 **Backpack Wallet** — Solana-compatible wallet integration  
+- ⚙️ **@coral-xyz/anchor** — Solana smart contract framework  
+
+---
+
+### 🎮 External APIs
+- 🕹 **Steam Web API** — Access to games, achievements, and inventory  
+- 🔑 **Steam OpenID** — Authentication via Steam  
+
+---
+
+### 🔐 Authentication
+- 🔸 **Hercules Auth (OIDC)** — Secure user authentication system  
+- 🔹 **oidc-client-ts** — OIDC client implementation  
+
+---
+
+### 🧮 Other Libraries
+- ✅ **Zod** — Schema validation and type-safe data  
+- 🗓 **date-fns** — Date utilities and formatting  
+- 🔔 **Sonner** — Toast notifications  
+- ⏱ **use-debounce** — Debounced input handling  
+
+---
+
+### 🧱 Infrastructure
+- 📦 **pnpm** — Fast and disk-efficient package manager  
+- 🧹 **ESLint** — Code linting for consistent style  
+- ✨ **Prettier** — Code formatter  
 
 ---
 
@@ -145,7 +192,7 @@ Leaderboard Rewards (Monthly):
 
 <div align="center">
 
-💫 Built with passion for gamers and AI beings.  
+💫 Built with passion for gamers and SVM.  
 **Play smarter. Earn faster. Rule the leaderboard.**
 
 </div>
