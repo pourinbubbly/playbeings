@@ -45,11 +45,15 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
     try {
       // Check if Backpack wallet is connected
       if (!window.backpack?.publicKey) {
-        toast.error("Please connect your Backpack wallet first!");
+        toast.error("Wallet not connected", {
+          description: "Please connect your Backpack wallet first",
+        });
         return;
       }
 
-      toast.info("Creating CARV SVM transaction...");
+      toast.info("Approve transaction in Backpack", {
+        description: "Confirm the quest completion transaction",
+      });
       
       // First, create blockchain transaction
       const { signature, explorerUrl } = await completeQuestTransaction(
@@ -57,7 +61,10 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
         quest.reward
       );
 
-      toast.success("Transaction confirmed on blockchain!");
+      // Show immediate success
+      toast.success("Transaction submitted!", {
+        description: "Recording quest completion...",
+      });
 
       // Then, complete quest in database with tx signature
       const result = await completeQuest({
@@ -72,23 +79,43 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
       setCelebrationPoints(result.boostedPoints);
       setShowCelebration(true);
       
-      toast.success(
-        <div>
-          <div>Quest completed! +{result.boostedPoints} points</div>
-          <a 
-            href={explorerUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-xs underline"
-          >
-            View on CARV Explorer
-          </a>
-        </div>
-      );
+      toast.success(`Quest completed! +${result.boostedPoints} points`, {
+        description: "View on CARV Explorer",
+        action: {
+          label: "View TX",
+          onClick: () => window.open(explorerUrl, "_blank"),
+        },
+      });
     } catch (error) {
       console.error("Quest claim error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Failed to claim reward";
-      toast.error(errorMessage);
+      
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+          toast.error("Transaction cancelled", {
+            description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Wallet not connected")) {
+          toast.error("Wallet not connected", {
+            description: "Please connect your Backpack wallet first",
+          });
+        } else if (error.message.includes("already claimed")) {
+          toast.error("Already claimed", {
+            description: "You already claimed this quest reward",
+          });
+        } else if (error.message.includes("not completed yet")) {
+          toast.error("Quest not complete", {
+            description: "You haven't met the quest requirements yet",
+          });
+        } else {
+          toast.error("Failed to claim reward", {
+            description: "Please try again or refresh the page",
+          });
+        }
+      } else {
+        toast.error("Failed to claim reward", {
+          description: "An unexpected error occurred",
+        });
+      }
     }
   };
 
