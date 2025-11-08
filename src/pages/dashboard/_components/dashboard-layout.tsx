@@ -61,7 +61,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
         <div className="container mx-auto px-6 h-20 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src="https://cdn.hercules.app/file_C1apUdTtCZmsdaOnfQV8Z8c0" 
+              src="https://cdn.hercules.app/file_Evc6kLN23XZ1w4t1QNsD1IRy" 
               alt="PlayBeings" 
               className="w-12 h-12 object-contain"
             />

@@ -34,7 +34,7 @@ export default function Index() {
         <div className="container mx-auto px-4 h-20 flex items-center justify-between relative z-10">
           <Link to="/" className="flex items-center gap-3 group">
             <img 
-              src="https://cdn.hercules.app/file_C1apUdTtCZmsdaOnfQV8Z8c0" 
+              src="https://cdn.hercules.app/file_Evc6kLN23XZ1w4t1QNsD1IRy" 
               alt="PlayBeings" 
               className="w-12 h-12 object-contain"
             />
@@ -228,9 +228,11 @@ export default function Index() {
           <div className="grid md:grid-cols-4 gap-8 max-w-6xl mx-auto">
             <div className="space-y-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
-                  <Zap className="w-6 h-6 text-[var(--neon-cyan)]" />
-                </div>
+                <img 
+                  src="https://cdn.hercules.app/file_Evc6kLN23XZ1w4t1QNsD1IRy" 
+                  alt="PlayBeings" 
+                  className="w-10 h-10 object-contain"
+                />
                 <span className="text-xl font-bold gradient-text-cyber tracking-wider">PLAYBEINGS</span>
               </div>
               <p className="text-sm text-muted-foreground uppercase tracking-wide">
@@ -253,7 +255,7 @@ export default function Index() {
               <h3 className="font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/docs" className="hover:text-foreground transition-colors">Documentation</Link></li>
-                <li><a href="http://explorer.testnet.carv.io/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">CARV Explorer</a></li>
+                <li><a href="http://explorer.testnet.carv.io/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">CARV SVM Testnet Explorer</a></li>
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
               </ul>
