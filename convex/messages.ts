@@ -305,6 +305,14 @@ export const sendMessage = mutation({
 
     const now = Date.now();
 
+    // Log image upload for debugging
+    if (args.messageType === "image" && args.imageUrl) {
+      console.log("Saving image message with storage ID:", args.imageUrl);
+      // Test if we can get the URL immediately
+      const testUrl = await ctx.storage.getUrl(args.imageUrl);
+      console.log("Immediate URL resolution test:", testUrl);
+    }
+
     // Insert message
     await ctx.db.insert("messages", {
       conversationId: args.conversationId,

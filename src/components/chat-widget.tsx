@@ -126,6 +126,7 @@ export function ChatWidget() {
     try {
       // Generate upload URL
       const uploadUrl = await generateImageUploadUrl({});
+      console.log("Generated upload URL:", uploadUrl);
 
       // Upload file
       const result = await fetch(uploadUrl, {
@@ -134,18 +135,26 @@ export function ChatWidget() {
         body: file,
       });
 
+      console.log("Upload response status:", result.status);
+
       if (!result.ok) {
+        const errorText = await result.text();
+        console.error("Upload failed with response:", errorText);
         throw new Error("Upload failed");
       }
 
       const response = await result.json();
+      console.log("Upload response JSON:", response);
+      
       const storageId = response.storageId;
 
       if (!storageId) {
+        console.error("No storage ID in response:", response);
         throw new Error("No storage ID returned");
       }
 
       console.log("Uploaded image storage ID:", storageId);
+      console.log("Storage ID type:", typeof storageId);
 
       // Send image message
       await sendMessage({
@@ -155,6 +164,7 @@ export function ChatWidget() {
         imageUrl: storageId,
       });
 
+      console.log("Message sent successfully");
       toast.success("Resim gönderildi!");
     } catch (error) {
       console.error("Image upload error:", error);
