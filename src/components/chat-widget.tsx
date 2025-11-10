@@ -458,7 +458,9 @@ export function ChatWidget() {
                         messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
-                          const imageUrl = msg.resolvedImageUrl;
+                          // Use the resolved URL from backend (added dynamically)
+                          type MessageWithUrl = typeof msg & { imageUrlResolved?: string | null };
+                          const imageUrl = (msg as MessageWithUrl).imageUrlResolved;
                           
                           if (isImageMessage) {
                             console.log("Image message:", {

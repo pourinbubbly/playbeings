@@ -213,13 +213,17 @@ export const getMessages = query({
           try {
             const url = await ctx.storage.getUrl(msg.imageUrl);
             console.log("Resolved image URL for storage ID:", msg.imageUrl, "->", url);
-            return { ...msg, resolvedImageUrl: url };
+            // Add resolved URL as a separate field
+            return { 
+              ...msg, 
+              imageUrlResolved: url,
+            };
           } catch (error) {
             console.error("Failed to resolve storage URL:", msg.imageUrl, error);
-            return { ...msg, resolvedImageUrl: null };
+            return { ...msg, imageUrlResolved: null };
           }
         }
-        return { ...msg, resolvedImageUrl: null };
+        return { ...msg, imageUrlResolved: null };
       })
     );
 
