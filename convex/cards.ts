@@ -16,8 +16,8 @@ export const saveMinedNFT = mutation({
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {
       throw new ConvexError({
-        code: "UNAUTHENTICATED",
         message: "User not logged in",
+        code: "UNAUTHENTICATED",
       });
     }
 
@@ -30,8 +30,8 @@ export const saveMinedNFT = mutation({
 
     if (!user) {
       throw new ConvexError({
-        code: "NOT_FOUND",
         message: "User not found",
+        code: "NOT_FOUND",
       });
     }
 
@@ -50,8 +50,8 @@ export const saveMinedNFT = mutation({
 
     if (existingNFT) {
       throw new ConvexError({
-        code: "CONFLICT",
         message: "This achievement has already been minted as NFT",
+        code: "CONFLICT",
       });
     }
 

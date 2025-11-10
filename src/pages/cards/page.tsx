@@ -45,8 +45,17 @@ function CardsContent() {
   const [minting, setMinting] = useState<string | null>(null);
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
   const steamProfile = useQuery(api.profiles.getSteamProfile, {});
+  const mintedNFTs = useQuery(api.nft.getMintedNFTs);
   const getAchievements = useAction(api.steam.getSteamAchievements);
   const saveMinedNFT = useMutation(api.cards.saveMinedNFT);
+
+  // Check if an achievement is already minted
+  const isAlreadyMinted = (achievement: SteamAchievement): boolean => {
+    if (!mintedNFTs) return false;
+    return mintedNFTs.some(
+      (nft) => nft.appId === achievement.gameId && nft.cardName === achievement.name
+    );
+  };
 
   const handleLoadAchievements = async () => {
     if (!steamProfile?.steamId) {
@@ -85,6 +94,14 @@ function CardsContent() {
             window.location.href = "/dashboard/wallet";
           },
         },
+      });
+      return;
+    }
+
+    // Check if already minted
+    if (isAlreadyMinted(achievement)) {
+      toast.error("Already Minted", {
+        description: "This achievement has already been minted as an NFT",
       });
       return;
     }
@@ -144,9 +161,27 @@ function CardsContent() {
       setAchievements(prev => prev.filter(a => a.id !== achievement.id));
     } catch (error) {
       console.error("Minting error:", error);
-      toast.error("Minting failed", {
-        description: error instanceof Error ? error.message : "Transaction was rejected or failed",
-      });
+      
+      // Handle specific errors
+      if (error instanceof Error) {
+        if (error.message.includes("already been minted") || error.message.includes("CONFLICT")) {
+          toast.error("Already Minted", {
+            description: "This achievement has already been minted as an NFT",
+          });
+        } else if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+          toast.error("Transaction Cancelled", {
+            description: "You cancelled the transaction in your wallet",
+          });
+        } else {
+          toast.error("Minting failed", {
+            description: error.message || "Transaction was rejected or failed",
+          });
+        }
+      } else {
+        toast.error("Minting failed", {
+          description: "Transaction was rejected or failed",
+        });
+      }
     } finally {
       setMinting(null);
     }
@@ -219,6 +254,7 @@ function CardsContent() {
         {achievements.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {achievements.map((achievement) => {
+              const alreadyMinted = isAlreadyMinted(achievement);
               const rarityColor =
                 achievement.rarity === "Rare" ? "text-[var(--neon-magenta)]" :
                 achievement.rarity === "Uncommon" ? "text-[var(--neon-cyan)]" :
@@ -227,7 +263,11 @@ function CardsContent() {
               return (
                 <div
                   key={achievement.id}
-                  className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden hover-glow-cyan transition-all group"
+                  className={`glass-card rounded-sm border-2 overflow-hidden transition-all group ${
+                    alreadyMinted 
+                      ? "border-[var(--neon-purple)]/20 opacity-70" 
+                      : "border-[var(--neon-cyan)]/20 hover-glow-cyan"
+                  }`}
                 >
                   {/* Achievement Image */}
                   <div className="relative aspect-[616/353] bg-black/40 overflow-hidden">
@@ -241,11 +281,16 @@ function CardsContent() {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
 
-                    {/* Rarity Badge */}
-                    <div className="absolute top-3 right-3">
+                    {/* Status Badges */}
+                    <div className="absolute top-3 right-3 flex flex-col gap-2">
                       <Badge className={`${rarityColor} bg-black/60 border border-current font-semibold uppercase tracking-wider text-xs`}>
                         {achievement.rarity}
                       </Badge>
+                      {alreadyMinted && (
+                        <Badge className="bg-[var(--neon-purple)]/80 border border-[var(--neon-purple)] text-white font-semibold uppercase tracking-wider text-xs">
+                          Minted
+                        </Badge>
+                      )}
                     </div>
 
                     {/* Achievement Info Overlay */}
@@ -267,23 +312,33 @@ function CardsContent() {
 
                   {/* Mint Button */}
                   <div className="p-4 bg-black/20">
-                    <Button
-                      onClick={() => handleMint(achievement)}
-                      disabled={!connectedWallet || minting === achievement.id}
-                      className="w-full glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider"
-                    >
-                      {minting === achievement.id ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Minting...
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="w-4 h-4 mr-2" />
-                          Mint NFT
-                        </>
-                      )}
-                    </Button>
+                    {alreadyMinted ? (
+                      <Button
+                        disabled
+                        className="w-full glass-card border-2 border-[var(--neon-purple)]/30 text-[var(--neon-purple)] bg-[var(--neon-purple)]/10 font-bold uppercase tracking-wider cursor-not-allowed"
+                      >
+                        <Trophy className="w-4 h-4 mr-2" />
+                        Already Minted
+                      </Button>
+                    ) : (
+                      <Button
+                        onClick={() => handleMint(achievement)}
+                        disabled={!connectedWallet || minting === achievement.id}
+                        className="w-full glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider"
+                      >
+                        {minting === achievement.id ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Minting...
+                          </>
+                        ) : (
+                          <>
+                            <Sparkles className="w-4 h-4 mr-2" />
+                            Mint NFT
+                          </>
+                        )}
+                      </Button>
+                    )}
                   </div>
                 </div>
               );
