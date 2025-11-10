@@ -79,7 +79,7 @@ async function deepseekRequest(messages: Array<{ role: string; content: string }
         model: "deepseek/deepseek-r1", // Advanced reasoning model on OpenRouter
         messages,
         temperature: 0.7,
-        max_tokens: 2000,
+        max_tokens: 800, // Reduced for faster response
       }),
     });
 
@@ -143,11 +143,34 @@ export const analyzeBehaviorWithAI = internalAction({
       rewardMultiplier: number;
     };
     insights: string[];
+    carvData?: {
+      carvId: string | null;
+      reputationScore: number;
+    };
   } | null> => {
     try {
       // Get user data from database
       const user = await ctx.runQuery(api.users.getUserById, { userId: args.userId });
       if (!user) return null;
+
+      // Get CARV on-chain identity if wallet connected
+      let carvData = null;
+      const wallet = await ctx.runQuery(internal.wallets.getUserWallet, { userId: args.userId });
+      if (wallet?.walletAddress) {
+        try {
+          const carvIdentity = await ctx.runAction(api.carv.getUserIdentity, {
+            walletAddress: wallet.walletAddress,
+          });
+          if (carvIdentity) {
+            carvData = {
+              carvId: carvIdentity.carvId,
+              reputationScore: carvIdentity.reputationScore,
+            };
+          }
+        } catch (error) {
+          console.log("CARV identity fetch skipped:", error);
+        }
+      }
 
       // Get user's games
       const games = await ctx.runQuery(internal.steamQueries.getUserGames, { userId: args.userId });
@@ -159,29 +182,28 @@ export const analyzeBehaviorWithAI = internalAction({
       });
 
       // Prepare data for AI analysis
-      const analysisPrompt = `Analyze this gaming user's behavior and provide insights:
+      const analysisPrompt = `Analyze gaming user behavior. Respond ONLY with valid JSON, no markdown:
 
-User Stats:
-- Total Points: ${user.totalPoints}
-- Level: ${user.level}
-- Total Games: ${games?.length || 0}
-- Top 3 Games: ${games?.slice(0, 3).map((g: { name: string; playtime: number }) => `${g.name} (${g.playtime}min)`).join(", ")}
+Stats:
+- Points: ${user.totalPoints}, Level: ${user.level}
+- Games: ${games?.length || 0}
+- Top 3: ${games?.slice(0, 3).map((g: { name: string; playtime: number }) => `${g.name}(${g.playtime}m)`).join(", ")}
+- Quest Rate: ${recentQuests?.filter((q: { completed: boolean }) => q.completed).length || 0}/${recentQuests?.length || 0}
+${carvData ? `- CARV ID: ${carvData.carvId || "none"}, Rep: ${carvData.reputationScore}` : ""}
 
-Recent Quest Completion Rate: ${recentQuests?.filter((q: { completed: boolean }) => q.completed).length || 0}/${recentQuests?.length || 0}
+Return JSON:
+{
+  "gamingPreferences": {"genres": ["action"], "playStyle": "casual", "sessionLength": 60},
+  "engagement": {"level": "medium", "trend": "stable"},
+  "recommendations": {"nextQuest": "Play 1h", "suggestedGame": "CS2", "rewardMultiplier": 1.2},
+  "insights": ["insight1", "insight2"]
+}`;
 
-Provide a JSON response with:
-1. gamingPreferences: {genres: string[], playStyle: string, sessionLength: number}
-2. engagement: {level: "low"|"medium"|"high", trend: "increasing"|"stable"|"decreasing"}
-3. recommendations: {nextQuest: string, suggestedGame: string, rewardMultiplier: number}
-4. insights: string[]
-
-Format as valid JSON only, no markdown.`;
-
-      // Get AI insights from DeepSeek
+      // Get AI insights from DeepSeek R1 + CARV
       const aiResponse = await deepseekRequest([
         {
           role: "system",
-          content: "You are a gaming behavioral analyst. Provide actionable insights in JSON format.",
+          content: "Return only valid JSON, no markdown.",
         },
         {
           role: "user",
@@ -193,6 +215,10 @@ Format as valid JSON only, no markdown.`;
       if (aiResponse) {
         try {
           insights = JSON.parse(aiResponse);
+          // Add CARV data to AI insights
+          if (carvData) {
+            insights.carvData = carvData;
+          }
         } catch {
           console.warn("Failed to parse AI response, using fallback");
           insights = null;
@@ -223,7 +249,9 @@ Format as valid JSON only, no markdown.`;
             `Total playtime: ${totalPlaytime} minutes`,
             `Playing ${games?.length || 0} different games`,
             `Quest completion rate: ${Math.round(((recentQuests?.filter((q: { completed: boolean }) => q.completed).length || 0) / Math.max(recentQuests?.length || 1, 1)) * 100)}%`,
+            ...(carvData?.carvId ? [`CARV ID: ${carvData.carvId}, Reputation: ${carvData.reputationScore}`] : []),
           ],
+          ...(carvData && { carvData }),
         };
       }
 
@@ -267,26 +295,18 @@ export const generateGameRecommendations = action({
       const games = await ctx.runQuery(internal.steamQueries.getUserGames, { userId: args.userId });
       const topGames = games?.slice(0, 5).map((g: { name: string }) => g.name).join(", ") || "No games yet";
 
-      // Use DeepSeek AI to generate personalized recommendations
-      const recommendPrompt = `Based on this user's gaming profile, recommend ${args.limit || 5} games:
+      // Use AI to generate personalized recommendations
+      const recommendPrompt = `Recommend ${args.limit || 5} Steam games. JSON array only:
 
-Current Top Games: ${topGames}
-Play Style: ${behavior?.gamingPreferences?.playStyle || "casual"}
-Preferences: ${behavior?.gamingPreferences?.genres?.join(", ") || "various"}
-Engagement: ${behavior?.engagement?.level || "medium"}
+User: ${topGames}, ${behavior?.gamingPreferences?.playStyle || "casual"}, ${behavior?.engagement?.level || "medium"}
+${behavior?.carvData?.carvId ? `CARV: ${behavior.carvData.carvId}` : ""}
 
-For each game, provide:
-- appId (Steam App ID)
-- name (Game name)
-- reason (Why recommended)
-- confidence (0.0-1.0)
-
-Return as JSON array only, no markdown.`;
+[{"appId":"730","name":"CS2","reason":"Match playstyle","confidence":0.85}]`;
 
       const aiResponse = await deepseekRequest([
         {
           role: "system",
-          content: "You are a Steam game recommendation expert. Always return valid JSON arrays.",
+          content: "Return only valid JSON array, no markdown.",
         },
         {
           role: "user",
@@ -391,31 +411,17 @@ export const generateQuestRecommendations = action({
       const today = new Date().toISOString().split("T")[0];
       const dailyQuests = await ctx.runQuery(internal.quests.getDailyQuests, { date: today });
 
-      const questPrompt = `Based on this user's profile, recommend ${args.limit || 3} quests:
+      const questPrompt = `Recommend ${args.limit || 3} gaming quests. JSON array only:
 
-Play Style: ${behavior?.gamingPreferences?.playStyle || "casual"}
-Engagement: ${behavior?.engagement?.level || "medium"}
-Session Length: ${behavior?.gamingPreferences?.sessionLength || 60} minutes
+User: ${behavior?.gamingPreferences?.playStyle || "casual"}, ${behavior?.engagement?.level || "medium"}, ${behavior?.gamingPreferences?.sessionLength || 60}m
+${behavior?.carvData?.carvId ? `CARV: ${behavior.carvData.carvId}` : ""}
 
-Available Quest Types:
-- Play specific games (30-120 min)
-- Win matches (1-5 wins)
-- Earn achievements (1-3 achievements)
-- Social activities (add friends, comment)
-
-For each quest, provide:
-- questId (unique id)
-- title (Quest name)
-- reason (Why recommended)
-- confidence (0.0-1.0)
-- suggestedReward (50-300 points)
-
-Return as JSON array only.`;
+[{"questId":"q1","title":"Play 1h","reason":"Fits schedule","confidence":0.8,"suggestedReward":100}]`;
 
       const aiResponse = await deepseekRequest([
         {
           role: "system",
-          content: "You are a quest design expert. Create engaging, achievable quests.",
+          content: "Return only valid JSON array, no markdown.",
         },
         {
           role: "user",

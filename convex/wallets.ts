@@ -1,5 +1,5 @@
 import { ConvexError } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalQuery } from "./_generated/server";
 import { v } from "convex/values";
 
 export const connectWallet = mutation({
@@ -126,6 +126,19 @@ export const getWalletByAddress = query({
     const wallet = await ctx.db
       .query("wallets")
       .withIndex("by_address", (q) => q.eq("walletAddress", args.walletAddress))
+      .unique();
+
+    return wallet;
+  },
+});
+
+// Internal query to get user's wallet
+export const getUserWallet = internalQuery({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const wallet = await ctx.db
+      .query("wallets")
+      .withIndex("by_user", (q) => q.eq("userId", args.userId))
       .unique();
 
     return wallet;
