@@ -410,16 +410,14 @@ export function ChatWidget() {
                                 {isImageMessage && msg.imageUrl ? (
                                   <div className="space-y-2">
                                     <img
-                                      src={(() => {
-                                        const baseUrl = (import.meta.env.VITE_CONVEX_URL || '').replace(/\/$/, '');
-                                        return `${baseUrl}/api/storage/${msg.imageUrl}`;
-                                      })()}
+                                      src={typeof msg.imageUrl === 'string' ? msg.imageUrl : ''}
                                       alt="Image"
                                       className="rounded w-full h-auto object-contain cursor-pointer"
                                       style={{ maxHeight: "300px" }}
                                       onClick={() => {
-                                        const baseUrl = (import.meta.env.VITE_CONVEX_URL || '').replace(/\/$/, '');
-                                        window.open(`${baseUrl}/api/storage/${msg.imageUrl}`, "_blank");
+                                        if (typeof msg.imageUrl === 'string') {
+                                          window.open(msg.imageUrl, "_blank");
+                                        }
                                       }}
                                       onError={(e) => {
                                         console.error("Image load error:", msg.imageUrl);

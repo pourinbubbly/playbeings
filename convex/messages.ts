@@ -206,7 +206,21 @@ export const getMessages = query({
       .order("asc")
       .collect();
 
-    return messages;
+    // Get storage URLs for image messages
+    const messagesWithUrls = await Promise.all(
+      messages.map(async (msg) => {
+        if (msg.messageType === "image" && msg.imageUrl) {
+          const imageUrl = await ctx.storage.getUrl(msg.imageUrl);
+          return {
+            ...msg,
+            imageUrl: imageUrl || undefined,
+          };
+        }
+        return msg;
+      })
+    );
+
+    return messagesWithUrls;
   },
 });
 
