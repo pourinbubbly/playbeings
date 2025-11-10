@@ -210,14 +210,22 @@ export const getMessages = query({
     const messagesWithUrls = await Promise.all(
       messages.map(async (msg) => {
         if (msg.messageType === "image" && msg.imageUrl) {
-          const url = await ctx.storage.getUrl(msg.imageUrl);
-          // Add resolved URL as a separate property
-          return { ...msg, imageUrlResolved: url };
+          console.log("Attempting to resolve storage ID:", msg.imageUrl);
+          try {
+            const url = await ctx.storage.getUrl(msg.imageUrl);
+            console.log("Resolved URL:", url);
+            // Add resolved URL as a separate property
+            return { ...msg, imageUrlResolved: url };
+          } catch (error) {
+            console.error("Error resolving storage URL:", error);
+            return { ...msg, imageUrlResolved: null };
+          }
         }
         return { ...msg, imageUrlResolved: null };
       })
     );
 
+    console.log("Returning", messagesWithUrls.length, "messages with URLs resolved");
     return messagesWithUrls;
   },
 });
@@ -296,6 +304,11 @@ export const sendMessage = mutation({
 
     const now = Date.now();
 
+    // Log image message details
+    if (args.messageType === "image" && args.imageUrl) {
+      console.log("Inserting image message with storage ID:", args.imageUrl);
+    }
+
     // Insert message
     await ctx.db.insert("messages", {
       conversationId: args.conversationId,
@@ -307,6 +320,10 @@ export const sendMessage = mutation({
       isRead: false,
       createdAt: now,
     });
+
+    if (args.messageType === "image" && args.imageUrl) {
+      console.log("Image message inserted successfully");
+    }
 
     // Update conversation
     const unreadUpdate =

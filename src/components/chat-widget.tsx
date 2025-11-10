@@ -141,9 +141,14 @@ export function ChatWidget() {
       const response = await result.json();
       const storageId = response.storageId;
 
+      console.log("Upload complete, storage ID:", storageId);
+
       if (!storageId) {
+        console.error("No storage ID in response");
         throw new Error("No storage ID returned");
       }
+
+      console.log("Sending image message with storage ID:", storageId);
 
       // Send image message
       await sendMessage({
@@ -153,6 +158,7 @@ export function ChatWidget() {
         imageUrl: storageId,
       });
 
+      console.log("Image message sent successfully");
       toast.success("Resim gönderildi!");
     } catch (error) {
       console.error("Image upload error:", error);
@@ -457,7 +463,16 @@ export function ChatWidget() {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
                           // Get resolved URL from backend (dynamically added property)
-                          const imageUrl = (msg as typeof msg & { imageUrlResolved?: string | null }).imageUrlResolved;
+                          const msgWithUrl = msg as typeof msg & { imageUrlResolved?: string | null };
+                          const imageUrl = msgWithUrl.imageUrlResolved;
+                          
+                          if (isImageMessage) {
+                            console.log("Rendering image message:", {
+                              msgId: msg._id,
+                              storageId: msg.imageUrl,
+                              resolvedUrl: imageUrl,
+                            });
+                          }
                           
                           return (
                             <div
