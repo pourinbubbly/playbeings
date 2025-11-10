@@ -87,7 +87,9 @@ function PremiumPassContent() {
         throw new Error("Quest not found");
       }
 
-      toast.info("Creating claim transaction on CARV SVM Testnet...");
+      toast.info("Opening Backpack wallet...", {
+        description: "Please approve the transaction in your wallet"
+      });
       
       const { signature, explorerUrl } = await claimPremiumQuestTransaction(
         quest.title,
@@ -112,7 +114,25 @@ function PremiumPassContent() {
     } catch (error) {
       console.error("Claim failed:", error);
       const err = error as Error;
-      toast.error("Failed to claim reward", { description: err.message });
+      
+      // Handle specific error types
+      if (err.message.includes("Plugin Closed") || err.message.includes("User rejected")) {
+        toast.error("Transaction cancelled", { 
+          description: "You cancelled the transaction in your wallet. Please try again when ready." 
+        });
+      } else if (err.message.includes("Wallet not connected")) {
+        toast.error("Wallet not connected", { 
+          description: "Please connect your Backpack wallet first" 
+        });
+      } else if (err.message.includes("already claimed")) {
+        toast.error("Already claimed", { 
+          description: "You have already claimed a quest today. Come back tomorrow!" 
+        });
+      } else {
+        toast.error("Failed to claim reward", { 
+          description: err.message || "Please try again" 
+        });
+      }
     } finally {
       setSelectedQuestId(null);
     }

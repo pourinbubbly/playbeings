@@ -755,11 +755,11 @@ export async function claimPremiumQuestTransaction(
   dayNumber: number
 ): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
   try {
@@ -840,6 +840,18 @@ export async function claimPremiumQuestTransaction(
     };
   } catch (error) {
     console.error("Premium quest claim transaction failed:", error);
+    
+    // Provide better error messages
+    if (error instanceof Error) {
+      if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+        throw new Error("Transaction cancelled by user");
+      } else if (error.message.includes("Insufficient funds")) {
+        throw new Error("Insufficient SOL balance. You need at least 0.001 SOL for the transaction.");
+      } else if (error.message.includes("blockhash")) {
+        throw new Error("Network error. Please try again.");
+      }
+    }
+    
     throw error;
   }
 }
