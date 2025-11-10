@@ -34,14 +34,13 @@ export default function Dashboard() {
 function DashboardContent() {
   const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const currentUser = useQuery(api.users.getCurrentUser);
-  const wallet = useQuery(api.wallets.getConnectedWallet);
   const initQuests = useMutation(api.initQuests.initializeTodayQuests);
 
   useEffect(() => {
     initQuests();
   }, [initQuests]);
 
-  if (steamProfile === undefined || currentUser === undefined || wallet === undefined) {
+  if (steamProfile === undefined || currentUser === undefined) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Skeleton className="h-20 w-64" />
@@ -66,8 +65,6 @@ function DashboardContent() {
               carvId={currentUser.carvId}
               reputationScore={currentUser.carvReputationScore}
               lastSync={currentUser.carvLastSync}
-              isWalletConnected={!!wallet?.evmAddress}
-              evmAddress={wallet?.evmAddress}
             />
           )}
         </div>
