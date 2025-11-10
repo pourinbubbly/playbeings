@@ -1,11 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Button } from "@/components/ui/button.tsx";
-import { Shield, Star, RefreshCw, ExternalLink, Loader2 } from "lucide-react";
-import { useAction } from "convex/react";
-import { api } from "@/convex/_generated/api.js";
+import { Shield, ExternalLink, Wallet } from "lucide-react";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
-import { useState } from "react";
-import { toast } from "sonner";
 
 interface CarvDataCardProps {
   userId: Id<"users">;
@@ -13,43 +9,12 @@ interface CarvDataCardProps {
   reputationScore?: number | null;
   lastSync?: number | null;
   isWalletConnected?: boolean;
+  evmAddress?: string | null;
 }
 
-export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWalletConnected = false }: CarvDataCardProps) {
-  const [syncing, setSyncing] = useState(false);
-  const syncCarvData = useAction(api.carv.syncCarvData);
+export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWalletConnected = false, evmAddress }: CarvDataCardProps) {
 
-  const handleSync = async () => {
-    setSyncing(true);
-    try {
-      const result = await syncCarvData({ userId });
-      if (result.success) {
-        toast.success("CARV data synced successfully");
-      } else {
-        toast.error(result.message || "Failed to sync CARV data");
-      }
-    } catch (error) {
-      toast.error("Failed to sync CARV data");
-      console.error(error);
-    } finally {
-      setSyncing(false);
-    }
-  };
-
-  const getLastSyncText = () => {
-    if (!lastSync) return "Never synced";
-    const diff = Date.now() - lastSync;
-    const minutes = Math.floor(diff / 60000);
-    const hours = Math.floor(diff / 3600000);
-    const days = Math.floor(diff / 86400000);
-
-    if (minutes < 1) return "Just now";
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    return `${days}d ago`;
-  };
-
-  if (!carvId) {
+  if (!isWalletConnected) {
     return (
       <Card className="glass-card border-2 border-[var(--neon-cyan)]/20">
         <CardHeader>
@@ -60,7 +25,7 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWall
                 CARV D.A.T.A.
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                On-Chain Identity
+                On-Chain Identity Framework
               </CardDescription>
             </div>
           </div>
@@ -69,23 +34,17 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWall
           <div className="text-center py-8">
             <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
             <p className="text-muted-foreground text-sm mb-4">
-              {isWalletConnected 
-                ? "Click below to sync your CARV data from blockchain"
-                : "Connect MetaMask wallet first (not Backpack), then sync CARV data"}
+              Connect MetaMask wallet to link your CARV identity
             </p>
             <Button 
-              onClick={handleSync}
-              disabled={syncing || !isWalletConnected}
-              className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black disabled:opacity-50"
+              asChild
+              className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
             >
-              {syncing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {syncing ? "Syncing..." : "Sync CARV Data"}
+              <a href="/dashboard/wallet">
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect MetaMask
+              </a>
             </Button>
-            {!isWalletConnected && (
-              <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-3">
-                ⚠️ MetaMask (Ethereum) wallet required - Go to Wallet page
-              </p>
-            )}
             <p className="text-xs text-muted-foreground mt-4">
               Powered by CARV D.A.T.A. Framework
             </p>
@@ -106,58 +65,62 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWall
                 CARV D.A.T.A.
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                On-Chain Verified
+                MetaMask Connected
               </CardDescription>
             </div>
           </div>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleSync}
-            disabled={syncing}
-            className="text-[var(--neon-cyan)]"
-          >
-            <RefreshCw className={`w-4 h-4 ${syncing ? "animate-spin" : ""}`} />
-          </Button>
+          <div className="px-3 py-1 rounded-full bg-green-500/20 border border-green-500/50">
+            <span className="text-xs font-semibold text-green-600 dark:text-green-400">ACTIVE</span>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {/* CARV ID */}
+          {/* Wallet Address */}
           <div className="glass-card p-4 border border-[var(--neon-purple)]/20">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Wallet className="w-4 h-4" />
+                <span>Connected Wallet</span>
+              </div>
+              <code className="text-xs font-mono text-[var(--neon-cyan)] break-all">
+                {evmAddress || "Not available"}
+              </code>
+            </div>
+          </div>
+
+          {/* CARV Identity Portal Link */}
+          <div className="glass-card p-4 border border-[var(--neon-purple)]/20">
+            <div className="flex flex-col gap-3">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="w-4 h-4" />
-                <span>CARV ID</span>
+                <span>CARV Identity Portal</span>
               </div>
-              <a
-                href={`https://explorer.carv.io/id/${carvId}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[var(--neon-cyan)] hover:underline text-sm flex items-center gap-1"
+              <p className="text-xs text-muted-foreground">
+                Manage your on-chain identity, reputation, and credentials
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                asChild
+                className="w-full border-[var(--neon-cyan)]/50 text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10"
               >
-                {carvId.slice(0, 8)}...{carvId.slice(-6)}
-                <ExternalLink className="w-3 h-3" />
-              </a>
+                <a
+                  href="https://protocol.carv.io/identity"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Open CARV Portal
+                  <ExternalLink className="w-3 h-3 ml-2" />
+                </a>
+              </Button>
             </div>
           </div>
 
-          {/* Reputation Score */}
-          <div className="glass-card p-4 border border-[var(--neon-purple)]/20">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Star className="w-4 h-4" />
-                <span>Reputation</span>
-              </div>
-              <span className="text-2xl font-bold text-yellow-600 dark:text-yellow-500">
-                {reputationScore || 0}
-              </span>
-            </div>
-          </div>
-
-          {/* Last Sync */}
-          <div className="text-xs text-muted-foreground text-center">
-            Last synced: {getLastSyncText()}
+          {/* Info */}
+          <div className="text-xs text-muted-foreground text-center pt-2">
+            <p>CARV D.A.T.A. Framework provides decentralized identity,</p>
+            <p>reputation scoring, and verifiable credentials</p>
           </div>
         </div>
       </CardContent>

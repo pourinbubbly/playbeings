@@ -67,6 +67,7 @@ function DashboardContent() {
               reputationScore={currentUser.carvReputationScore}
               lastSync={currentUser.carvLastSync}
               isWalletConnected={!!wallet?.evmAddress}
+              evmAddress={wallet?.evmAddress}
             />
           )}
         </div>
