@@ -19,7 +19,7 @@ import Settings from "./pages/settings/page.tsx";
 import Community from "./pages/community/page.tsx";
 import MyNFTs from "./pages/nfts/page.tsx";
 import UserProfile from "./pages/user/page.tsx";
-import Premium from "./pages/premium/page.tsx";
+import PremiumPass from "./pages/premium/page.tsx";
 import Documentation from "./pages/docs/page.tsx";
 import FAQ from "./pages/faq/page.tsx";
 import PrivacyPolicy from "./pages/privacy/page.tsx";
@@ -48,7 +48,7 @@ export default function App() {
           <Route path="/community" element={<Community />} />
           <Route path="/user/:userId" element={<UserProfile />} />
           <Route path="/dashboard/nfts" element={<MyNFTs />} />
-          <Route path="/premium" element={<Premium />} />
+          <Route path="/premium" element={<PremiumPass />} />
           <Route path="/docs" element={<Documentation />} />
           <Route path="/faq" element={<FAQ />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />

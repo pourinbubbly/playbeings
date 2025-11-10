@@ -217,6 +217,10 @@
   .neon-glow-pink {
     box-shadow: 0 0 5px rgba(255, 20, 147, 0.3), 0 0 10px rgba(255, 20, 147, 0.2);
   }
+  
+  .neon-glow-yellow {
+    box-shadow: 0 0 5px rgba(234, 179, 8, 0.3), 0 0 10px rgba(234, 179, 8, 0.2);
+  }
 
   /* Hover glow - subtle hover effect */
   .hover-glow-cyan:hover {

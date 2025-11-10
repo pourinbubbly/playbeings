@@ -38,7 +38,7 @@ export default function Profile() {
 
 function ProfileContent() {
   const currentUser = useQuery(api.users.getCurrentUser);
-  const passInfo = useQuery(api.premium.getPremiumPassInfo, {});
+  const passInfo = useQuery(api.premiumPass.getPremiumPassInfo, {});
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
   
@@ -239,10 +239,10 @@ function ProfileContent() {
                   <h3 className="text-xl font-bold text-[var(--neon-cyan)]">
                     {username || currentUser?.name || "No username"}
                   </h3>
-                  {passInfo?.hasPremiumPass && (
-                    <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500 text-yellow-500 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                  {passInfo && (
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500 text-yellow-500 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider neon-glow-yellow">
                       <Crown className="w-3 h-3" />
-                      <span>Premium</span>
+                      <span>Pass Active</span>
                     </div>
                   )}
                 </div>
