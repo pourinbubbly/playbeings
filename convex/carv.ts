@@ -76,10 +76,10 @@ async function deepseekRequest(messages: Array<{ role: string; content: string }
         "X-Title": "PlayBeings",
       },
       body: JSON.stringify({
-        model: "deepseek/deepseek-chat", // Free model on OpenRouter
+        model: "deepseek/deepseek-r1", // Advanced reasoning model on OpenRouter
         messages,
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 2000,
       }),
     });
 
