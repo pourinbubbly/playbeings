@@ -388,3 +388,48 @@ export const updateCarvData = internalMutation({
     });
   },
 });
+
+// Public mutation to update CARV ID manually
+export const updateCarvId = mutation({
+  args: {
+    carvId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    // Validate CARV ID format (basic validation)
+    if (!args.carvId || args.carvId.trim().length === 0) {
+      throw new ConvexError({
+        code: "BAD_REQUEST",
+        message: "Invalid CARV ID",
+      });
+    }
+
+    await ctx.db.patch(user._id, {
+      carvId: args.carvId.trim(),
+      carvVerifiedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});

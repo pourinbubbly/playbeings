@@ -36,6 +36,7 @@ import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { createProfileCommentTransaction, deleteProfileCommentTransaction } from "@/lib/wallet.ts";
 import { checkWalletConnection } from "@/lib/wallet-check.ts";
 import { FollowersDialog } from "@/components/followers-dialog.tsx";
+import { CarvBadge } from "@/components/carv-badge.tsx";
 
 export default function UserProfile() {
   return (
@@ -140,10 +141,17 @@ function UserProfileContent() {
 
                 {/* Name & Stats */}
                 <div className="mb-4 min-w-0 flex-1">
-                  <div className="flex items-center gap-3 mb-1">
+                  <div className="flex items-center gap-3 mb-1 flex-wrap">
                     <h1 className="text-3xl font-bold text-foreground uppercase tracking-wider">
                       {targetUser.username || targetUser.name || "Unknown User"}
                     </h1>
+                    {targetUser.carvId && (
+                      <CarvBadge 
+                        carvId={targetUser.carvId}
+                        reputationScore={targetUser.carvReputationScore}
+                        size="md"
+                      />
+                    )}
                     {hasPremiumPass && (
                       <Badge className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold uppercase tracking-wider px-3 py-1 neon-glow-cyan flex items-center gap-2">
                         <Crown className="w-4 h-4" />
