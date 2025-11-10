@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
-import { useQuery, useAction } from "convex/react";
+import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
@@ -46,6 +46,7 @@ function CardsContent() {
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
   const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const getAchievements = useAction(api.steam.getSteamAchievements);
+  const saveMinedNFT = useMutation(api.cards.saveMinedNFT);
 
   const handleLoadAchievements = async () => {
     if (!steamProfile?.steamId) {
@@ -92,7 +93,6 @@ function CardsContent() {
     try {
       // Dynamically import wallet functions
       const { mintNFTOnCARV } = await import("@/lib/wallet.ts");
-      const { useMutation } = await import("convex/react");
       
       toast.info("Approve transaction in Backpack...", {
         description: "Please confirm the transaction in your wallet",
@@ -111,10 +111,7 @@ function CardsContent() {
       else if (achievement.rarity === "Epic") boost = 0.15;
       
       // Save to database with boost
-      const saveNFT = await import("@/convex/_generated/api.js").then(m => m.api.cards.saveMinedNFT);
-      const convex = (await import("@/lib/convex.ts")).convex;
-      
-      await convex.mutation(saveNFT, {
+      await saveMinedNFT({
         appId: achievement.gameId,
         gameName: achievement.gameName,
         cardName: achievement.name,
