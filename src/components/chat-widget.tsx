@@ -168,6 +168,13 @@ export function ChatWidget() {
 
   const selectedConv = conversations?.find((c) => c._id === selectedConvId);
   const totalUnread = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
+  
+  // Check if we have a selected conversation ID but no conversation object yet
+  const hasSelectedConv = selectedConvId !== null;
+  
+  console.log("Selected conv ID:", selectedConvId);
+  console.log("Selected conv object:", selectedConv);
+  console.log("Has selected conv:", hasSelectedConv);
 
   // Filter conversations based on search
   const filteredConversations = conversations?.filter((conv) => {
@@ -207,8 +214,14 @@ export function ChatWidget() {
     try {
       const convId = await getOrCreateConversation({ otherUserId: userId });
       console.log("Conversation created/found:", convId);
+      
+      // Wait a bit for the conversation to be synced to queries
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       setSelectedConvId(convId);
       setSearchQuery("");
+      
+      console.log("Selected conversation ID set to:", convId);
     } catch (error) {
       console.error("Failed to start conversation:", error);
       toast.error("Sohbet başlatılamadı: " + (error as Error).message);
@@ -234,11 +247,11 @@ export function ChatWidget() {
                 <div className="flex items-center gap-2 flex-1 min-w-0">
                   <MessageCircle className="w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0" />
                   <span className="font-bold text-[var(--neon-cyan)] uppercase tracking-wide text-sm truncate">
-                    {selectedConv ? selectedConv.otherUser?.username : "Messages"}
+                    {selectedConv ? selectedConv.otherUser?.username : hasSelectedConv ? "Yükleniyor..." : "Messages"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
-                  {selectedConv && (
+                  {hasSelectedConv && (
                     <button
                       onClick={() => {
                         setSelectedConvId(null);
@@ -262,7 +275,7 @@ export function ChatWidget() {
               </div>
 
               {/* Content */}
-              {!selectedConv ? (
+              {!hasSelectedConv ? (
                 // Conversation List
                 <div className="flex-1 flex flex-col min-h-0">
                   {/* Search Bar */}
@@ -389,6 +402,18 @@ export function ChatWidget() {
               ) : (
                 // Message View
                 <div className="flex-1 flex flex-col min-h-0">
+                  {!selectedConv ? (
+                    // Loading state while conversation data syncs
+                    <div className="flex-1 flex items-center justify-center p-8">
+                      <div className="text-center">
+                        <Loader2 className="w-8 h-8 text-[var(--neon-cyan)] animate-spin mx-auto mb-3" />
+                        <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                          Sohbet yükleniyor...
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
                   <div 
                     ref={messagesContainerRef}
                     onScroll={handleScroll}
@@ -535,6 +560,8 @@ export function ChatWidget() {
                       </Button>
                     </form>
                   </div>
+                  </>
+                  )}
                 </div>
               )}
             </motion.div>
