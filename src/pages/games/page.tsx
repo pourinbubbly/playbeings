@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { Authenticated, AuthLoading } from "convex/react";
 import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
-import { Gamepad2, Clock, Calendar, ExternalLink, Play, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { Gamepad2, Clock, Calendar, ExternalLink, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
@@ -44,56 +44,6 @@ function GamesContent() {
   const [selectedGame, setSelectedGame] = useState<Doc<"games"> | null>(null);
   const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const scrollIntervalRef = useRef<number | null>(null);
-  const [showScrollButtons, setShowScrollButtons] = useState(false);
-
-  useEffect(() => {
-    const checkScroll = () => {
-      if (containerRef.current) {
-        const hasScroll = 
-          containerRef.current.scrollHeight > containerRef.current.clientHeight ||
-          containerRef.current.scrollWidth > containerRef.current.clientWidth;
-        setShowScrollButtons(hasScroll);
-      }
-    };
-
-    checkScroll();
-    window.addEventListener("resize", checkScroll);
-    return () => window.removeEventListener("resize", checkScroll);
-  }, [games]);
-
-  const startScroll = (direction: "up" | "down" | "left" | "right") => {
-    if (!containerRef.current || scrollIntervalRef.current) return;
-
-    const scrollAmount = direction === "left" || direction === "right" ? 30 : 30;
-    
-    scrollIntervalRef.current = window.setInterval(() => {
-      if (!containerRef.current) return;
-      
-      switch (direction) {
-        case "up":
-          containerRef.current.scrollTop -= scrollAmount;
-          break;
-        case "down":
-          containerRef.current.scrollTop += scrollAmount;
-          break;
-        case "left":
-          containerRef.current.scrollLeft -= scrollAmount;
-          break;
-        case "right":
-          containerRef.current.scrollLeft += scrollAmount;
-          break;
-      }
-    }, 20);
-  };
-
-  const stopScroll = () => {
-    if (scrollIntervalRef.current) {
-      clearInterval(scrollIntervalRef.current);
-      scrollIntervalRef.current = null;
-    }
-  };
 
   if (games === undefined) {
     return (
@@ -151,7 +101,7 @@ function GamesContent() {
 
   return (
     <DashboardLayout>
-      <div className="space-y-8 relative">
+      <div className="space-y-8">
         {/* Header */}
         <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
           <div className="flex items-center gap-4">
@@ -169,109 +119,57 @@ function GamesContent() {
           </div>
         </div>
 
-        {/* Games Grid Container with Scroll */}
-        <div 
-          ref={containerRef}
-          className="max-h-[calc(100vh-280px)] overflow-auto scroll-smooth custom-scrollbar"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {sortedGames.map((game) => (
-              <div 
-                key={game._id} 
-                className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
-                onClick={() => handleGameClick(game)}
-              >
-                <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
-                  <img
-                    src={game.imageUrl}
-                    alt={game.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                    onError={(e) => {
-                      e.currentTarget.style.display = "none";
-                    }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-                  {game.playtime > 6000 && (
-                    <div className="absolute top-3 right-3">
-                      <Badge className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] font-semibold uppercase tracking-wider text-xs">
-                        100+ Hours
-                      </Badge>
+        {/* Games Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          {sortedGames.map((game) => (
+            <div 
+              key={game._id} 
+              className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
+              onClick={() => handleGameClick(game)}
+            >
+              <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
+                <img
+                  src={game.imageUrl}
+                  alt={game.name}
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                  onError={(e) => {
+                    e.currentTarget.style.display = "none";
+                  }}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
+                {game.playtime > 6000 && (
+                  <div className="absolute top-3 right-3">
+                    <Badge className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] font-semibold uppercase tracking-wider text-xs">
+                      100+ Hours
+                    </Badge>
+                  </div>
+                )}
+              </div>
+              
+              <div className="p-4 space-y-3">
+                <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">
+                  {game.name}
+                </h3>
+                
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2 text-sm text-[var(--neon-cyan)] font-semibold uppercase tracking-wide">
+                    <Clock className="w-4 h-4" />
+                    <span>{Math.floor(game.playtime / 60)}h played</span>
+                  </div>
+                  
+                  {game.lastPlayed && game.lastPlayed > 0 && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
+                      <Calendar className="w-3 h-3" />
+                      <span>
+                        {new Date(game.lastPlayed * 1000).toLocaleDateString()}
+                      </span>
                     </div>
                   )}
                 </div>
-                
-                <div className="p-4 space-y-3">
-                  <h3 className="font-bold line-clamp-1 text-foreground uppercase tracking-wide text-sm">
-                    {game.name}
-                  </h3>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-[var(--neon-cyan)] font-semibold uppercase tracking-wide">
-                      <Clock className="w-4 h-4" />
-                      <span>{Math.floor(game.playtime / 60)}h played</span>
-                    </div>
-                    
-                    {game.lastPlayed && game.lastPlayed > 0 && (
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground uppercase tracking-wide">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          {new Date(game.lastPlayed * 1000).toLocaleDateString()}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
-
-        {/* Scroll Navigation Buttons */}
-        {showScrollButtons && (
-          <>
-            {/* Vertical Buttons */}
-            <button
-              onMouseDown={() => startScroll("up")}
-              onMouseUp={stopScroll}
-              onMouseLeave={stopScroll}
-              className="fixed right-6 top-24 z-50 w-12 h-12 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 rounded-sm flex items-center justify-center transition-all hover:scale-110 neon-glow-cyan"
-              aria-label="Scroll Up"
-            >
-              <ArrowUp className="w-6 h-6" />
-            </button>
-
-            <button
-              onMouseDown={() => startScroll("down")}
-              onMouseUp={stopScroll}
-              onMouseLeave={stopScroll}
-              className="fixed right-6 bottom-6 z-50 w-12 h-12 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 rounded-sm flex items-center justify-center transition-all hover:scale-110 neon-glow-cyan"
-              aria-label="Scroll Down"
-            >
-              <ArrowDown className="w-6 h-6" />
-            </button>
-
-            {/* Horizontal Buttons */}
-            <button
-              onMouseDown={() => startScroll("left")}
-              onMouseUp={stopScroll}
-              onMouseLeave={stopScroll}
-              className="fixed left-6 bottom-6 z-50 w-12 h-12 glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 rounded-sm flex items-center justify-center transition-all hover:scale-110 neon-glow-purple"
-              aria-label="Scroll Left"
-            >
-              <ArrowLeft className="w-6 h-6" />
-            </button>
-
-            <button
-              onMouseDown={() => startScroll("right")}
-              onMouseUp={stopScroll}
-              onMouseLeave={stopScroll}
-              className="fixed left-24 bottom-6 z-50 w-12 h-12 glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 rounded-sm flex items-center justify-center transition-all hover:scale-110 neon-glow-purple"
-              aria-label="Scroll Right"
-            >
-              <ArrowRight className="w-6 h-6" />
-            </button>
-          </>
-        )}
 
         {/* Game Detail Modal */}
         {selectedGame && (
