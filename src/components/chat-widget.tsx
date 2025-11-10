@@ -265,26 +265,29 @@ export function ChatWidget() {
                       ) : (
                         messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
+                          const isImageMessage = msg.messageType === "image" && msg.imageUrl;
                           return (
                             <div
                               key={msg._id}
                               className={`flex ${isSender ? "justify-end" : "justify-start"}`}
                             >
                               <div
-                                className={`max-w-[75%] p-3 rounded-lg ${
+                                className={`${isImageMessage ? "max-w-[90%]" : "max-w-[75%]"} p-2 rounded-lg ${
                                   isSender
                                     ? "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white"
                                     : "glass-card border border-[var(--neon-purple)]/20"
                                 }`}
                               >
-                                {msg.messageType === "image" && msg.imageUrl ? (
+                                {isImageMessage ? (
                                   <div className="space-y-2">
                                     <img
                                       src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${msg.imageUrl}`}
                                       alt="Shared"
-                                      className="rounded max-w-full h-auto max-h-64 object-contain"
+                                      className="rounded w-full h-auto object-contain cursor-pointer"
+                                      style={{ maxHeight: "300px" }}
+                                      onClick={() => window.open(`${import.meta.env.VITE_CONVEX_URL}/api/storage/${msg.imageUrl}`, "_blank")}
                                     />
-                                    <p className="text-xs opacity-70">
+                                    <p className="text-xs opacity-70 px-1">
                                       {new Date(msg.createdAt).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",
@@ -293,8 +296,8 @@ export function ChatWidget() {
                                   </div>
                                 ) : (
                                   <>
-                                    <p className="text-sm break-words">{msg.content}</p>
-                                    <p className="text-xs mt-1 opacity-70">
+                                    <p className="text-sm break-words px-1">{msg.content}</p>
+                                    <p className="text-xs mt-1 opacity-70 px-1">
                                       {new Date(msg.createdAt).toLocaleTimeString([], {
                                         hour: "2-digit",
                                         minute: "2-digit",

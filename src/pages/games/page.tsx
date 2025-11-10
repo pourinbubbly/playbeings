@@ -182,15 +182,27 @@ function GamesContent() {
               className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
               onClick={() => handleGameClick(game)}
             >
-              <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
-                <img
-                  src={game.imageUrl}
-                  alt={game.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                  onError={(e) => {
-                    e.currentTarget.style.display = "none";
-                  }}
-                />
+              <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20 flex items-center justify-center">
+                {game.imageUrl ? (
+                  <img
+                    src={game.imageUrl}
+                    alt={game.name}
+                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      target.style.display = "none";
+                      const parent = target.parentElement;
+                      if (parent) {
+                        const icon = document.createElement("div");
+                        icon.className = "flex items-center justify-center w-full h-full";
+                        icon.innerHTML = '<svg class="w-16 h-16 text-[var(--neon-purple)] opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>';
+                        parent.appendChild(icon);
+                      }
+                    }}
+                  />
+                ) : (
+                  <Gamepad2 className="w-16 h-16 text-[var(--neon-purple)] opacity-50" />
+                )}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
                 {game.playtime > 6000 && (
                   <div className="absolute top-3 right-3">
