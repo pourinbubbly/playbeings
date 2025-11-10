@@ -36,6 +36,11 @@ export default defineSchema({
       social: v.boolean(),
       messages: v.boolean(),
     })),
+    // CARV D.A.T.A. Framework (real on-chain data)
+    carvId: v.optional(v.string()),
+    carvReputationScore: v.optional(v.number()),
+    carvVerifiedAt: v.optional(v.number()),
+    carvLastSync: v.optional(v.number()),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_steam_id", ["steamId"])

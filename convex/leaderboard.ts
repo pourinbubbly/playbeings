@@ -41,6 +41,8 @@ export const getLeaderboard = query({
           points: user.totalPoints,
           level: user.level,
           hasPremiumPass: !!premiumPass,
+          carvId: user.carvId,
+          carvReputationScore: user.carvReputationScore,
         };
       })
     );

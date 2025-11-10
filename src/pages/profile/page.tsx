@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink, Crop, Crown } from "lucide-react";
 import { toast } from "sonner";
+import { CarvBadge } from "@/components/carv-badge.tsx";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { createProfileCommentTransaction, deleteProfileCommentTransaction } from "@/lib/wallet.ts";
 import { ImageCropDialog } from "@/components/ui/image-crop-dialog.tsx";
@@ -235,10 +236,17 @@ function ProfileContent() {
                 )}
               </div>
               <div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-xl font-bold text-[var(--neon-cyan)]">
                     {username || currentUser?.name || "No username"}
                   </h3>
+                  {currentUser?.carvId && (
+                    <CarvBadge 
+                      carvId={currentUser.carvId}
+                      reputationScore={currentUser.carvReputationScore}
+                      size="sm"
+                    />
+                  )}
                   {passInfo && (
                     <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500 text-yellow-500 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider neon-glow-yellow">
                       <Crown className="w-3 h-3" />

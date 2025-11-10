@@ -83,6 +83,49 @@ export const getUserIdentity = action({
   },
 });
 
+// Sync CARV data to user profile (called when wallet connected or on demand)
+export const syncCarvData = action({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; message?: string; carvId?: string | null; reputationScore?: number }> => {
+    try {
+      // Get user's wallet
+      const wallet = await ctx.runQuery(internal.wallets.getUserWallet, { userId: args.userId });
+      if (!wallet?.walletAddress) {
+        return { success: false, message: "No wallet connected" };
+      }
+
+      // Fetch CARV identity
+      const carvIdentity = await ctx.runAction(api.carv.getUserIdentity, {
+        walletAddress: wallet.walletAddress,
+      });
+
+      if (!carvIdentity) {
+        return { success: false, message: "Failed to fetch CARV data" };
+      }
+
+      // Update user profile with CARV data
+      await ctx.runMutation(internal.users.updateCarvData, {
+        userId: args.userId,
+        carvId: carvIdentity.carvId,
+        carvReputationScore: carvIdentity.reputationScore,
+        carvVerifiedAt: carvIdentity.verifiedAt ? Date.now() : undefined,
+        carvLastSync: Date.now(),
+      });
+
+      return { 
+        success: true, 
+        carvId: carvIdentity.carvId,
+        reputationScore: carvIdentity.reputationScore,
+      };
+    } catch (error) {
+      console.error("Error syncing CARV data:", error);
+      return { success: false, message: "Sync failed" };
+    }
+  },
+});
+
 // Real-time behavioral analytics using Steam data + CARV DATA Framework
 export const analyzeBehaviorWithAI = internalAction({
   args: {

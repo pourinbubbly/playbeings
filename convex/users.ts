@@ -1,5 +1,5 @@
 import { ConvexError, v } from "convex/values";
-import { mutation, query } from "./_generated/server";
+import { mutation, query, internalMutation } from "./_generated/server";
 
 export const updateCurrentUser = mutation({
   args: {},
@@ -367,5 +367,24 @@ export const deleteAccount = mutation({
     await ctx.db.delete(user._id);
 
     return { success: true };
+  },
+});
+
+// Internal mutation to update CARV data
+export const updateCarvData = internalMutation({
+  args: {
+    userId: v.id("users"),
+    carvId: v.union(v.string(), v.null()),
+    carvReputationScore: v.number(),
+    carvVerifiedAt: v.optional(v.number()),
+    carvLastSync: v.number(),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.userId, {
+      carvId: args.carvId || undefined,
+      carvReputationScore: args.carvReputationScore,
+      carvVerifiedAt: args.carvVerifiedAt,
+      carvLastSync: args.carvLastSync,
+    });
   },
 });

@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar.tsx"
 import { Badge } from "@/components/ui/badge.tsx";
 import { Crown, Medal, Star } from "lucide-react";
 import { cn } from "@/lib/utils.ts";
+import { CarvBadge } from "@/components/carv-badge.tsx";
 
 interface LeaderboardEntry {
   rank: number;
@@ -14,6 +15,8 @@ interface LeaderboardEntry {
   points: number;
   level: number;
   hasPremiumPass?: boolean;
+  carvId?: string | null;
+  carvReputationScore?: number | null;
 }
 
 interface LeaderboardTableProps {
@@ -72,12 +75,20 @@ export function LeaderboardTable({ leaderboard, currentUserId }: LeaderboardTabl
                     <AvatarFallback>{entry.name[0]}</AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold truncate flex items-center gap-2">
+                    <div className="font-semibold truncate flex items-center gap-2 flex-wrap">
                       {entry.name}
                       {isCurrentUser && (
                         <Badge variant="secondary" className="text-xs">
                           You
                         </Badge>
+                      )}
+                      {entry.carvId && (
+                        <CarvBadge 
+                          carvId={entry.carvId}
+                          reputationScore={entry.carvReputationScore}
+                          size="sm"
+                          showReputation={false}
+                        />
                       )}
                       {entry.hasPremiumPass && (
                         <Badge className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white text-xs font-bold uppercase tracking-wider px-2 py-0.5 neon-glow-cyan">
