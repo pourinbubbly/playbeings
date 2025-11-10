@@ -35,6 +35,19 @@ export const saveSteamProfile = mutation({
       });
     }
 
+    // Check if this Steam ID is already linked to another user
+    const steamIdInUse = await ctx.db
+      .query("steamProfiles")
+      .withIndex("by_steam_id", (q) => q.eq("steamId", args.steamId))
+      .first();
+
+    if (steamIdInUse && steamIdInUse.userId !== user._id) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message: "This Steam account is already linked to another PlayBeings account",
+      });
+    }
+
     // Update user with steamId
     await ctx.db.patch(user._id, {
       steamId: args.steamId,

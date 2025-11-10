@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 import { Authenticated, Unauthenticated } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -15,10 +16,29 @@ import {
   DollarSign,
   Gift,
   Clock,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 export default function Index() {
   const stats = useQuery(api.stats.getPlatformStats);
+  const [showScrollButtons, setShowScrollButtons] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowScrollButtons(window.scrollY > 300);
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const scrollToBottom = () => {
+    window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+  };
 
   return (
     <div className="min-h-screen bg-background cyber-grid-animated relative">
@@ -276,6 +296,26 @@ export default function Index() {
           </div>
         </div>
       </footer>
+
+      {/* Floating Scroll Buttons */}
+      {showScrollButtons && (
+        <div className="fixed right-6 bottom-6 flex flex-col gap-3 z-50">
+          <Button
+            onClick={scrollToTop}
+            size="icon"
+            className="glass-card w-12 h-12 rounded-full border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 hover:neon-glow-cyan shadow-lg"
+          >
+            <ArrowUp className="w-5 h-5" />
+          </Button>
+          <Button
+            onClick={scrollToBottom}
+            size="icon"
+            className="glass-card w-12 h-12 rounded-full border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 hover:neon-glow-magenta shadow-lg"
+          >
+            <ArrowDown className="w-5 h-5" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

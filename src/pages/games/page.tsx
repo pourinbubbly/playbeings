@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Authenticated, AuthLoading } from "convex/react";
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -5,8 +6,11 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
-import { Gamepad2, Clock, Calendar } from "lucide-react";
+import { Gamepad2, Clock, Calendar, ExternalLink, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge.tsx";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog.tsx";
+import { Button } from "@/components/ui/button.tsx";
+import type { Doc } from "@/convex/_generated/dataModel.d.ts";
 
 export default function Games() {
   return (
@@ -25,6 +29,7 @@ export default function Games() {
 
 function GamesContent() {
   const games = useQuery(api.profiles.getUserGames, {});
+  const [selectedGame, setSelectedGame] = useState<Doc<"games"> | null>(null);
 
   if (games === undefined) {
     return (
@@ -90,7 +95,8 @@ function GamesContent() {
           {sortedGames.map((game) => (
             <div 
               key={game._id} 
-              className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group"
+              className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
+              onClick={() => setSelectedGame(game)}
             >
               <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
                 <img
@@ -135,6 +141,84 @@ function GamesContent() {
             </div>
           ))}
         </div>
+
+        {/* Game Detail Modal */}
+        {selectedGame && (
+          <Dialog open={!!selectedGame} onOpenChange={() => setSelectedGame(null)}>
+            <DialogContent className="glass-card border-2 border-[var(--neon-cyan)]/30 max-w-2xl">
+              <DialogHeader>
+                <DialogTitle className="text-2xl font-bold gradient-text-cyber uppercase tracking-wider">
+                  {selectedGame.name}
+                </DialogTitle>
+                <DialogDescription className="text-muted-foreground uppercase tracking-wide">
+                  Steam App ID: {selectedGame.appId}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="space-y-6">
+                {/* Game Image */}
+                <div className="aspect-[616/353] bg-black/40 relative overflow-hidden rounded border-2 border-[var(--neon-purple)]/20">
+                  <img
+                    src={selectedGame.imageUrl}
+                    alt={selectedGame.name}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.style.display = "none";
+                    }}
+                  />
+                </div>
+
+                {/* Stats Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="glass-card p-4 border border-[var(--neon-cyan)]/20">
+                    <div className="flex items-center gap-2 text-[var(--neon-cyan)] mb-2">
+                      <Clock className="w-5 h-5" />
+                      <span className="text-sm uppercase tracking-wide font-semibold">Playtime</span>
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">
+                      {Math.floor(selectedGame.playtime / 60)}h {selectedGame.playtime % 60}m
+                    </p>
+                  </div>
+
+                  <div className="glass-card p-4 border border-[var(--neon-magenta)]/20">
+                    <div className="flex items-center gap-2 text-[var(--neon-magenta)] mb-2">
+                      <Calendar className="w-5 h-5" />
+                      <span className="text-sm uppercase tracking-wide font-semibold">Last Played</span>
+                    </div>
+                    <p className="text-lg font-bold text-foreground">
+                      {selectedGame.lastPlayed && selectedGame.lastPlayed > 0
+                        ? new Date(selectedGame.lastPlayed * 1000).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric'
+                          })
+                        : "Never"}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    onClick={() => window.open(`https://store.steampowered.com/app/${selectedGame.appId}`, '_blank')}
+                    className="flex-1 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 hover:neon-glow-cyan font-bold uppercase tracking-wider"
+                  >
+                    <ExternalLink className="w-4 h-4 mr-2" />
+                    View on Steam
+                  </Button>
+
+                  <Button
+                    onClick={() => window.open(`steam://rungameid/${selectedGame.appId}`, '_self')}
+                    className="flex-1 glass-card border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10 hover:neon-glow-magenta font-bold uppercase tracking-wider"
+                  >
+                    <Play className="w-4 h-4 mr-2" />
+                    Play Game
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
     </DashboardLayout>
   );

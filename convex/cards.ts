@@ -35,6 +35,26 @@ export const saveMinedNFT = mutation({
       });
     }
 
+    // Check if this achievement has already been minted as NFT
+    const existingNFT = await ctx.db
+      .query("tradingCards")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("appId"), args.appId),
+          q.eq(q.field("cardName"), args.cardName),
+          q.eq(q.field("mintedAsNft"), true)
+        )
+      )
+      .first();
+
+    if (existingNFT) {
+      throw new ConvexError({
+        code: "CONFLICT",
+        message: "This achievement has already been minted as NFT",
+      });
+    }
+
     // Save the NFT card
     await ctx.db.insert("tradingCards", {
       userId: user._id,

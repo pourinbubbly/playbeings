@@ -9,24 +9,29 @@ interface PointsChartProps {
 }
 
 export function PointsChart({ data }: PointsChartProps) {
-  const formattedData = data.map((item) => ({
-    ...item,
-    date: new Date(item.date).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-    }),
-  }));
+  // Calculate cumulative points
+  let cumulative = 0;
+  const cumulativeData = data.map((item) => {
+    cumulative += item.points;
+    return {
+      date: new Date(item.date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+      }),
+      totalPoints: cumulative,
+    };
+  });
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Points Over Time</CardTitle>
-        <CardDescription>Your point earnings in the last 30 days</CardDescription>
+        <CardDescription>Your cumulative point growth in the last 30 days</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="h-[300px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={formattedData}>
+            <LineChart data={cumulativeData}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
               <XAxis
                 dataKey="date"
@@ -44,13 +49,15 @@ export function PointsChart({ data }: PointsChartProps) {
                   borderRadius: "8px",
                 }}
                 labelStyle={{ color: "hsl(var(--foreground))" }}
+                formatter={(value: number) => [`${value.toLocaleString()} points`, "Total Points"]}
               />
               <Line
                 type="monotone"
-                dataKey="points"
+                dataKey="totalPoints"
                 stroke="hsl(var(--primary))"
-                strokeWidth={2}
-                dot={{ fill: "hsl(var(--primary))" }}
+                strokeWidth={3}
+                dot={{ fill: "hsl(var(--primary))", r: 4 }}
+                activeDot={{ r: 6 }}
               />
             </LineChart>
           </ResponsiveContainer>

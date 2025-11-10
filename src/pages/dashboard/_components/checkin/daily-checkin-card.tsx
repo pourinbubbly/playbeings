@@ -243,18 +243,26 @@ export function DailyCheckInCard() {
               Recent Activity
             </h4>
             <div className="grid grid-cols-7 gap-2">
-              {checkInHistory.slice(0, 14).map((checkIn) => (
-                <div
-                  key={checkIn._id}
-                  className="aspect-square glass-card border border-[var(--neon-cyan)]/30 rounded flex flex-col items-center justify-center p-1 hover:border-[var(--neon-cyan)]/60 transition-all cursor-pointer group"
-                  title={`${new Date(checkIn.createdAt).toLocaleDateString()} - Day ${checkIn.streakDay} - ${checkIn.points} points`}
-                >
-                  <div className="text-[var(--neon-cyan)] text-xs font-bold">
-                    {new Date(checkIn.createdAt).getDate()}
+              {checkInHistory.slice(0, 14).map((checkIn) => {
+                const date = new Date(checkIn.createdAt);
+                const monthShort = date.toLocaleDateString('en-US', { month: 'short' });
+                const day = date.getDate();
+                return (
+                  <div
+                    key={checkIn._id}
+                    className="aspect-square glass-card border border-[var(--neon-cyan)]/30 rounded flex flex-col items-center justify-center p-1 hover:border-[var(--neon-cyan)]/60 transition-all cursor-pointer group"
+                    title={`${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Day ${checkIn.streakDay} - ${checkIn.points} points`}
+                  >
+                    <div className="text-[var(--neon-cyan)] text-[9px] font-semibold uppercase">
+                      {monthShort}
+                    </div>
+                    <div className="text-[var(--neon-cyan)] text-xs font-bold">
+                      {day}
+                    </div>
+                    <Flame className="w-3 h-3 text-[var(--neon-cyan)]/50 group-hover:text-[var(--neon-cyan)] transition-colors" />
                   </div>
-                  <Flame className="w-3 h-3 text-[var(--neon-cyan)]/50 group-hover:text-[var(--neon-cyan)] transition-colors" />
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
