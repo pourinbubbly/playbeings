@@ -32,9 +32,9 @@ export function ImageCropDialog({
 }: ImageCropDialogProps) {
   const [crop, setCrop] = useState<Crop>({
     unit: "%",
-    width: 80,
-    height: 80,
-    x: 10,
+    width: aspectRatio >= 1 ? 90 : 80,
+    height: aspectRatio >= 1 ? 90 / aspectRatio : 80,
+    x: aspectRatio >= 1 ? 5 : 10,
     y: 10,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop | null>(null);
@@ -43,18 +43,39 @@ export function ImageCropDialog({
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
     const { width, height } = e.currentTarget;
-    const cropSize = Math.min(width, height) * 0.8;
-    const x = (width - cropSize) / 2;
-    const y = (height - cropSize) / 2;
+    
+    // Calculate initial crop based on aspect ratio
+    let cropWidth: number;
+    let cropHeight: number;
+    
+    if (aspectRatio >= 1) {
+      // Wide format (banner): use most of the width
+      cropWidth = width * 0.9;
+      cropHeight = cropWidth / aspectRatio;
+      
+      // If crop height exceeds image height, adjust
+      if (cropHeight > height * 0.9) {
+        cropHeight = height * 0.9;
+        cropWidth = cropHeight * aspectRatio;
+      }
+    } else {
+      // Portrait or square: use the smaller dimension
+      const cropSize = Math.min(width, height) * 0.8;
+      cropWidth = cropSize;
+      cropHeight = cropSize / aspectRatio;
+    }
+    
+    const x = (width - cropWidth) / 2;
+    const y = (height - cropHeight) / 2;
 
     setCrop({
       unit: "px",
-      width: cropSize,
-      height: cropSize,
+      width: cropWidth,
+      height: cropHeight,
       x,
       y,
     });
-  }, []);
+  }, [aspectRatio]);
 
   const getCroppedImg = useCallback(
     async (image: HTMLImageElement, crop: PixelCrop): Promise<Blob> => {
@@ -116,7 +137,7 @@ export function ImageCropDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="glass-card border-2 border-[var(--neon-cyan)]/30 max-w-2xl">
+      <DialogContent className="glass-card border-2 border-[var(--neon-cyan)]/30 max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold gradient-text-cyber uppercase tracking-wider flex items-center gap-2">
             <CropIcon className="w-6 h-6 text-[var(--neon-cyan)]" />
@@ -127,7 +148,7 @@ export function ImageCropDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex items-center justify-center min-h-[300px] max-h-[500px] overflow-auto bg-black/20 rounded border border-[var(--neon-cyan)]/20 p-4">
+        <div className="flex items-center justify-center min-h-[400px] max-h-[600px] overflow-auto bg-black/20 rounded border border-[var(--neon-cyan)]/20 p-4">
           <ReactCrop
             crop={crop}
             onChange={(c) => setCrop(c)}
@@ -142,7 +163,7 @@ export function ImageCropDialog({
               alt="Crop preview"
               onLoad={onImageLoad}
               className="max-w-full h-auto"
-              style={{ maxHeight: "450px" }}
+              style={{ maxHeight: "550px" }}
             />
           </ReactCrop>
         </div>
