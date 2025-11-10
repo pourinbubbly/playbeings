@@ -220,6 +220,98 @@ export default function Index() {
         </div>
       </section>
 
+      {/* CARV D.A.T.A Framework Section */}
+      <section className="py-20 md:py-32 relative z-10">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 px-6 py-3 glass-card rounded-sm border-2 border-green-500/30 mb-6">
+                <Shield className="w-5 h-5 text-green-500" />
+                <span className="text-sm font-bold uppercase tracking-wider text-green-500">Powered by CARV</span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text-cyber uppercase tracking-wider">
+                D.A.T.A AI Framework
+              </h2>
+              <p className="text-xl text-muted-foreground tracking-wide">
+                Data Authentication, Trust, and Attestation
+              </p>
+            </div>
+
+            <div className="glass-card border-2 border-green-500/20 p-8 md:p-12 space-y-6">
+              <p className="text-lg text-foreground leading-relaxed">
+                The D.A.T.A Framework empowers AI agents with seamless access to high-quality on-chain and off-chain data, 
+                enabling them to make better-informed, autonomous decisions in decentralized ecosystems.
+              </p>
+              
+              <p className="text-base text-muted-foreground leading-relaxed">
+                At its core, D.A.T.A represents a pioneering implementation of DeepSeek's revolutionary reasoning-first approach 
+                to AI autonomy. As the first framework to integrate DeepSeek's breakthrough self-evolving reasoning capabilities 
+                in a Web3 context, D.A.T.A enables AI agents to develop sophisticated cognitive processes that mirror human-like 
+                reasoning patterns.
+              </p>
+
+              <div className="grid md:grid-cols-2 gap-6 pt-6">
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-[var(--neon-cyan)] uppercase tracking-wide flex items-center gap-2">
+                    <Zap className="w-5 h-5" />
+                    For Developers
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Transform static data into dynamic, actionable insights. Build smarter, more autonomous AI systems that 
+                    require minimal human intervention, from trading bots that respond instantly to on-chain events to AI 
+                    agents capable of executing autonomous strategies.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-[var(--neon-magenta)] uppercase tracking-wide flex items-center gap-2">
+                    <Target className="w-5 h-5" />
+                    For Blockchain Ecosystem
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Bridge on-chain and off-chain data seamlessly. Enable AI agents to make intelligent, cross-chain decisions 
+                    and interact meaningfully within decentralized networks through agentic infrastructure that decentralizes trust.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-[var(--neon-purple)] uppercase tracking-wide flex items-center gap-2">
+                    <Gift className="w-5 h-5" />
+                    For End-Users
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Securely control and monetize your data. Solve the challenge of fragmented, inaccessible, and untrustworthy 
+                    data while maintaining full ownership and privacy control.
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <h3 className="text-xl font-bold text-[var(--neon-cyan)] uppercase tracking-wide flex items-center gap-2">
+                    <Sparkles className="w-5 h-5" />
+                    For AI Researchers
+                  </h3>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Empower AGI to evolve collaboratively within a decentralized ecosystem. Explore decentralized AI innovations 
+                    that push the boundaries of what intelligent systems can achieve.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex justify-center pt-8">
+                <Button
+                  asChild
+                  className="glass-card border-2 border-green-500 text-green-500 hover:bg-green-500/20 font-bold uppercase tracking-wider text-lg px-10 h-14"
+                >
+                  <a href="https://docs.carv.io/d.a.t.a.-ai-framework/introduction" target="_blank" rel="noopener noreferrer">
+                    Learn More About D.A.T.A
+                  </a>
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 md:py-32 relative z-10">
         <div className="container mx-auto px-4">
@@ -276,6 +368,7 @@ export default function Index() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="https://docs.playbeings.fun/documentation" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a></li>
                 <li><a href="http://explorer.testnet.carv.io/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">CARV SVM Testnet Explorer</a></li>
+                <li><a href="https://docs.carv.io/d.a.t.a.-ai-framework/introduction" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">CARV D.A.T.A Framework</a></li>
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
               </ul>

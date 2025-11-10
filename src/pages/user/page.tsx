@@ -218,6 +218,20 @@ function UserProfileContent() {
                           </svg>
                         </a>
                       )}
+                      {targetUser.carvProfileUrl && (
+                        <a
+                          href={targetUser.carvProfileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-400 transition-colors"
+                          title="CARV Profile"
+                        >
+                          <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5zm0 18c-3.87-.93-7-5.43-7-10V8.3l7-3.11 7 3.11V10c0 4.57-3.13 9.07-7 10z"/>
+                            <circle cx="12" cy="12" r="3"/>
+                          </svg>
+                        </a>
+                      )}
                     </div>
                   )}
                   

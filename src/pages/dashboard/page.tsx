@@ -10,7 +10,6 @@ import { DailyQuestsSection } from "./_components/daily-quests-section.tsx";
 import { DailyCheckInCard } from "./_components/checkin/daily-checkin-card.tsx";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { AIRecommendations } from "@/components/ai-recommendations.tsx";
-import { CarvDataCard } from "@/components/carv-data-card.tsx";
 import { useEffect } from "react";
 
 export default function Dashboard() {
@@ -57,18 +56,7 @@ function DashboardContent() {
       <div className="space-y-8">
         <ProfileOverview profile={steamProfile} user={currentUser} />
         <DailyCheckInCard />
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {currentUser && <AIRecommendations userId={currentUser._id} />}
-          {currentUser && (
-            <CarvDataCard 
-              userId={currentUser._id} 
-              carvId={currentUser.carvId}
-              carvProfileUrl={currentUser.carvProfileUrl}
-              reputationScore={currentUser.carvReputationScore}
-              lastSync={currentUser.carvLastSync}
-            />
-          )}
-        </div>
+        {currentUser && <AIRecommendations userId={currentUser._id} />}
         <DailyQuestsSection />
         <GamesLibrary />
       </div>
