@@ -45,7 +45,14 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
   const handleClaim = async () => {
     try {
       // Check if Backpack wallet is connected
+<<<<<<< HEAD
       if (!checkWalletConnection()) {
+=======
+      if (!window.backpack?.publicKey) {
+        toast.error("Wallet not connected", {
+          description: "Please connect your Backpack wallet first",
+        });
+>>>>>>> e2316a1d8368855da6a56687891a143941741f71
         return;
       }
 
