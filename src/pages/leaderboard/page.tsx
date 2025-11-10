@@ -31,6 +31,11 @@ function LeaderboardContent() {
   const currentUserRank = useQuery(api.leaderboard.getCurrentUserRank);
   const pointHistory = useQuery(api.leaderboard.getPointHistory, { limit: 20 });
 
+  // Calculate days remaining in current month
+  const today = new Date();
+  const endOfMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+  const daysRemaining = Math.ceil((endOfMonth.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+
   if (leaderboard === undefined || currentUserRank === undefined || pointHistory === undefined) {
     return (
       <DashboardLayout>
@@ -67,7 +72,7 @@ function LeaderboardContent() {
                   1,000
                 </div>
                 <Badge variant="secondary" className="mt-2">
-                  Ends in 15 days
+                  Ends in {daysRemaining} {daysRemaining === 1 ? 'day' : 'days'}
                 </Badge>
               </div>
             </div>

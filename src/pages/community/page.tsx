@@ -171,7 +171,7 @@ function CommunityContent() {
                   Find Players
                 </CardTitle>
                 <CardDescription className="uppercase tracking-wide">
-                  Search by name or username
+                  Search by username
                 </CardDescription>
               </CardHeader>
               <CardContent>

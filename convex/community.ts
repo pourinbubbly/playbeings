@@ -70,16 +70,18 @@ export const followUser = mutation({
         followerCount: targetFollowerCount + 1,
       });
 
-      // Create notification for the followed user
-      await ctx.db.insert("notifications", {
-        userId: args.userId,
-        type: "follow",
-        title: "New Follower",
-        message: `${currentUser.username || currentUser.name || "Someone"} started following you!`,
-        isRead: false,
-        link: `/user/${currentUser._id}`,
-        createdAt: Date.now(),
-      });
+      // Create notification for the followed user (if social notifications enabled)
+      if (targetUser.notificationPreferences?.social !== false) {
+        await ctx.db.insert("notifications", {
+          userId: args.userId,
+          type: "follow",
+          title: "New Follower",
+          message: `${currentUser.username || currentUser.name || "Someone"} started following you!`,
+          isRead: false,
+          link: `/user/${currentUser._id}`,
+          createdAt: Date.now(),
+        });
+      }
     }
 
     return { success: true };
@@ -311,17 +313,20 @@ export const addComment = mutation({
       createdAt: Date.now(),
     });
 
-    // Create notification for the profile owner (if not commenting on own profile)
+    // Create notification for the profile owner (if not commenting on own profile and social notifications enabled)
     if (args.profileUserId !== currentUser._id) {
-      await ctx.db.insert("notifications", {
-        userId: args.profileUserId,
-        type: "comment",
-        title: "New Comment",
-        message: `${currentUser.username || currentUser.name || "Someone"} commented on your profile`,
-        isRead: false,
-        link: `/user/${args.profileUserId}`,
-        createdAt: Date.now(),
-      });
+      const profileOwner = await ctx.db.get(args.profileUserId);
+      if (profileOwner?.notificationPreferences?.social !== false) {
+        await ctx.db.insert("notifications", {
+          userId: args.profileUserId,
+          type: "comment",
+          title: "New Comment",
+          message: `${currentUser.username || currentUser.name || "Someone"} commented on your profile`,
+          isRead: false,
+          link: `/user/${args.profileUserId}`,
+          createdAt: Date.now(),
+        });
+      }
     }
 
     return { success: true };
@@ -416,12 +421,18 @@ export const searchUsers = query({
     const allUsers = await ctx.db.query("users").collect();
     
     const searchLower = args.searchTerm.toLowerCase();
-    const filteredUsers = allUsers.filter((user) => {
-      const nameMatch = user.name?.toLowerCase().includes(searchLower);
-      const usernameMatch = user.username?.toLowerCase().includes(searchLower);
-      return nameMatch || usernameMatch;
-    }).slice(0, 20);
+    
+    // Prioritize username matches over name matches
+    const usernameMatches = allUsers.filter((user) => 
+      user.username?.toLowerCase().includes(searchLower)
+    );
+    
+    const nameMatches = allUsers.filter((user) => 
+      !user.username?.toLowerCase().includes(searchLower) &&
+      user.name?.toLowerCase().includes(searchLower)
+    );
 
-    return filteredUsers;
+    // Return username matches first, then name matches, limited to 20 total
+    return [...usernameMatches, ...nameMatches].slice(0, 20);
   },
 });

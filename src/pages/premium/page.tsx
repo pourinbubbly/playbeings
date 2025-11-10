@@ -294,12 +294,29 @@ function PremiumPassContent() {
                         );
                         const hasBonus = quest.pointsReward && quest.pointsReward > 0;
 
+                        // Calculate which day of the pass the user is on
+                        const passStartDate = passInfo ? new Date(passInfo.purchaseDate) : new Date();
+                        const today = new Date();
+                        const daysSinceStart = Math.floor((today.getTime() - passStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+                        // Determine button state
+                        const isToday = quest.dayNumber === daysSinceStart;
+                        const isFuture = quest.dayNumber && quest.dayNumber > daysSinceStart;
+                        const isPast = quest.dayNumber && quest.dayNumber < daysSinceStart;
+
+                        // Calculate unlock date for future quests
+                        const unlockDate = new Date(passStartDate);
+                        unlockDate.setDate(unlockDate.getDate() + (quest.dayNumber || 1) - 1);
+                        const unlockDateString = unlockDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
                         return (
                           <div
                             key={quest.id}
                             className={`glass-card p-5 border-2 transition-all ${
                               progress?.claimed
                                 ? "border-[var(--neon-purple)]/20 opacity-70"
+                                : isFuture 
+                                ? "border-[var(--neon-cyan)]/10 opacity-50"
                                 : "border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
                             }`}
                           >
@@ -338,7 +355,20 @@ function PremiumPassContent() {
 
                               {/* Action Button */}
                               <div className="flex-shrink-0">
-                                {!progress?.claimed ? (
+                                {progress?.claimed ? (
+                                  <div className="glass-card border-2 border-[var(--neon-purple)]/30 px-6 py-2 bg-[var(--neon-purple)]/10">
+                                    <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide flex items-center gap-2">
+                                      <Trophy className="w-4 h-4" />
+                                      Claimed
+                                    </span>
+                                  </div>
+                                ) : isFuture ? (
+                                  <div className="glass-card border-2 border-muted/30 px-6 py-2 bg-muted/5">
+                                    <span className="text-sm text-muted-foreground font-semibold uppercase tracking-wide text-center">
+                                      {unlockDateString}
+                                    </span>
+                                  </div>
+                                ) : isToday ? (
                                   <Button
                                     onClick={() => handleClaimReward(quest.id)}
                                     disabled={selectedQuestId === quest.id}
@@ -356,14 +386,13 @@ function PremiumPassContent() {
                                       </>
                                     )}
                                   </Button>
-                                ) : (
-                                  <div className="glass-card border-2 border-[var(--neon-purple)]/30 px-6 py-2 bg-[var(--neon-purple)]/10">
-                                    <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide flex items-center gap-2">
-                                      <Trophy className="w-4 h-4" />
-                                      Claimed
+                                ) : isPast ? (
+                                  <div className="glass-card border-2 border-destructive/30 px-6 py-2 bg-destructive/5">
+                                    <span className="text-sm text-destructive font-semibold uppercase tracking-wide">
+                                      Missed
                                     </span>
                                   </div>
-                                )}
+                                ) : null}
                               </div>
                             </div>
                           </div>

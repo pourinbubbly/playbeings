@@ -29,6 +29,13 @@ export default defineSchema({
     // Premium Pass
     hasPremiumPass: v.optional(v.boolean()),
     premiumPassExpiry: v.optional(v.number()),
+    // Notification Preferences
+    notificationPreferences: v.optional(v.object({
+      quests: v.boolean(),
+      rewards: v.boolean(),
+      social: v.boolean(),
+      messages: v.boolean(),
+    })),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_steam_id", ["steamId"])

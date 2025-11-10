@@ -177,6 +177,49 @@ export const getUserByUsername = query({
   },
 });
 
+export const updateNotificationPreferences = mutation({
+  args: {
+    quests: v.boolean(),
+    rewards: v.boolean(),
+    social: v.boolean(),
+    messages: v.boolean(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        code: "UNAUTHENTICATED",
+        message: "User not logged in",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier),
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    await ctx.db.patch(user._id, {
+      notificationPreferences: {
+        quests: args.quests,
+        rewards: args.rewards,
+        social: args.social,
+        messages: args.messages,
+      },
+    });
+
+    return { success: true };
+  },
+});
+
 export const deleteAccount = mutation({
   args: {},
   handler: async (ctx) => {

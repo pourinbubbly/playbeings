@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
+import { Switch } from "@/components/ui/switch.tsx";
 import { AlertCircle, Trash2, Shield, Bell, User, Mail } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -27,9 +28,35 @@ import { useAuth } from "@/hooks/use-auth.ts";
 function SettingsContent() {
   const currentUser = useQuery(api.users.getCurrentUser);
   const deleteAccount = useMutation(api.users.deleteAccount);
+  const updateNotificationPrefs = useMutation(api.users.updateNotificationPreferences);
   const { signoutRedirect } = useAuth();
   const navigate = useNavigate();
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Default notification preferences to true if not set
+  const notificationPrefs = currentUser?.notificationPreferences ?? {
+    quests: true,
+    rewards: true,
+    social: true,
+    messages: true,
+  };
+
+  const [localPrefs, setLocalPrefs] = useState(notificationPrefs);
+
+  const handleTogglePreference = async (type: 'quests' | 'rewards' | 'social' | 'messages', value: boolean) => {
+    const newPrefs = { ...localPrefs, [type]: value };
+    setLocalPrefs(newPrefs);
+    
+    try {
+      await updateNotificationPrefs(newPrefs);
+      toast.success("Notification preferences updated");
+    } catch (error) {
+      console.error("Update error:", error);
+      toast.error("Failed to update preferences");
+      // Revert on error
+      setLocalPrefs(localPrefs);
+    }
+  };
 
   const handleDeleteAccount = async () => {
     setIsDeleting(true);
@@ -182,21 +209,22 @@ function SettingsContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
                 Quest Notifications
               </p>
               <p className="text-sm text-muted-foreground">
-                Get notified about new daily quests
+                Get notified about new daily quests and completions
               </p>
             </div>
-            <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              On
-            </div>
+            <Switch
+              checked={localPrefs.quests}
+              onCheckedChange={(checked) => handleTogglePreference('quests', checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
                 Reward Notifications
               </p>
@@ -204,13 +232,14 @@ function SettingsContent() {
                 Get notified about reward status updates
               </p>
             </div>
-            <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              On
-            </div>
+            <Switch
+              checked={localPrefs.rewards}
+              onCheckedChange={(checked) => handleTogglePreference('rewards', checked)}
+            />
           </div>
 
           <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
-            <div className="space-y-1">
+            <div className="space-y-1 flex-1">
               <p className="font-semibold text-foreground uppercase tracking-wide">
                 Social Notifications
               </p>
@@ -218,9 +247,25 @@ function SettingsContent() {
                 Get notified about new followers and comments
               </p>
             </div>
-            <div className="text-sm text-[var(--neon-cyan)] font-semibold">
-              On
+            <Switch
+              checked={localPrefs.social}
+              onCheckedChange={(checked) => handleTogglePreference('social', checked)}
+            />
+          </div>
+
+          <div className="flex items-center justify-between p-4 glass-card border border-[var(--neon-cyan)]/30">
+            <div className="space-y-1 flex-1">
+              <p className="font-semibold text-foreground uppercase tracking-wide">
+                Message Notifications
+              </p>
+              <p className="text-sm text-muted-foreground">
+                Get notified about new messages
+              </p>
             </div>
+            <Switch
+              checked={localPrefs.messages}
+              onCheckedChange={(checked) => handleTogglePreference('messages', checked)}
+            />
           </div>
         </CardContent>
       </Card>
