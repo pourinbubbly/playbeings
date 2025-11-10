@@ -88,18 +88,28 @@ export function DailyCheckInCard() {
       
       if (error instanceof Error) {
         if (error.message.includes("Already checked in")) {
-          toast.error("Already checked in today");
-        } else if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
-          toast.error("Transaction cancelled", {
+          toast.error("Already checked in today", {
+            description: "Come back tomorrow for your next check-in!"
+          });
+        } else if (error.message.includes("cancelled by user")) {
+          toast.error("Check-in cancelled", {
             description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Insufficient SOL")) {
+          toast.error("Insufficient Balance", {
+            description: "You need at least 0.001 SOL for check-in",
           });
         } else if (error.message.includes("Wallet not connected")) {
           toast.error("Wallet not connected", {
             description: "Please connect your Backpack wallet first",
           });
+        } else if (error.message.includes("multiple attempts")) {
+          toast.error("Network Error", {
+            description: "Please check your connection and try again",
+          });
         } else {
           toast.error("Check-in failed", {
-            description: "Please try again or refresh the page",
+            description: error.message || "Please try again or refresh the page",
           });
         }
       } else {

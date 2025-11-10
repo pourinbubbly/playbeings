@@ -78,186 +78,236 @@ export async function createProfileCommentTransaction(
   commentContent: string
 ): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
-  try {
-    const connection = new Connection(CARV_RPC_URL, {
-      commitment: "confirmed",
-      confirmTransactionInitialTimeout: 60000,
-    });
-    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+  let retryCount = 0;
+  const maxRetries = 2;
 
-    console.log("Creating profile comment transaction on CARV SVM...");
-
-    const transaction = new Transaction();
-
-    // Small transfer to self (0.001 SOL)
-    const lamports = 1000000; // 0.001 SOL
-    
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: walletPubkey,
-        lamports,
-      })
-    );
-
-    // Add comment metadata as memo
-    const commentData = JSON.stringify({
-      type: "PROFILE_COMMENT",
-      timestamp: new Date().toISOString(),
-      profileUsername,
-      comment: commentContent.substring(0, 200), // Limit comment length in tx
-      app: "PlayBeings",
-    });
-    
-    const memoData = new TextEncoder().encode(commentData);
-    
-    transaction.add({
-      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData),
-    });
-
-    // Set transaction metadata
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubkey;
-
-    console.log("Requesting Backpack approval for comment...");
-    
-    // Sign and send with Backpack
-    const { signature } = await window.backpack.signAndSendTransaction(transaction);
-    
-    console.log("Comment transaction submitted! Tx:", signature);
-
-    // Verify transaction on-chain (with extended timeout)
-    const confirmationPromise = connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-    
-    // Add timeout to prevent hanging (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
-    });
-    
+  while (retryCount <= maxRetries) {
     try {
-      await Promise.race([confirmationPromise, timeoutPromise]);
-      console.log("Comment transaction confirmed!");
-    } catch (confirmError) {
-      // Transaction submitted but confirmation timed out
-      // It might still be processing - return signature anyway
-      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating profile comment transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Small transfer to self (0.001 SOL)
+      const lamports = 1000000; // 0.001 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: walletPubkey,
+          lamports,
+        })
+      );
+
+      // Add comment metadata as memo
+      const commentData = JSON.stringify({
+        type: "PROFILE_COMMENT",
+        timestamp: new Date().toISOString(),
+        profileUsername,
+        comment: commentContent.substring(0, 200),
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(commentData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for comment...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Comment transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Comment transaction confirmed!");
+      } catch (confirmError) {
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Profile comment transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || 
+            error.message.includes("User rejected") ||
+            error.message.includes("User cancelled")) {
+          throw new Error("Transaction cancelled by user");
+        }
+        
+        if (error.message.includes("Insufficient funds")) {
+          throw new Error("Insufficient SOL balance. You need at least 0.001 SOL for the transaction.");
+        }
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
-    
-    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
-    
-    return { 
-      signature, 
-      explorerUrl,
-    };
-  } catch (error) {
-    console.error("Profile comment transaction failed:", error);
-    throw error;
   }
+
+  throw new Error("Failed to create comment transaction after multiple attempts");
 }
 
 export async function performDailyCheckInTransaction(): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
-  try {
-    const connection = new Connection(CARV_RPC_URL, {
-      commitment: "confirmed",
-      confirmTransactionInitialTimeout: 60000,
-    });
-    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+  let retryCount = 0;
+  const maxRetries = 2;
 
-    console.log("Creating daily check-in transaction on CARV SVM...");
-
-    const transaction = new Transaction();
-
-    // Small transfer to self (0.001 SOL)
-    const lamports = 1000000; // 0.001 SOL
-    
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: walletPubkey,
-        lamports,
-      })
-    );
-
-    // Add check-in metadata as memo (using TextEncoder instead of Buffer)
-    const checkInData = JSON.stringify({
-      type: "DAILY_CHECK_IN",
-      timestamp: new Date().toISOString(),
-      app: "PlayBeings",
-    });
-    
-    const memoData = new TextEncoder().encode(checkInData);
-    
-    transaction.add({
-      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData),
-    });
-
-    // Set transaction metadata
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubkey;
-
-    console.log("Requesting Backpack approval for check-in...");
-    
-    // Sign and send with Backpack
-    const { signature } = await window.backpack.signAndSendTransaction(transaction);
-    
-    console.log("Check-in transaction submitted! Tx:", signature);
-
-    // Verify transaction on-chain (with extended timeout)
-    const confirmationPromise = connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-    
-    // Add timeout to prevent hanging (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
-    });
-    
+  while (retryCount <= maxRetries) {
     try {
-      await Promise.race([confirmationPromise, timeoutPromise]);
-      console.log("Check-in transaction confirmed!");
-    } catch (confirmError) {
-      // Transaction submitted but confirmation timed out
-      // It might still be processing - return signature anyway
-      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating daily check-in transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Small transfer to self (0.001 SOL)
+      const lamports = 1000000; // 0.001 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: walletPubkey,
+          lamports,
+        })
+      );
+
+      // Add check-in metadata as memo
+      const checkInData = JSON.stringify({
+        type: "DAILY_CHECK_IN",
+        timestamp: new Date().toISOString(),
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(checkInData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for check-in...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Check-in transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Check-in transaction confirmed!");
+      } catch (confirmError) {
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Daily check-in transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || 
+            error.message.includes("User rejected") ||
+            error.message.includes("User cancelled")) {
+          throw new Error("Transaction cancelled by user");
+        }
+        
+        if (error.message.includes("Insufficient funds")) {
+          throw new Error("Insufficient SOL balance. You need at least 0.001 SOL for the transaction.");
+        }
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
-    
-    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
-    
-    return { 
-      signature, 
-      explorerUrl,
-    };
-  } catch (error) {
-    console.error("Daily check-in transaction failed:", error);
-    throw error;
   }
+
+  throw new Error("Failed to complete check-in transaction after multiple attempts");
 }
 
 export async function completeQuestTransaction(
@@ -391,95 +441,120 @@ export async function deleteProfileCommentTransaction(
   profileUsername: string
 ): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
-  try {
-    const connection = new Connection(CARV_RPC_URL, {
-      commitment: "confirmed",
-      confirmTransactionInitialTimeout: 60000,
-    });
-    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+  let retryCount = 0;
+  const maxRetries = 2;
 
-    console.log("Creating comment deletion transaction on CARV SVM...");
-
-    const transaction = new Transaction();
-
-    // Small transfer to self (0.001 SOL)
-    const lamports = 1000000; // 0.001 SOL
-    
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: walletPubkey,
-        lamports,
-      })
-    );
-
-    // Add deletion metadata as memo
-    const deleteData = JSON.stringify({
-      type: "DELETE_PROFILE_COMMENT",
-      timestamp: new Date().toISOString(),
-      commentId,
-      profileUsername,
-      app: "PlayBeings",
-    });
-    
-    const memoData = new TextEncoder().encode(deleteData);
-    
-    transaction.add({
-      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData),
-    });
-
-    // Set transaction metadata
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubkey;
-
-    console.log("Requesting Backpack approval for comment deletion...");
-    
-    // Sign and send with Backpack
-    const { signature } = await window.backpack.signAndSendTransaction(transaction);
-    
-    console.log("Comment deletion transaction submitted! Tx:", signature);
-
-    // Verify transaction on-chain (with extended timeout)
-    const confirmationPromise = connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-    
-    // Add timeout to prevent hanging (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
-    });
-    
+  while (retryCount <= maxRetries) {
     try {
-      await Promise.race([confirmationPromise, timeoutPromise]);
-      console.log("Comment deletion transaction confirmed!");
-    } catch (confirmError) {
-      // Transaction submitted but confirmation timed out
-      // It might still be processing - return signature anyway
-      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating comment deletion transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Small transfer to self (0.001 SOL)
+      const lamports = 1000000; // 0.001 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: walletPubkey,
+          lamports,
+        })
+      );
+
+      // Add deletion metadata as memo
+      const deleteData = JSON.stringify({
+        type: "DELETE_PROFILE_COMMENT",
+        timestamp: new Date().toISOString(),
+        commentId,
+        profileUsername,
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(deleteData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for comment deletion...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Comment deletion transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Comment deletion transaction confirmed!");
+      } catch (confirmError) {
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Comment deletion transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || 
+            error.message.includes("User rejected") ||
+            error.message.includes("User cancelled")) {
+          throw new Error("Transaction cancelled by user");
+        }
+        
+        if (error.message.includes("Insufficient funds")) {
+          throw new Error("Insufficient SOL balance. You need at least 0.001 SOL for the transaction.");
+        }
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
-    
-    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
-    
-    return { 
-      signature, 
-      explorerUrl,
-    };
-  } catch (error) {
-    console.error("Comment deletion transaction failed:", error);
-    throw error;
   }
+
+  throw new Error("Failed to delete comment transaction after multiple attempts");
 }
 
 export async function mintNFTOnCARV(
@@ -489,14 +564,19 @@ export async function mintNFTOnCARV(
   achievementImage: string
 ): Promise<{ signature: string; explorerUrl: string; mintAddress: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
-  try {
+  // NFT minting is complex, only retry once on network errors
+  let retryCount = 0;
+  const maxRetries = 1;
+
+  while (retryCount <= maxRetries) {
+    try {
     const connection = new Connection(CARV_RPC_URL, {
       commitment: "confirmed",
       confirmTransactionInitialTimeout: 60000,
@@ -647,107 +727,157 @@ export async function mintNFTOnCARV(
     console.log("- Transaction:", signature);
     console.log("- Explorer:", explorerUrl);
     
-    return { 
-      signature, 
-      explorerUrl,
-      mintAddress
-    };
-  } catch (error) {
-    console.error("NFT minting failed:", error);
-    throw error;
+      return { 
+        signature, 
+        explorerUrl,
+        mintAddress
+      };
+    } catch (error) {
+      console.error(`NFT minting failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || 
+            error.message.includes("User rejected") ||
+            error.message.includes("User cancelled")) {
+          throw new Error("Transaction cancelled by user");
+        }
+        
+        if (error.message.includes("Insufficient funds")) {
+          throw new Error("Insufficient SOL balance. You need SOL for the transaction and rent.");
+        }
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
   }
+
+  throw new Error("Failed to mint NFT after multiple attempts");
 }
 
 export async function purchasePremiumPassTransaction(): Promise<{ signature: string; explorerUrl: string }> {
   if (!window.backpack) {
-    throw new Error("Backpack wallet not found");
+    throw new Error("Backpack wallet not found. Please install the Backpack extension.");
   }
 
   if (!window.backpack.publicKey) {
-    throw new Error("Wallet not connected");
+    throw new Error("Wallet not connected. Please connect your Backpack wallet first.");
   }
 
-  try {
-    const connection = new Connection(CARV_RPC_URL, {
-      commitment: "confirmed",
-      confirmTransactionInitialTimeout: 60000,
-    });
-    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+  let retryCount = 0;
+  const maxRetries = 2;
 
-    console.log("Creating Premium Pass purchase transaction on CARV SVM...");
-
-    const transaction = new Transaction();
-
-    // Transfer 0.05 SOL to PlayBeings treasury (premium pass payment)
-    const treasuryAddress = new PublicKey("8ZeTZaujAWzR8UkLsXGeo8LSd8LoBgkTzXdGEbAjRAjk");
-    const lamports = 50000000; // 0.05 SOL
-    
-    transaction.add(
-      SystemProgram.transfer({
-        fromPubkey: walletPubkey,
-        toPubkey: treasuryAddress,
-        lamports,
-      })
-    );
-
-    // Add premium pass metadata as memo
-    const purchaseData = JSON.stringify({
-      type: "PREMIUM_PASS_PURCHASE",
-      timestamp: new Date().toISOString(),
-      amount: "0.05 SOL",
-      duration: "30 days",
-      app: "PlayBeings",
-    });
-    
-    const memoData = new TextEncoder().encode(purchaseData);
-    
-    transaction.add({
-      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
-      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
-      data: Buffer.from(memoData),
-    });
-
-    // Set transaction metadata
-    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
-    transaction.recentBlockhash = blockhash;
-    transaction.feePayer = walletPubkey;
-
-    console.log("Requesting Backpack approval for Premium Pass purchase...");
-    
-    // Sign and send with Backpack
-    const { signature } = await window.backpack.signAndSendTransaction(transaction);
-    
-    console.log("Premium Pass purchase transaction submitted! Tx:", signature);
-
-    // Verify transaction on-chain (with extended timeout)
-    const confirmationPromise = connection.confirmTransaction({
-      signature,
-      blockhash,
-      lastValidBlockHeight,
-    }, "confirmed");
-    
-    // Add timeout to prevent hanging (60 seconds)
-    const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
-    });
-    
+  while (retryCount <= maxRetries) {
     try {
-      await Promise.race([confirmationPromise, timeoutPromise]);
-      console.log("Premium Pass purchase transaction confirmed!");
-    } catch (confirmError) {
-      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating Premium Pass purchase transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Transfer 0.05 SOL to PlayBeings treasury (premium pass payment)
+      const treasuryAddress = new PublicKey("8ZeTZaujAWzR8UkLsXGeo8LSd8LoBgkTzXdGEbAjRAjk");
+      const lamports = 50000000; // 0.05 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: treasuryAddress,
+          lamports,
+        })
+      );
+
+      // Add premium pass metadata as memo
+      const purchaseData = JSON.stringify({
+        type: "PREMIUM_PASS_PURCHASE",
+        timestamp: new Date().toISOString(),
+        amount: "0.05 SOL",
+        duration: "30 days",
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(purchaseData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for Premium Pass purchase...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Premium Pass purchase transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Premium Pass purchase transaction confirmed!");
+      } catch (confirmError) {
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Premium Pass purchase transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || 
+            error.message.includes("User rejected") ||
+            error.message.includes("User cancelled")) {
+          throw new Error("Transaction cancelled by user");
+        }
+        
+        if (error.message.includes("Insufficient funds")) {
+          throw new Error("Insufficient SOL balance. You need at least 0.05 SOL to purchase Premium Pass.");
+        }
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
-    
-    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
-    
-    return { 
-      signature, 
-      explorerUrl,
-    };
-  } catch (error) {
-    console.error("Premium Pass purchase transaction failed:", error);
-    throw error;
   }
+
+  throw new Error("Failed to purchase Premium Pass after multiple attempts");
 }
 
 export async function claimPremiumQuestTransaction(

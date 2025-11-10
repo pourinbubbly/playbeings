@@ -170,18 +170,26 @@ function CardsContent() {
           toast.error("Already Minted", {
             description: "This achievement has already been minted as an NFT",
           });
-        } else if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
-          toast.error("Transaction Cancelled", {
+        } else if (error.message.includes("cancelled by user")) {
+          toast.error("Minting Cancelled", {
             description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Insufficient SOL")) {
+          toast.error("Insufficient Balance", {
+            description: "You need SOL for the transaction and NFT rent",
+          });
+        } else if (error.message.includes("multiple attempts")) {
+          toast.error("Network Error", {
+            description: "Please check your connection and try again",
           });
         } else {
           toast.error("Minting failed", {
-            description: error.message || "Transaction was rejected or failed",
+            description: error.message || "Please try again",
           });
         }
       } else {
         toast.error("Minting failed", {
-          description: "Transaction was rejected or failed",
+          description: "An unexpected error occurred",
         });
       }
     } finally {

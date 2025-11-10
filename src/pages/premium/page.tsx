@@ -49,7 +49,9 @@ function PremiumPassContent() {
 
     setIsPurchasing(true);
     try {
-      toast.info("Creating transaction on CARV SVM Testnet...");
+      toast.info("Creating transaction on CARV SVM Testnet...", {
+        description: "Please approve in Backpack wallet"
+      });
       
       const { signature, explorerUrl } = await purchasePremiumPassTransaction();
       
@@ -66,11 +68,30 @@ function PremiumPassContent() {
       // Initialize quests if needed
       await initQuests({});
       
-      toast.success("Premium Pass Activated! 🎉");
+      toast.success("Premium Pass Activated! 🎉", {
+        description: "Your exclusive quests are now unlocked"
+      });
     } catch (error) {
       console.error("Purchase failed:", error);
       const err = error as Error;
-      toast.error("Purchase failed", { description: err.message });
+      
+      if (err.message.includes("cancelled by user")) {
+        toast.error("Purchase cancelled", { 
+          description: "You cancelled the transaction in your wallet" 
+        });
+      } else if (err.message.includes("Insufficient SOL")) {
+        toast.error("Insufficient Balance", { 
+          description: "You need at least 0.05 SOL to purchase Premium Pass" 
+        });
+      } else if (err.message.includes("multiple attempts")) {
+        toast.error("Network Error", { 
+          description: "Please check your connection and try again" 
+        });
+      } else {
+        toast.error("Purchase failed", { 
+          description: err.message || "Please try again" 
+        });
+      }
     } finally {
       setIsPurchasing(false);
     }

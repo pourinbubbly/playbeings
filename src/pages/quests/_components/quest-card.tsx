@@ -88,9 +88,13 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
       console.error("Quest claim error:", error);
       
       if (error instanceof Error) {
-        if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
-          toast.error("Transaction cancelled", {
+        if (error.message.includes("cancelled by user")) {
+          toast.error("Quest claim cancelled", {
             description: "You cancelled the transaction in your wallet",
+          });
+        } else if (error.message.includes("Insufficient SOL")) {
+          toast.error("Insufficient Balance", {
+            description: "You need at least 0.001 SOL to claim quest",
           });
         } else if (error.message.includes("Wallet not connected")) {
           toast.error("Wallet not connected", {
@@ -104,9 +108,13 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
           toast.error("Quest not complete", {
             description: "You haven't met the quest requirements yet",
           });
+        } else if (error.message.includes("multiple attempts")) {
+          toast.error("Network Error", {
+            description: "Please check your connection and try again",
+          });
         } else {
           toast.error("Failed to claim reward", {
-            description: "Please try again or refresh the page",
+            description: error.message || "Please try again or refresh the page",
           });
         }
       } else {
