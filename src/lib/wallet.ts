@@ -636,3 +636,94 @@ export async function mintNFTOnCARV(
     throw error;
   }
 }
+
+export async function purchasePremiumPassTransaction(): Promise<{ signature: string; explorerUrl: string }> {
+  if (!window.backpack) {
+    throw new Error("Backpack wallet not found");
+  }
+
+  if (!window.backpack.publicKey) {
+    throw new Error("Wallet not connected");
+  }
+
+  try {
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
+    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+    console.log("Creating Premium Pass purchase transaction on CARV SVM...");
+
+    const transaction = new Transaction();
+
+    // Transfer 0.05 SOL to self (premium pass payment)
+    const lamports = 50000000; // 0.05 SOL
+    
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: walletPubkey,
+        toPubkey: walletPubkey,
+        lamports,
+      })
+    );
+
+    // Add premium pass metadata as memo
+    const purchaseData = JSON.stringify({
+      type: "PREMIUM_PASS_PURCHASE",
+      timestamp: new Date().toISOString(),
+      amount: "0.05 SOL",
+      duration: "30 days",
+      app: "PlayBeings",
+    });
+    
+    const memoData = new TextEncoder().encode(purchaseData);
+    
+    transaction.add({
+      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      data: Buffer.from(memoData),
+    });
+
+    // Set transaction metadata
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    console.log("Requesting Backpack approval for Premium Pass purchase...");
+    
+    // Sign and send with Backpack
+    const { signature } = await window.backpack.signAndSendTransaction(transaction);
+    
+    console.log("Premium Pass purchase transaction submitted! Tx:", signature);
+
+    // Verify transaction on-chain (with extended timeout)
+    const confirmationPromise = connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, "confirmed");
+    
+    // Add timeout to prevent hanging (60 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+    });
+    
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Premium Pass purchase transaction confirmed!");
+    } catch (confirmError) {
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
+    
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+    
+    return { 
+      signature, 
+      explorerUrl,
+    };
+  } catch (error) {
+    console.error("Premium Pass purchase transaction failed:", error);
+    throw error;
+  }
+}

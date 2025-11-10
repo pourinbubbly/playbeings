@@ -26,6 +26,9 @@ export default defineSchema({
     currentStreak: v.optional(v.number()),
     longestStreak: v.optional(v.number()),
     lastCheckIn: v.optional(v.number()),
+    // Premium Pass
+    hasPremiumPass: v.optional(v.boolean()),
+    premiumPassExpiry: v.optional(v.number()),
   })
     .index("by_token", ["tokenIdentifier"])
     .index("by_steam_id", ["steamId"])
@@ -208,4 +211,50 @@ export default defineSchema({
     .index("by_blocker", ["blockerId"])
     .index("by_blocked", ["blockedId"])
     .index("by_blocker_blocked", ["blockerId", "blockedId"]),
+
+  premiumPasses: defineTable({
+    userId: v.id("users"),
+    txHash: v.string(),
+    purchaseDate: v.number(),
+    expiryDate: v.number(),
+    isActive: v.boolean(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_tx", ["txHash"]),
+
+  premiumQuests: defineTable({
+    month: v.string(), // "2025-01"
+    quests: v.array(
+      v.object({
+        id: v.string(),
+        type: v.string(), // "playtime", "achievements", "checkin"
+        title: v.string(),
+        description: v.string(),
+        requirement: v.number(),
+        rewardType: v.string(), // "emoji", "sticker", "points"
+        rewardData: v.string(), // emoji char or sticker URL
+        icon: v.string(),
+      })
+    ),
+  }).index("by_month", ["month"]),
+
+  userPremiumQuests: defineTable({
+    userId: v.id("users"),
+    questId: v.string(),
+    month: v.string(),
+    progress: v.number(),
+    completed: v.boolean(),
+    claimed: v.boolean(),
+    rewardType: v.optional(v.string()),
+    rewardData: v.optional(v.string()),
+  })
+    .index("by_user_and_month", ["userId", "month"])
+    .index("by_user_quest_month", ["userId", "questId", "month"]),
+
+  premiumRewards: defineTable({
+    userId: v.id("users"),
+    rewardType: v.string(), // "emoji", "sticker"
+    rewardData: v.string(),
+    earnedAt: v.number(),
+  }).index("by_user", ["userId"]),
 });

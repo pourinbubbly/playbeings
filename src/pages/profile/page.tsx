@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink, Crop } from "lucide-react";
+import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink, Crop, Crown } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { createProfileCommentTransaction, deleteProfileCommentTransaction } from "@/lib/wallet.ts";
@@ -38,6 +38,7 @@ export default function Profile() {
 
 function ProfileContent() {
   const currentUser = useQuery(api.users.getCurrentUser);
+  const passInfo = useQuery(api.premium.getPremiumPassInfo, {});
   const updateProfile = useMutation(api.users.updateProfile);
   const generateUploadUrl = useMutation(api.users.generateUploadUrl);
   
@@ -234,9 +235,17 @@ function ProfileContent() {
                 )}
               </div>
               <div>
-                <h3 className="text-xl font-bold text-[var(--neon-cyan)]">
-                  {username || currentUser?.name || "No username"}
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-xl font-bold text-[var(--neon-cyan)]">
+                    {username || currentUser?.name || "No username"}
+                  </h3>
+                  {passInfo?.hasPremiumPass && (
+                    <div className="flex items-center gap-1 bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 border border-yellow-500 text-yellow-500 px-2 py-1 rounded text-xs font-bold uppercase tracking-wider">
+                      <Crown className="w-3 h-3" />
+                      <span>Premium</span>
+                    </div>
+                  )}
+                </div>
                 <p className="text-sm text-muted-foreground">{bio || "No bio"}</p>
                 
                 {/* Social Links Preview */}

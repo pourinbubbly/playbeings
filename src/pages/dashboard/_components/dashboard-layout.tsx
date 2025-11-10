@@ -19,6 +19,7 @@ import {
   User,
   Settings,
   Users,
+  Crown,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -39,6 +40,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
   ];
 
   const moreNavItems = [
+    { href: "/premium", icon: Crown, label: "Premium Pass" },
     { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
     { href: "/dashboard/cards", icon: CreditCard, label: "NFT Cards" },
     { href: "/dashboard/nfts", icon: Zap, label: "My NFTs" },

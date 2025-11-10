@@ -39,6 +39,26 @@ export const redeemReward = mutation({
       });
     }
 
+    // Check if user has active premium pass
+    const now = Date.now();
+    const premiumPass = await ctx.db
+      .query("premiumPasses")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("isActive"), true),
+          q.gt(q.field("expiryDate"), now)
+        )
+      )
+      .first();
+
+    if (!premiumPass) {
+      throw new ConvexError({
+        code: "FORBIDDEN",
+        message: "Premium Pass required to redeem rewards",
+      });
+    }
+
     const reward = await ctx.db.get(args.rewardId);
     if (!reward || !reward.isActive) {
       throw new ConvexError({
