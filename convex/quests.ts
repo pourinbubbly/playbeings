@@ -214,13 +214,19 @@ export const syncQuestProgress = mutation({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
 
-    // Calculate today's playtime (simplified: using lastPlayed timestamp as proxy)
-    const todayPlayedGames = userGames.filter(g => {
-      const lastPlayedDate = g.lastPlayed ? new Date(g.lastPlayed * 1000).toISOString().split("T")[0] : null;
-      return lastPlayedDate === today;
-    });
-
-    const todayPlaytimeMinutes = todayPlayedGames.reduce((sum, g) => sum + (g.playtime || 0), 0);
+    // For today's playtime, we need to check playtime snapshots
+    // Get today's playtime records (if any exist)
+    const todayPlaytimeRecords = await ctx.db
+      .query("dailyPlaytime")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", user._id).eq("date", today))
+      .collect();
+    
+    // Calculate total playtime minutes for today
+    const todayPlaytimeMinutes = todayPlaytimeRecords.reduce((sum, record) => sum + (record.playtimeMinutes || 0), 0);
+    
+    // Count unique games played today
+    const todayPlayedGameIds = new Set(todayPlaytimeRecords.map(r => r.appId));
+    const uniqueGamesPlayedToday = todayPlayedGameIds.size;
 
     // Get all achievement records from today for achievement counting
     const todayTimestamp = new Date(today).getTime();
@@ -275,7 +281,7 @@ export const syncQuestProgress = mutation({
         calculatedProgress = todayPlaytimeMinutes;
       } else if (quest.type === "game_count") {
         // For game count quests, count unique games played today
-        calculatedProgress = todayPlayedGames.length;
+        calculatedProgress = uniqueGamesPlayedToday;
       } else if (quest.type === "achievement") {
         // For achievement quests, count today's achievements (trading cards)
         calculatedProgress = todayAchievements.length;

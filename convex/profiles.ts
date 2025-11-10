@@ -124,26 +124,74 @@ export const saveGames = mutation({
       });
     }
 
-    // Delete existing games
+    // Get existing games to track playtime changes
     const existingGames = await ctx.db
       .query("games")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .collect();
+    
+    // Create a map of existing games for quick lookup
+    const existingGamesMap = new Map(existingGames.map(g => [g.appId, g]));
+    
+    // Today's date for tracking daily playtime
+    const today = new Date().toISOString().split("T")[0];
 
-    for (const game of existingGames) {
-      await ctx.db.delete(game._id);
-    }
-
-    // Insert new games
-    for (const game of args.games) {
-      await ctx.db.insert("games", {
-        userId: user._id,
-        appId: game.appId,
-        name: game.name,
-        playtime: game.playtime,
-        imageUrl: game.imageUrl,
-        lastPlayed: game.lastPlayed || undefined,
-      });
+    // Update or insert games, tracking playtime changes
+    for (const newGame of args.games) {
+      const existingGame = existingGamesMap.get(newGame.appId);
+      
+      if (existingGame) {
+        // Calculate playtime increase
+        const playtimeIncrease = newGame.playtime - existingGame.playtime;
+        
+        // If there's an increase, record it for today
+        if (playtimeIncrease > 0) {
+          // Check if we already have a record for today
+          const existingDailyRecord = await ctx.db
+            .query("dailyPlaytime")
+            .withIndex("by_user_appid_date", (q) => 
+              q.eq("userId", user._id).eq("appId", newGame.appId).eq("date", today)
+            )
+            .unique();
+          
+          if (existingDailyRecord) {
+            // Update existing record
+            await ctx.db.patch(existingDailyRecord._id, {
+              playtimeMinutes: existingDailyRecord.playtimeMinutes + playtimeIncrease,
+            });
+          } else {
+            // Create new record
+            await ctx.db.insert("dailyPlaytime", {
+              userId: user._id,
+              appId: newGame.appId,
+              gameName: newGame.name,
+              date: today,
+              playtimeMinutes: playtimeIncrease,
+            });
+          }
+        }
+        
+        // Update the game
+        await ctx.db.patch(existingGame._id, {
+          name: newGame.name,
+          playtime: newGame.playtime,
+          imageUrl: newGame.imageUrl,
+          lastPlayed: newGame.lastPlayed || undefined,
+        });
+      } else {
+        // New game - insert it
+        await ctx.db.insert("games", {
+          userId: user._id,
+          appId: newGame.appId,
+          name: newGame.name,
+          playtime: newGame.playtime,
+          imageUrl: newGame.imageUrl,
+          lastPlayed: newGame.lastPlayed || undefined,
+        });
+        
+        // For new games, we don't record daily playtime since we don't know 
+        // if the playtime was from today or accumulated over time
+      }
     }
 
     return { success: true };

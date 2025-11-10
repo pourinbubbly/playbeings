@@ -67,6 +67,16 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_appid", ["userId", "appId"]),
 
+  dailyPlaytime: defineTable({
+    userId: v.id("users"),
+    appId: v.number(),
+    gameName: v.string(),
+    date: v.string(), // YYYY-MM-DD format
+    playtimeMinutes: v.number(), // Minutes played today for this game
+  })
+    .index("by_user_and_date", ["userId", "date"])
+    .index("by_user_appid_date", ["userId", "appId", "date"]),
+
   dailyQuests: defineTable({
     date: v.string(),
     quests: v.array(
