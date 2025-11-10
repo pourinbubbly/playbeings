@@ -95,7 +95,7 @@ function RewardsContent() {
     <DashboardLayout>
       <div className="space-y-8">
         {/* Header */}
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
+        <div className="glass-card p-6 md:p-8 rounded-lg border border-[var(--neon-cyan)]/20">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-4">
               <div className="w-14 h-14 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">

@@ -188,9 +188,9 @@ function ProfileContent() {
     <DashboardLayout>
       <div className="space-y-8 max-w-4xl mx-auto">
         {/* Header */}
-        <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan">
+        <div className="glass-card p-6 md:p-8 rounded-lg border border-[var(--neon-cyan)]/20">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded bg-black/40 border-2 border-[var(--neon-cyan)] flex items-center justify-center neon-glow-cyan">
+            <div className="w-14 h-14 rounded bg-[var(--neon-cyan)]/10 flex items-center justify-center">
               <User className="w-8 h-8 text-[var(--neon-cyan)]" />
             </div>
             <div>
@@ -205,7 +205,7 @@ function ProfileContent() {
         </div>
 
         {/* Profile Preview */}
-        <Card className="glass-card border-2 border-[var(--neon-purple)]/20">
+        <Card className="glass-card border border-[var(--neon-purple)]/20">
           <CardHeader>
             <CardTitle className="text-xl font-bold gradient-text-purple uppercase tracking-wider">
               Profile Preview
@@ -287,7 +287,7 @@ function ProfileContent() {
         </Card>
 
         {/* Edit Form */}
-        <Card className="glass-card border-2 border-[var(--neon-cyan)]/20">
+        <Card className="glass-card border border-[var(--neon-cyan)]/20">
           <CardHeader>
             <CardTitle className="text-xl font-bold gradient-text-cyber uppercase tracking-wider">
               Profile Information
@@ -306,7 +306,7 @@ function ProfileContent() {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 placeholder="Enter your username"
-                className="glass-card border-2 border-[var(--neon-purple)]/30"
+                className="glass-card border border-[var(--neon-purple)]/20"
               />
             </div>
 
@@ -319,7 +319,7 @@ function ProfileContent() {
                 value={bio}
                 onChange={(e) => setBio(e.target.value)}
                 placeholder="Tell us about yourself..."
-                className="glass-card border-2 border-[var(--neon-purple)]/30 min-h-[100px]"
+                className="glass-card border border-[var(--neon-purple)]/20 min-h-[100px]"
               />
             </div>
 
@@ -333,12 +333,12 @@ function ProfileContent() {
                   value={avatar}
                   onChange={(e) => setAvatar(e.target.value)}
                   placeholder="https://..."
-                  className="glass-card border-2 border-[var(--neon-purple)]/30 flex-1"
+                  className="glass-card border border-[var(--neon-purple)]/20 flex-1"
                 />
                 <Button
                   onClick={() => document.getElementById("avatar-upload")?.click()}
                   disabled={uploadingAvatar}
-                  className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
+                  className="bg-black/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
                   title="Upload and crop avatar"
                 >
                   {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crop className="w-4 h-4" />}
@@ -366,12 +366,12 @@ function ProfileContent() {
                   value={banner}
                   onChange={(e) => setBanner(e.target.value)}
                   placeholder="https://..."
-                  className="glass-card border-2 border-[var(--neon-purple)]/30 flex-1"
+                  className="glass-card border border-[var(--neon-purple)]/20 flex-1"
                 />
                 <Button
                   onClick={() => document.getElementById("banner-upload")?.click()}
                   disabled={uploadingBanner}
-                  className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
+                  className="bg-black/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
                   title="Upload and crop banner"
                 >
                   {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crop className="w-4 h-4" />}
@@ -402,7 +402,7 @@ function ProfileContent() {
         />
 
         {/* Social Links */}
-        <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
+        <Card className="glass-card border border-[var(--neon-magenta)]/20">
           <CardHeader>
             <CardTitle className="text-xl font-bold gradient-text-purple uppercase tracking-wider">
               Social Links
@@ -422,7 +422,7 @@ function ProfileContent() {
                   value={twitter}
                   onChange={(e) => setTwitter(e.target.value)}
                   placeholder="@username"
-                  className="glass-card border-2 border-[var(--neon-purple)]/30"
+                  className="glass-card border border-[var(--neon-purple)]/20"
                 />
               </div>
 
@@ -435,7 +435,7 @@ function ProfileContent() {
                   value={discord}
                   onChange={(e) => setDiscord(e.target.value)}
                   placeholder="username#0000"
-                  className="glass-card border-2 border-[var(--neon-purple)]/30"
+                  className="glass-card border border-[var(--neon-purple)]/20"
                 />
               </div>
 
@@ -448,7 +448,7 @@ function ProfileContent() {
                   value={twitch}
                   onChange={(e) => setTwitch(e.target.value)}
                   placeholder="username"
-                  className="glass-card border-2 border-[var(--neon-purple)]/30"
+                  className="glass-card border border-[var(--neon-purple)]/20"
                 />
               </div>
 
@@ -461,7 +461,7 @@ function ProfileContent() {
                   value={youtube}
                   onChange={(e) => setYoutube(e.target.value)}
                   placeholder="channel name"
-                  className="glass-card border-2 border-[var(--neon-purple)]/30"
+                  className="glass-card border border-[var(--neon-purple)]/20"
                 />
               </div>
             </div>
@@ -473,7 +473,7 @@ function ProfileContent() {
           <Button
             onClick={handleSave}
             disabled={saving}
-            className="glass-card border-2 border-[var(--neon-magenta)] hover:neon-glow-magenta text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider px-8"
+            className="bg-[var(--neon-magenta)]/10 border border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/20 font-bold uppercase tracking-wider px-8"
           >
             {saving ? (
               <>Saving...</>

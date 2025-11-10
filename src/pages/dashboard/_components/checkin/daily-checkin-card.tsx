@@ -22,30 +22,26 @@ export function DailyCheckInCard() {
   // Show loading state while data is loading
   if (checkInStatus === undefined) {
     return (
-      <Card className="glass-card border-2 border-[var(--neon-purple)]/30">
-        <CardHeader>
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-purple)] flex items-center justify-center">
-              <Calendar className="w-6 h-6 text-[var(--neon-purple)]" />
-            </div>
-            <div>
-              <CardTitle className="text-xl text-[var(--neon-purple)] uppercase tracking-wider">
-                Daily Check-In
-              </CardTitle>
-              <CardDescription className="uppercase tracking-wide text-xs">
-                Loading...
-              </CardDescription>
-            </div>
+      <div className="glass-card border border-[var(--neon-purple)]/20 p-6 rounded-lg space-y-6">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded bg-[var(--neon-purple)]/10 flex items-center justify-center">
+            <Calendar className="w-6 h-6 text-[var(--neon-purple)]" />
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-3 gap-4">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="glass-card p-4 border border-[var(--neon-cyan)]/20 h-24 animate-pulse" />
-            ))}
+          <div>
+            <h3 className="text-xl font-bold text-[var(--neon-purple)] uppercase tracking-wider">
+              Daily Check-In
+            </h3>
+            <p className="text-xs text-muted-foreground uppercase tracking-wide">
+              Loading...
+            </p>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+        <div className="grid grid-cols-3 gap-4">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="bg-black/20 p-4 rounded-lg border border-[var(--neon-cyan)]/10 h-24 animate-pulse" />
+          ))}
+        </div>
+      </div>
     );
   }
 
@@ -133,25 +129,25 @@ export function DailyCheckInCard() {
         points={celebrationPoints}
       />
       
-      <Card className="glass-card border-2 border-[var(--neon-purple)]/30">
-      <CardHeader>
+      <div className="glass-card border border-[var(--neon-purple)]/20 p-6 rounded-lg space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded bg-black/40 border-2 border-[var(--neon-purple)] flex items-center justify-center">
+            <div className="w-10 h-10 rounded bg-[var(--neon-purple)]/10 flex items-center justify-center">
               <Calendar className="w-6 h-6 text-[var(--neon-purple)]" />
             </div>
             <div>
-              <CardTitle className="text-xl text-[var(--neon-purple)] uppercase tracking-wider">
+              <h3 className="text-xl font-bold text-[var(--neon-purple)] uppercase tracking-wider">
                 Daily Check-In
-              </CardTitle>
-              <CardDescription className="uppercase tracking-wide text-xs">
+              </h3>
+              <p className="text-xs text-muted-foreground uppercase tracking-wide">
                 Earn points & build your streak
-              </CardDescription>
+              </p>
             </div>
           </div>
           
           {checkInStatus.hasCheckedInToday && (
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)]/30">
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded bg-[var(--neon-cyan)]/10 border border-[var(--neon-cyan)]/30">
               <Check className="w-4 h-4 text-[var(--neon-cyan)]" />
               <span className="text-xs font-semibold text-[var(--neon-cyan)] uppercase tracking-wider">
                 Completed
@@ -159,12 +155,10 @@ export function DailyCheckInCard() {
             </div>
           )}
         </div>
-      </CardHeader>
       
-      <CardContent className="space-y-6">
         {/* Stats Grid */}
         <div className="grid grid-cols-3 gap-4">
-          <div className="glass-card p-4 border border-[var(--neon-cyan)]/20 text-center">
+          <div className="bg-black/20 p-4 rounded-lg border border-[var(--neon-cyan)]/10 text-center">
             <div className="flex items-center justify-center mb-2">
               <Flame className="w-5 h-5 text-[var(--neon-cyan)]" />
             </div>
@@ -176,7 +170,7 @@ export function DailyCheckInCard() {
             </p>
           </div>
 
-          <div className="glass-card p-4 border border-[var(--neon-magenta)]/20 text-center">
+          <div className="bg-black/20 p-4 rounded-lg border border-[var(--neon-magenta)]/10 text-center">
             <div className="flex items-center justify-center mb-2">
               <Trophy className="w-5 h-5 text-[var(--neon-magenta)]" />
             </div>
@@ -188,7 +182,7 @@ export function DailyCheckInCard() {
             </p>
           </div>
 
-          <div className="glass-card p-4 border border-[var(--neon-purple)]/20 text-center">
+          <div className="bg-black/20 p-4 rounded-lg border border-[var(--neon-purple)]/10 text-center">
             <div className="flex items-center justify-center mb-2">
               <Zap className="w-5 h-5 text-[var(--neon-purple)]" />
             </div>
@@ -207,8 +201,8 @@ export function DailyCheckInCard() {
           disabled={!checkInStatus.canCheckIn || isCheckingIn}
           className={
             checkInStatus.hasCheckedInToday
-              ? "w-full glass-card border-2 border-[var(--neon-cyan)]/30 text-[var(--neon-cyan)] font-bold uppercase tracking-wider py-6 cursor-not-allowed opacity-60"
-              : "w-full glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 hover:neon-glow-purple font-bold uppercase tracking-wider py-6"
+              ? "w-full bg-black/20 border border-[var(--neon-cyan)]/30 text-[var(--neon-cyan)] font-bold uppercase tracking-wider py-6 cursor-not-allowed opacity-60"
+              : "w-full bg-[var(--neon-purple)]/10 border border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/20 font-bold uppercase tracking-wider py-6"
           }
         >
           {isCheckingIn ? (
@@ -231,7 +225,7 @@ export function DailyCheckInCard() {
 
         {/* Info */}
         {!checkInStatus.hasCheckedInToday && (
-          <div className="glass-card p-3 border border-[var(--neon-cyan)]/20">
+          <div className="bg-black/10 p-3 rounded border border-[var(--neon-cyan)]/10">
             <p className="text-xs text-muted-foreground uppercase tracking-wide text-center">
               Check in daily to maintain your streak and earn bonus points!
               <br />
@@ -256,7 +250,7 @@ export function DailyCheckInCard() {
                 return (
                   <div
                     key={checkIn._id}
-                    className="aspect-square glass-card border border-[var(--neon-cyan)]/30 rounded flex flex-col items-center justify-center p-1 hover:border-[var(--neon-cyan)]/60 transition-all cursor-pointer group"
+                    className="aspect-square bg-black/20 border border-[var(--neon-cyan)]/20 rounded flex flex-col items-center justify-center p-1 hover:border-[var(--neon-cyan)]/40 transition-all cursor-pointer group"
                     title={`${date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })} - Day ${checkIn.streakDay} - ${checkIn.points} points`}
                   >
                     <div className="text-[var(--neon-cyan)] text-[9px] font-semibold uppercase">
@@ -272,8 +266,7 @@ export function DailyCheckInCard() {
             </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
     </>
   );
 }

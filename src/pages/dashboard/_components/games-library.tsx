@@ -76,7 +76,7 @@ export function GamesLibrary() {
         {showLeftButton && (
           <Button
             onClick={() => scroll("left")}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full backdrop-blur-sm"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -86,7 +86,7 @@ export function GamesLibrary() {
         {showRightButton && (
           <Button
             onClick={() => scroll("right")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full backdrop-blur-sm"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
@@ -96,7 +96,7 @@ export function GamesLibrary() {
           {sortedGames.map((game) => (
             <div
               key={game._id}
-              className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group min-w-[200px] flex-shrink-0"
+              className="bg-black/30 rounded-lg border border-[var(--neon-purple)]/20 overflow-hidden hover:border-[var(--neon-purple)]/40 transition-all group min-w-[200px] flex-shrink-0"
             >
               <div className="aspect-[616/353] bg-black/40 relative overflow-hidden">
                 <img

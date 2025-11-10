@@ -78,16 +78,16 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
   };
 
   return (
-    <div className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 neon-glow-cyan p-8">
+    <div className="glass-card rounded-lg border border-[var(--neon-cyan)]/20 p-6 md:p-8">
       <div className="flex flex-col md:flex-row gap-8">
         {/* Avatar & Name */}
         <div className="flex items-center gap-6">
           <div className="relative">
-            <Avatar className="w-32 h-32 border-4 border-[var(--neon-cyan)]/40">
+            <Avatar className="w-28 h-28 border-2 border-[var(--neon-cyan)]/40">
               <AvatarImage src={user?.avatar || profile.avatarUrl} alt={user?.username || profile.personaName} />
               <AvatarFallback className="text-3xl">{(user?.username || profile.personaName)[0]}</AvatarFallback>
             </Avatar>
-            <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full border-2 border-[var(--neon-cyan)] bg-black/80 flex items-center justify-center neon-glow-cyan">
+            <div className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full border border-[var(--neon-cyan)] bg-black flex items-center justify-center">
               <span className="text-sm font-bold text-[var(--neon-cyan)]">{user?.level || 1}</span>
             </div>
           </div>
@@ -98,14 +98,14 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
                 onClick={handleSync}
                 disabled={isSyncing}
                 size="sm"
-                className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 hover:neon-glow-cyan font-semibold uppercase tracking-wider"
+                className="bg-black/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider"
               >
                 <RefreshCw className={`w-4 h-4 mr-2 ${isSyncing ? "animate-spin" : ""}`} />
                 {isSyncing ? "Syncing..." : "Sync"}
               </Button>
             </div>
             <div className="flex items-center gap-3">
-              <Badge className="bg-[var(--neon-purple)]/20 border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] font-bold uppercase tracking-wider neon-glow-purple">
+              <Badge className="bg-[var(--neon-purple)]/10 border border-[var(--neon-purple)] text-[var(--neon-purple)] font-bold uppercase tracking-wider">
                 <Star className="w-4 h-4 mr-2" />
                 {user?.totalPoints || 0} POINTS
               </Badge>
@@ -157,10 +157,10 @@ function StatCard({
   highlight?: boolean;
 }) {
   return (
-    <div className={`glass-card rounded-sm border-2 p-4 flex flex-col gap-2 transition-all ${
+    <div className={`bg-black/20 rounded-lg border p-4 flex flex-col gap-2 transition-all ${
       highlight 
-        ? "border-[var(--neon-purple)]/30 hover-glow-purple" 
-        : "border-[var(--neon-magenta)]/20 hover-glow-magenta"
+        ? "border-[var(--neon-purple)]/20 hover:border-[var(--neon-purple)]/40" 
+        : "border-[var(--neon-magenta)]/10 hover:border-[var(--neon-magenta)]/30"
     }`}>
       <div className={`flex items-center gap-1.5 font-semibold uppercase tracking-wider text-xs ${
         highlight ? "text-[var(--neon-purple)]" : "text-[var(--neon-magenta)]"

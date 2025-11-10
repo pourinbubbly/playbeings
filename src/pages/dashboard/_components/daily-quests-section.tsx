@@ -97,7 +97,7 @@ export function DailyQuestsSection() {
         {showLeftButton && (
           <Button
             onClick={() => scroll("left")}
-            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full backdrop-blur-sm"
           >
             <ChevronLeft className="w-5 h-5" />
           </Button>
@@ -107,7 +107,7 @@ export function DailyQuestsSection() {
         {showRightButton && (
           <Button
             onClick={() => scroll("right")}
-            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-black/80 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full backdrop-blur-sm"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
@@ -123,7 +123,7 @@ export function DailyQuestsSection() {
             return (
               <div
                 key={quest.id}
-                className="glass-card rounded-sm border-2 border-[var(--neon-cyan)]/20 overflow-hidden min-w-[300px] max-w-[320px] flex-shrink-0 hover-glow-cyan transition-all"
+                className="bg-black/30 rounded-lg border border-[var(--neon-cyan)]/20 overflow-hidden min-w-[300px] max-w-[320px] flex-shrink-0 hover:border-[var(--neon-cyan)]/40 transition-all"
               >
                 {/* Quest Image */}
                 <div className="relative h-32 bg-black/40 overflow-hidden">
@@ -134,7 +134,7 @@ export function DailyQuestsSection() {
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black via-black/60 to-transparent" />
                   {completed && (
-                    <div className="absolute top-3 right-3 px-3 py-1.5 rounded-sm bg-[var(--neon-cyan)] text-black text-xs font-bold uppercase neon-glow-cyan">
+                    <div className="absolute top-3 right-3 px-3 py-1.5 rounded bg-[var(--neon-cyan)] text-black text-xs font-bold uppercase">
                       ✓ COMPLETE
                     </div>
                   )}
