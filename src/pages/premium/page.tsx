@@ -75,21 +75,32 @@ function PremiumPassContent() {
       console.error("Purchase failed:", error);
       const err = error as Error;
       
-      if (err.message.includes("cancelled by user")) {
-        toast.error("Purchase cancelled", { 
-          description: "You cancelled the transaction in your wallet" 
+      // Check for cancellation
+      if (err.message.includes("cancelled") || err.message.includes("iptal")) {
+        toast.error("İşlem İptal Edildi", { 
+          description: "Cüzdanınızda işlemi iptal ettiniz" 
         });
-      } else if (err.message.includes("Insufficient SOL")) {
-        toast.error("Insufficient Balance", { 
-          description: "You need at least 0.05 SOL to purchase Premium Pass" 
+      } 
+      // Check for insufficient balance (English and Turkish)
+      else if (err.message.toLowerCase().includes("insufficient") || 
+               err.message.includes("Yetersiz") || 
+               err.message.includes("yetersiz")) {
+        toast.error("Yetersiz Bakiye", { 
+          description: "Premium Pass satın almak için en az 0.05 SOL gerekli. Lütfen cüzdanınıza CARV SVM Testnet SOL ekleyin.",
+          duration: 8000
         });
-      } else if (err.message.includes("multiple attempts")) {
-        toast.error("Network Error", { 
-          description: "Please check your connection and try again" 
+      } 
+      // Network error
+      else if (err.message.includes("Network") || err.message.includes("Ağ")) {
+        toast.error("Ağ Hatası", { 
+          description: "Bağlantınızı kontrol edin ve tekrar deneyin" 
         });
-      } else {
-        toast.error("Purchase failed", { 
-          description: err.message || "Please try again" 
+      } 
+      // Generic error - show the actual error message
+      else {
+        toast.error("Satın Alma Başarısız", { 
+          description: err.message || "Lütfen tekrar deneyin",
+          duration: 6000
         });
       }
     } finally {

@@ -859,17 +859,25 @@ export async function purchasePremiumPassTransaction(): Promise<{ signature: str
         if (error.message.includes("Plugin Closed") || 
             error.message.includes("User rejected") ||
             error.message.includes("User cancelled")) {
-          throw new Error("Transaction cancelled by user");
+          throw new Error("İşlem iptal edildi");
         }
         
-        if (error.message.includes("Insufficient funds")) {
-          throw new Error("Insufficient SOL balance. You need at least 0.05 SOL to purchase Premium Pass.");
+        // Check for insufficient balance (check both common error patterns)
+        if (error.message.includes("Insufficient funds") || 
+            error.message.includes("insufficient lamports") ||
+            error.message.toLowerCase().includes("insufficient")) {
+          throw new Error("Yetersiz SOL bakiyesi. Premium Pass satın almak için en az 0.05 SOL gerekli. Lütfen cüzdanınıza CARV SVM Testnet SOL ekleyin.");
+        }
+        
+        if (error.message.includes("blockhash")) {
+          throw new Error("Ağ hatası. Lütfen tekrar deneyin.");
         }
       }
       
       retryCount++;
       if (retryCount > maxRetries) {
-        throw error;
+        // Final error - provide helpful message
+        throw new Error("Premium Pass satın alınamadı. Lütfen cüzdanınızda yeterli SOL olduğundan emin olun (en az 0.05 SOL gerekli).");
       }
       
       // Wait before retry (exponential backoff)
@@ -877,7 +885,7 @@ export async function purchasePremiumPassTransaction(): Promise<{ signature: str
     }
   }
 
-  throw new Error("Failed to purchase Premium Pass after multiple attempts");
+  throw new Error("Premium Pass satın alınamadı. Lütfen cüzdanınızda yeterli SOL olduğundan emin olun.");
 }
 
 export async function claimPremiumQuestTransaction(
