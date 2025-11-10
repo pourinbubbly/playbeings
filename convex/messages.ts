@@ -206,28 +206,7 @@ export const getMessages = query({
       .order("asc")
       .collect();
 
-    // Resolve storage URLs for image messages
-    const messagesWithUrls = await Promise.all(
-      messages.map(async (msg) => {
-        if (msg.messageType === "image" && msg.imageUrl) {
-          try {
-            const url = await ctx.storage.getUrl(msg.imageUrl);
-            console.log("Resolved image URL for storage ID:", msg.imageUrl, "->", url);
-            // Add resolved URL as a separate field
-            return { 
-              ...msg, 
-              imageUrlResolved: url,
-            };
-          } catch (error) {
-            console.error("Failed to resolve storage URL:", msg.imageUrl, error);
-            return { ...msg, imageUrlResolved: null };
-          }
-        }
-        return { ...msg, imageUrlResolved: null };
-      })
-    );
-
-    return messagesWithUrls;
+    return messages;
   },
 });
 
@@ -304,14 +283,6 @@ export const sendMessage = mutation({
     }
 
     const now = Date.now();
-
-    // Log image upload for debugging
-    if (args.messageType === "image" && args.imageUrl) {
-      console.log("Saving image message with storage ID:", args.imageUrl);
-      // Test if we can get the URL immediately
-      const testUrl = await ctx.storage.getUrl(args.imageUrl);
-      console.log("Immediate URL resolution test:", testUrl);
-    }
 
     // Insert message
     await ctx.db.insert("messages", {

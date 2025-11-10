@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Authenticated } from "convex/react";
@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
+import { convexUrl } from "@/lib/convex.ts";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -36,6 +37,20 @@ export function ChatWidget() {
   const unhideConversation = useMutation(api.messages.unhideConversation);
   const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
 
+  // Get storage URLs for image messages
+  const messagesWithUrls = useMemo(() => {
+    if (!messages) return [];
+    
+    return messages.map((msg) => {
+      if (msg.messageType === "image" && msg.imageUrl) {
+        // Construct the storage URL manually
+        const url = `${convexUrl}/api/storage/${msg.imageUrl}`;
+        return { ...msg, resolvedImageUrl: url };
+      }
+      return { ...msg, resolvedImageUrl: null };
+    });
+  }, [messages]);
+
   // Check if user is at bottom of scroll
   const handleScroll = () => {
     if (messagesContainerRef.current) {
@@ -50,7 +65,7 @@ export function ChatWidget() {
     if (shouldAutoScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages, shouldAutoScroll]);
+  }, [messagesWithUrls, shouldAutoScroll]);
 
   // Scroll to bottom when conversation changes
   useEffect(() => {
@@ -126,7 +141,6 @@ export function ChatWidget() {
     try {
       // Generate upload URL
       const uploadUrl = await generateImageUploadUrl({});
-      console.log("Generated upload URL:", uploadUrl);
 
       // Upload file
       const result = await fetch(uploadUrl, {
@@ -135,26 +149,16 @@ export function ChatWidget() {
         body: file,
       });
 
-      console.log("Upload response status:", result.status);
-
       if (!result.ok) {
-        const errorText = await result.text();
-        console.error("Upload failed with response:", errorText);
         throw new Error("Upload failed");
       }
 
       const response = await result.json();
-      console.log("Upload response JSON:", response);
-      
       const storageId = response.storageId;
 
       if (!storageId) {
-        console.error("No storage ID in response:", response);
         throw new Error("No storage ID returned");
       }
-
-      console.log("Uploaded image storage ID:", storageId);
-      console.log("Storage ID type:", typeof storageId);
 
       // Send image message
       await sendMessage({
@@ -164,7 +168,6 @@ export function ChatWidget() {
         imageUrl: storageId,
       });
 
-      console.log("Message sent successfully");
       toast.success("Resim gönderildi!");
     } catch (error) {
       console.error("Image upload error:", error);
@@ -460,25 +463,15 @@ export function ChatWidget() {
                     style={{ scrollbarWidth: "thin" }}
                   >
                     <div className="space-y-3">
-                      {!messages || messages.length === 0 ? (
+                      {!messagesWithUrls || messagesWithUrls.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground text-sm">
                           Henüz mesaj yok
                         </div>
                       ) : (
-                        messages.map((msg) => {
+                        messagesWithUrls.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
-                          // Use the resolved URL from backend (added dynamically)
-                          type MessageWithUrl = typeof msg & { imageUrlResolved?: string | null };
-                          const imageUrl = (msg as MessageWithUrl).imageUrlResolved;
-                          
-                          if (isImageMessage) {
-                            console.log("Image message:", {
-                              msgId: msg._id,
-                              storageId: msg.imageUrl,
-                              resolvedUrl: imageUrl,
-                            });
-                          }
+                          const imageUrl = msg.resolvedImageUrl;
                           
                           return (
                             <div
