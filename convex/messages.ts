@@ -115,9 +115,22 @@ export const getMyConversations = query({
 
     const allConvs = [...convs1, ...convs2];
 
+    // Get hidden conversations
+    const hiddenConvs = await ctx.db
+      .query("hiddenConversations")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+    
+    const hiddenConvIds = new Set(hiddenConvs.map(h => h.conversationId));
+
     // Get other user info for each conversation
     const convsWithUsers = await Promise.all(
       allConvs.map(async (conv) => {
+        // Skip if hidden
+        if (hiddenConvIds.has(conv._id)) {
+          return null;
+        }
+
         const otherUserId =
           conv.participant1 === user._id ? conv.participant2 : conv.participant1;
         const otherUser = await ctx.db.get(otherUserId);
@@ -140,10 +153,16 @@ export const getMyConversations = query({
       })
     );
 
-    // Sort by last message time
-    return convsWithUsers
-      .filter((c) => c.otherUser !== null)
-      .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+    // Sort by last message time (filter nulls with proper type)
+    type ValidConv = Exclude<typeof convsWithUsers[number], null> & {
+      otherUser: NonNullable<Exclude<typeof convsWithUsers[number], null>['otherUser']>;
+    };
+    
+    const validConvs = convsWithUsers.filter(
+      (c): c is ValidConv => c !== null && c.otherUser !== null
+    );
+    
+    return validConvs.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
   },
 });
 
@@ -618,5 +637,144 @@ export const generateImageUploadUrl = mutation({
     }
 
     return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Hide a conversation
+export const hideConversation = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check if already hidden
+    const existing = await ctx.db
+      .query("hiddenConversations")
+      .withIndex("by_user_conversation", (q) =>
+        q.eq("userId", user._id).eq("conversationId", args.conversationId)
+      )
+      .first();
+
+    if (existing) {
+      return { success: true };
+    }
+
+    // Hide conversation
+    await ctx.db.insert("hiddenConversations", {
+      userId: user._id,
+      conversationId: args.conversationId,
+      hiddenAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Unhide a conversation
+export const unhideConversation = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Find hidden record
+    const hidden = await ctx.db
+      .query("hiddenConversations")
+      .withIndex("by_user_conversation", (q) =>
+        q.eq("userId", user._id).eq("conversationId", args.conversationId)
+      )
+      .first();
+
+    if (hidden) {
+      await ctx.db.delete(hidden._id);
+    }
+
+    return { success: true };
+  },
+});
+
+// Get following users for search
+export const getFollowingUsers = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    // Get all follows
+    const follows = await ctx.db
+      .query("follows")
+      .withIndex("by_follower", (q) => q.eq("followerId", user._id))
+      .collect();
+
+    // Get user details for each follow
+    const followingUsers = await Promise.all(
+      follows.map(async (follow) => {
+        const followedUser = await ctx.db.get(follow.followingId);
+        if (!followedUser) return null;
+        
+        return {
+          _id: followedUser._id,
+          username: followedUser.username || followedUser.name || "Unknown User",
+          avatar: followedUser.avatar,
+        };
+      })
+    );
+
+    return followingUsers.filter((u) => u !== null);
   },
 });

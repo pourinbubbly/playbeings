@@ -300,4 +300,12 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_unread", ["userId", "isRead"]),
+
+  hiddenConversations: defineTable({
+    userId: v.id("users"),
+    conversationId: v.id("conversations"),
+    hiddenAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_conversation", ["userId", "conversationId"]),
 });

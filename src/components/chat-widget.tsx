@@ -23,6 +23,7 @@ export function ChatWidget() {
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const conversations = useQuery(api.messages.getMyConversations, {});
+  const followingUsers = useQuery(api.messages.getFollowingUsers, {});
   const messages = useQuery(
     api.messages.getMessages,
     selectedConvId ? { conversationId: selectedConvId } : "skip"
@@ -30,6 +31,8 @@ export function ChatWidget() {
   const sendMessage = useMutation(api.messages.sendMessage);
   const markAsRead = useMutation(api.messages.markAsRead);
   const generateImageUploadUrl = useMutation(api.messages.generateImageUploadUrl);
+  const hideConversation = useMutation(api.messages.hideConversation);
+  const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
 
   // Check if user is at bottom of scroll
   const handleScroll = () => {
@@ -161,9 +164,45 @@ export function ChatWidget() {
   // Filter conversations based on search
   const filteredConversations = conversations?.filter((conv) => {
     if (!searchQuery.trim()) return true;
-    const username = conv.otherUser?.username?.toLowerCase() || "";
+    const username = conv.otherUser.username?.toLowerCase() || "";
     return username.includes(searchQuery.toLowerCase());
-  });
+  }) || [];
+
+  // Filter following users based on search (exclude users already in conversations)
+  const existingConvUserIds = new Set(
+    conversations?.map((c) => c.otherUser._id) || []
+  );
+  
+  const filteredFollowingUsers = followingUsers?.filter((user) => {
+    if (!searchQuery.trim()) return false; // Only show when searching
+    const username = user.username?.toLowerCase() || "";
+    const matchesSearch = username.includes(searchQuery.toLowerCase());
+    const notInConversations = !existingConvUserIds.has(user._id);
+    return matchesSearch && notInConversations;
+  }) || [];
+
+  const handleHideConversation = async (convId: Id<"conversations">, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await hideConversation({ conversationId: convId });
+      if (selectedConvId === convId) {
+        setSelectedConvId(null);
+      }
+      toast.success("Sohbet gizlendi");
+    } catch (error) {
+      toast.error("Sohbet gizlenemedi");
+    }
+  };
+
+  const handleStartConversation = async (userId: Id<"users">) => {
+    try {
+      const convId = await getOrCreateConversation({ otherUserId: userId });
+      setSelectedConvId(convId);
+      setSearchQuery("");
+    } catch (error) {
+      toast.error("Sohbet başlatılamadı");
+    }
+  };
 
   return (
     <Authenticated>
@@ -236,19 +275,23 @@ export function ChatWidget() {
                           Henüz konuşma yok
                         </div>
                       )}
-                      {searchQuery.trim() && filteredConversations?.length === 0 && (
+                      {searchQuery.trim() && 
+                        filteredConversations.length === 0 && 
+                        filteredFollowingUsers.length === 0 && (
                         <div className="p-8 text-center text-muted-foreground text-sm">
                           Kullanıcı bulunamadı
                         </div>
                       )}
-                      {filteredConversations?.map((conv) => (
-                      <button
+                      
+                      {/* Existing Conversations */}
+                      {filteredConversations.map((conv) => (
+                      <div
                         key={conv._id}
+                        className="relative w-full p-3 glass-card border border-[var(--neon-purple)]/20 rounded hover:border-[var(--neon-cyan)]/40 transition-all flex items-center gap-3 group cursor-pointer"
                         onClick={() => setSelectedConvId(conv._id)}
-                        className="w-full p-3 glass-card border border-[var(--neon-purple)]/20 rounded hover:border-[var(--neon-cyan)]/40 transition-all flex items-center gap-3 group"
                       >
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center flex-shrink-0">
-                          {conv.otherUser?.avatar ? (
+                          {conv.otherUser.avatar ? (
                             <img
                               src={conv.otherUser.avatar}
                               alt={conv.otherUser.username}
@@ -261,7 +304,7 @@ export function ChatWidget() {
                         <div className="flex-1 text-left min-w-0">
                           <div className="flex items-center justify-between mb-1">
                             <span className="font-semibold text-foreground text-sm truncate">
-                              {conv.otherUser?.username}
+                              {conv.otherUser.username}
                             </span>
                             {conv.unreadCount > 0 && (
                               <span className="bg-[var(--neon-cyan)] text-black text-xs font-bold px-2 py-0.5 rounded-full">
@@ -275,8 +318,55 @@ export function ChatWidget() {
                             </p>
                           )}
                         </div>
-                      </button>
+                        
+                        {/* Hide button */}
+                        <button
+                          onClick={(e) => handleHideConversation(conv._id, e)}
+                          className="absolute top-2 right-2 p-1 rounded opacity-0 group-hover:opacity-100 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-all"
+                          title="Sohbeti gizle"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
                     ))}
+                    
+                    {/* Following Users (only when searching) */}
+                    {searchQuery.trim() && filteredFollowingUsers.length > 0 && (
+                      <>
+                        {filteredConversations.length > 0 && (
+                          <div className="px-2 py-2 text-xs text-muted-foreground uppercase tracking-wide">
+                            Takip Edilenler
+                          </div>
+                        )}
+                        {filteredFollowingUsers.map((user) => (
+                          <div
+                            key={user._id}
+                            onClick={() => handleStartConversation(user._id)}
+                            className="w-full p-3 glass-card border border-[var(--neon-purple)]/20 rounded hover:border-[var(--neon-cyan)]/40 transition-all flex items-center gap-3 cursor-pointer"
+                          >
+                            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--neon-cyan)] to-[var(--neon-purple)] flex items-center justify-center flex-shrink-0">
+                              {user.avatar ? (
+                                <img
+                                  src={user.avatar}
+                                  alt={user.username}
+                                  className="w-full h-full rounded-full object-cover"
+                                />
+                              ) : (
+                                <User className="w-5 h-5 text-white" />
+                              )}
+                            </div>
+                            <div className="flex-1 text-left min-w-0">
+                              <span className="font-semibold text-foreground text-sm truncate block">
+                                {user.username}
+                              </span>
+                              <p className="text-xs text-muted-foreground">
+                                Mesaj başlat
+                              </p>
+                            </div>
+                          </div>
+                        ))}
+                      </>
+                    )}
                     </div>
                   </div>
                 </div>
