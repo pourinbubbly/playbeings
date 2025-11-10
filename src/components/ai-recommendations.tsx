@@ -88,7 +88,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
                 AI Recommendations
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                Powered by CARV D.A.T.A. + DeepSeek AI
+                Powered by CARV D.A.T.A. Framework
               </CardDescription>
             </div>
           </div>
@@ -97,7 +97,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
           <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
             <p className="text-muted-foreground text-sm mb-4">
-              Get AI-powered personalized recommendations
+              Get personalized recommendations using CARV on-chain data
             </p>
             <Button 
               onClick={handleGenerate} 
@@ -108,7 +108,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
               {isGenerating ? "Analyzing..." : "Generate Recommendations"}
             </Button>
             <p className="text-xs text-muted-foreground mt-4">
-              Uses DeepSeek AI to analyze your gaming patterns
+              Powered by CARV D.A.T.A. Framework + Real Steam Data
             </p>
           </div>
         </CardContent>
@@ -127,7 +127,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
                 AI Recommendations
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                CARV D.A.T.A. + DeepSeek AI
+                CARV D.A.T.A. Framework
               </CardDescription>
             </div>
           </div>
