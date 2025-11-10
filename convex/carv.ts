@@ -92,13 +92,13 @@ export const syncCarvData = action({
     try {
       // Get user's wallet
       const wallet = await ctx.runQuery(internal.wallets.getUserWallet, { userId: args.userId });
-      if (!wallet?.walletAddress) {
-        return { success: false, message: "No wallet connected" };
+      if (!wallet?.evmAddress) {
+        return { success: false, message: "No MetaMask wallet connected. Please connect MetaMask for CARV data." };
       }
 
-      // Fetch CARV identity
+      // Fetch CARV identity using EVM address
       const carvIdentity = await ctx.runAction(api.carv.getUserIdentity, {
-        walletAddress: wallet.walletAddress,
+        walletAddress: wallet.evmAddress,
       });
 
       if (!carvIdentity) {

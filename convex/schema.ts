@@ -168,11 +168,13 @@ export default defineSchema({
 
   wallets: defineTable({
     userId: v.id("users"),
-    walletAddress: v.string(),
+    walletAddress: v.string(), // Solana (Backpack)
     walletType: v.string(),
+    evmAddress: v.optional(v.string()), // Ethereum/EVM (MetaMask) for CARV D.A.T.A.
   })
     .index("by_user", ["userId"])
-    .index("by_address", ["walletAddress"]),
+    .index("by_address", ["walletAddress"])
+    .index("by_evm_address", ["evmAddress"]),
 
   follows: defineTable({
     followerId: v.id("users"),

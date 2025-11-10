@@ -6,20 +6,23 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert.tsx";
 import { Wallet, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { connectBackpackWallet, isBackpackInstalled } from "@/lib/wallet.ts";
+import { connectBackpackWallet, isBackpackInstalled, connectMetaMask, isMetaMaskInstalled } from "@/lib/wallet.ts";
 
 export function WalletConnect() {
-  const [isConnecting, setIsConnecting] = useState(false);
+  const [isConnectingBackpack, setIsConnectingBackpack] = useState(false);
+  const [isConnectingMetaMask, setIsConnectingMetaMask] = useState(false);
   const connectWallet = useMutation(api.wallets.connectWallet);
-  const isInstalled = isBackpackInstalled();
+  const connectMetaMaskMutation = useMutation(api.wallets.connectMetaMask);
+  const isBackpackAvailable = isBackpackInstalled();
+  const isMetaMaskAvailable = isMetaMaskInstalled();
 
-  const handleConnect = async () => {
-    if (!isInstalled) {
+  const handleConnectBackpack = async () => {
+    if (!isBackpackAvailable) {
       toast.error("Please install Backpack wallet extension first");
       return;
     }
 
-    setIsConnecting(true);
+    setIsConnectingBackpack(true);
     try {
       const walletAddress = await connectBackpackWallet();
       
@@ -28,28 +31,55 @@ export function WalletConnect() {
         walletType: "backpack",
       });
 
-      toast.success("Wallet connected successfully!");
+      toast.success("Backpack wallet connected successfully!");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to connect wallet");
+      toast.error(error instanceof Error ? error.message : "Failed to connect Backpack");
     } finally {
-      setIsConnecting(false);
+      setIsConnectingBackpack(false);
+    }
+  };
+
+  const handleConnectMetaMask = async () => {
+    if (!isMetaMaskAvailable) {
+      toast.error("Please install MetaMask extension first");
+      return;
+    }
+
+    setIsConnectingMetaMask(true);
+    try {
+      const evmAddress = await connectMetaMask();
+      
+      await connectMetaMaskMutation({
+        evmAddress,
+      });
+
+      toast.success("MetaMask wallet connected successfully!");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to connect MetaMask");
+    } finally {
+      setIsConnectingMetaMask(false);
     }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <Card>
-        <CardHeader className="text-center space-y-4">
-          <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-            <Wallet className="w-8 h-8 text-primary" />
+    <div className="max-w-4xl mx-auto space-y-6">
+      {/* Backpack Wallet */}
+      <Card className="border-[var(--neon-cyan)]/20">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-[var(--neon-cyan)]/10 rounded-full flex items-center justify-center">
+              <Wallet className="w-6 h-6 text-[var(--neon-cyan)]" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">Backpack Wallet (Solana)</CardTitle>
+              <CardDescription>
+                For CARV SVM Testnet transactions, NFT minting, Premium Pass
+              </CardDescription>
+            </div>
           </div>
-          <CardTitle className="text-2xl">Connect Your Wallet</CardTitle>
-          <CardDescription>
-            Connect Backpack wallet to interact with CARV SVM Testnet
-          </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
-          {!isInstalled && (
+        <CardContent className="space-y-4">
+          {!isBackpackAvailable && (
             <Alert>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription className="flex items-center justify-between">
@@ -73,33 +103,21 @@ export function WalletConnect() {
             </Alert>
           )}
 
-          <div className="space-y-4">
-            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-              <h4 className="font-semibold">Why connect a wallet?</h4>
-              <ul className="text-sm text-muted-foreground space-y-1 list-disc list-inside">
-                <li>Mint your Steam trading cards as NFTs</li>
-                <li>Trade and showcase your digital collectibles</li>
-                <li>Participate in the Web3 gaming ecosystem</li>
-                <li>Earn rewards on CARV SVM Testnet</li>
-              </ul>
-            </div>
-
-            <Button
-              onClick={handleConnect}
-              disabled={isConnecting || !isInstalled}
-              size="lg"
-              className="w-full"
-            >
-              {isConnecting ? (
-                "Connecting..."
-              ) : (
-                <>
-                  <Wallet className="w-4 h-4 mr-2" />
-                  Connect Backpack
-                </>
-              )}
-            </Button>
-          </div>
+          <Button
+            onClick={handleConnectBackpack}
+            disabled={isConnectingBackpack || !isBackpackAvailable}
+            size="lg"
+            className="w-full bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
+          >
+            {isConnectingBackpack ? (
+              "Connecting..."
+            ) : (
+              <>
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect Backpack
+              </>
+            )}
+          </Button>
 
           <div className="text-center text-xs text-muted-foreground">
             <p>CARV SVM Testnet RPC:</p>
@@ -107,6 +125,64 @@ export function WalletConnect() {
               https://rpc.testnet.carv.io/rpc
             </code>
           </div>
+        </CardContent>
+      </Card>
+
+      {/* MetaMask Wallet */}
+      <Card className="border-[var(--neon-purple)]/20">
+        <CardHeader>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-[var(--neon-purple)]/10 rounded-full flex items-center justify-center">
+              <Wallet className="w-6 h-6 text-[var(--neon-purple)]" />
+            </div>
+            <div>
+              <CardTitle className="text-xl">MetaMask (Ethereum)</CardTitle>
+              <CardDescription>
+                For CARV D.A.T.A. Framework on-chain identity and reputation
+              </CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {!isMetaMaskAvailable && (
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription className="flex items-center justify-between">
+                <span>MetaMask wallet not detected</span>
+                <Button
+                  variant="link"
+                  size="sm"
+                  asChild
+                  className="h-auto p-0"
+                >
+                  <a
+                    href="https://metamask.io"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Install MetaMask
+                    <ExternalLink className="w-3 h-3 ml-1" />
+                  </a>
+                </Button>
+              </AlertDescription>
+            </Alert>
+          )}
+
+          <Button
+            onClick={handleConnectMetaMask}
+            disabled={isConnectingMetaMask || !isMetaMaskAvailable}
+            size="lg"
+            className="w-full bg-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/80 text-white"
+          >
+            {isConnectingMetaMask ? (
+              "Connecting..."
+            ) : (
+              <>
+                <Wallet className="w-4 h-4 mr-2" />
+                Connect MetaMask
+              </>
+            )}
+          </Button>
         </CardContent>
       </Card>
 

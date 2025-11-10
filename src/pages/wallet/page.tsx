@@ -41,9 +41,9 @@ function WalletContent() {
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Wallet</CardTitle>
+            <CardTitle>Wallets</CardTitle>
             <CardDescription>
-              Connect your Backpack wallet to mint NFTs on CARV SVM Testnet
+              Connect Backpack for CARV SVM transactions and MetaMask for CARV D.A.T.A. Framework
             </CardDescription>
           </CardHeader>
         </Card>

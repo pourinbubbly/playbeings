@@ -71,7 +71,7 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWall
             <p className="text-muted-foreground text-sm mb-4">
               {isWalletConnected 
                 ? "Click below to sync your CARV data from blockchain"
-                : "Connect your wallet first, then sync CARV data"}
+                : "Connect MetaMask wallet first (not Backpack), then sync CARV data"}
             </p>
             <Button 
               onClick={handleSync}
@@ -83,7 +83,7 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWall
             </Button>
             {!isWalletConnected && (
               <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-3">
-                ⚠️ No wallet connected
+                ⚠️ MetaMask (Ethereum) wallet required - Go to Wallet page
               </p>
             )}
             <p className="text-xs text-muted-foreground mt-4">

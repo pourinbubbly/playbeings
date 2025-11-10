@@ -16,6 +16,12 @@ declare global {
       signMessage: (message: Uint8Array) => Promise<{ signature: Uint8Array }>;
       publicKey?: { toString: () => string };
     };
+    ethereum?: {
+      isMetaMask?: boolean;
+      request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+      on?: (event: string, callback: (accounts: string[]) => void) => void;
+      removeListener?: (event: string, callback: (accounts: string[]) => void) => void;
+    };
   }
 }
 
@@ -68,6 +74,56 @@ export function getConnectedWallet(): string | null {
     return window.backpack.publicKey.toString();
   }
   return null;
+}
+
+// MetaMask functions
+export async function connectMetaMask(): Promise<string> {
+  if (!window.ethereum || !window.ethereum.isMetaMask) {
+    throw new Error("MetaMask wallet not found. Please install MetaMask extension.");
+  }
+
+  try {
+    const accounts = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    }) as string[];
+    
+    if (!accounts || accounts.length === 0) {
+      throw new Error("No accounts found in MetaMask");
+    }
+    
+    return accounts[0];
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("User rejected")) {
+      throw new Error("User rejected MetaMask connection");
+    }
+    throw new Error("Failed to connect MetaMask wallet");
+  }
+}
+
+export async function disconnectMetaMask(): Promise<void> {
+  // MetaMask doesn't have a programmatic disconnect
+  // User must disconnect from MetaMask extension itself
+  return;
+}
+
+export function isMetaMaskInstalled(): boolean {
+  return typeof window !== "undefined" && !!window.ethereum?.isMetaMask;
+}
+
+export async function getMetaMaskAccount(): Promise<string | null> {
+  if (!window.ethereum?.isMetaMask) {
+    return null;
+  }
+
+  try {
+    const accounts = await window.ethereum.request({
+      method: "eth_accounts",
+    }) as string[];
+    
+    return accounts.length > 0 ? accounts[0] : null;
+  } catch {
+    return null;
+  }
 }
 
 // CARV SVM Testnet RPC URL
