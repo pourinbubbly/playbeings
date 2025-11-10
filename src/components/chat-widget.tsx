@@ -18,6 +18,7 @@ export function ChatWidget() {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -25,10 +26,6 @@ export function ChatWidget() {
 
   const conversations = useQuery(api.messages.getMyConversations, {});
   const followingUsers = useQuery(api.messages.getFollowingUsers, {});
-  const selectedConvDirect = useQuery(
-    api.messages.getConversationById,
-    selectedConvId ? { conversationId: selectedConvId } : "skip"
-  );
   const messages = useQuery(
     api.messages.getMessages,
     selectedConvId ? { conversationId: selectedConvId } : "skip"
@@ -170,17 +167,34 @@ export function ChatWidget() {
     }
   };
 
-  // Use direct query if available, otherwise try to find in conversations list
-  const selectedConv = selectedConvDirect || conversations?.find((c) => c._id === selectedConvId);
+  const selectedConv = conversations?.find((c) => c._id === selectedConvId);
   const totalUnread = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
   
   // Check if we have a selected conversation ID but no conversation object yet
   const hasSelectedConv = selectedConvId !== null;
   
   console.log("Selected conv ID:", selectedConvId);
-  console.log("Selected conv from direct query:", selectedConvDirect);
-  console.log("Selected conv final:", selectedConv);
+  console.log("Selected conv object:", selectedConv);
   console.log("Has selected conv:", hasSelectedConv);
+  console.log("Conversations list length:", conversations?.length);
+
+  // Handle loading timeout for new conversations
+  useEffect(() => {
+    if (hasSelectedConv && !selectedConv && !loadingTimeout) {
+      console.log("Starting loading timeout...");
+      const timer = setTimeout(() => {
+        console.log("Loading timeout reached");
+        setLoadingTimeout(true);
+        toast.error("Sohbet yüklenemedi. Lütfen tekrar deneyin.");
+        setSelectedConvId(null);
+      }, 3000); // 3 seconds timeout
+
+      return () => clearTimeout(timer);
+    } else if (selectedConv && loadingTimeout) {
+      // Reset timeout when conversation loads
+      setLoadingTimeout(false);
+    }
+  }, [hasSelectedConv, selectedConv, loadingTimeout]);
 
   // Filter conversations based on search
   const filteredConversations = conversations?.filter((conv) => {
@@ -217,11 +231,12 @@ export function ChatWidget() {
 
   const handleStartConversation = async (userId: Id<"users">) => {
     console.log("Starting conversation with user:", userId);
+    setLoadingTimeout(false); // Reset timeout state
     try {
       const convId = await getOrCreateConversation({ otherUserId: userId });
       console.log("Conversation created/found:", convId);
       
-      // Set the conversation ID - the direct query will load it
+      // Set the conversation ID
       setSelectedConvId(convId);
       setSearchQuery("");
       
@@ -229,6 +244,7 @@ export function ChatWidget() {
     } catch (error) {
       console.error("Failed to start conversation:", error);
       toast.error("Sohbet başlatılamadı: " + (error as Error).message);
+      setSelectedConvId(null);
     }
   };
 
