@@ -65,19 +65,27 @@ export const getUserIdentity = action({
   },
   handler: async (ctx, args) => {
     try {
+      console.log("🔍 Fetching CARV identity for address:", args.walletAddress);
+      
       // Call CARV API for on-chain identity
       const data = await carvApiRequest("/token_info", {
         address: args.walletAddress,
       });
       
-      return {
+      console.log("📦 CARV API response:", JSON.stringify(data, null, 2));
+      
+      const result = {
         carvId: data.data?.carv_id || null,
         reputationScore: data.data?.reputation_score || 0,
         verifiedAt: data.data?.verified_at || null,
         metadata: data.data?.metadata || {},
       };
+      
+      console.log("✅ Parsed CARV identity:", result);
+      
+      return result;
     } catch (error) {
-      console.error("Error fetching CARV identity:", error);
+      console.error("❌ Error fetching CARV identity:", error);
       return null;
     }
   },
@@ -90,19 +98,35 @@ export const syncCarvData = action({
   },
   handler: async (ctx, args): Promise<{ success: boolean; message?: string; carvId?: string | null; reputationScore?: number }> => {
     try {
+      console.log("🔄 Starting CARV data sync for userId:", args.userId);
+      
       // Get user's wallet
       const wallet = await ctx.runQuery(internal.wallets.getUserWallet, { userId: args.userId });
       if (!wallet?.evmAddress) {
+        console.log("❌ No MetaMask wallet connected");
         return { success: false, message: "No MetaMask wallet connected. Please connect MetaMask for CARV data." };
       }
+
+      console.log("💼 Using MetaMask address:", wallet.evmAddress);
 
       // Fetch CARV identity using EVM address
       const carvIdentity = await ctx.runAction(api.carv.getUserIdentity, {
         walletAddress: wallet.evmAddress,
       });
 
+      console.log("📊 CARV identity result:", carvIdentity);
+
       if (!carvIdentity) {
-        return { success: false, message: "Failed to fetch CARV data" };
+        console.log("❌ CARV identity is null");
+        return { success: false, message: "Failed to fetch CARV data from API" };
+      }
+
+      if (!carvIdentity.carvId) {
+        console.log("⚠️ CARV ID is null - wallet may not be registered with CARV");
+        return { 
+          success: false, 
+          message: "This wallet address is not registered with CARV D.A.T.A. Framework. Please register at carv.io first." 
+        };
       }
 
       // Update user profile with CARV data
@@ -114,14 +138,19 @@ export const syncCarvData = action({
         carvLastSync: Date.now(),
       });
 
+      console.log("✅ CARV data synced successfully:", {
+        carvId: carvIdentity.carvId,
+        reputationScore: carvIdentity.reputationScore,
+      });
+
       return { 
         success: true, 
         carvId: carvIdentity.carvId,
         reputationScore: carvIdentity.reputationScore,
       };
     } catch (error) {
-      console.error("Error syncing CARV data:", error);
-      return { success: false, message: "Sync failed" };
+      console.error("❌ Error syncing CARV data:", error);
+      return { success: false, message: "Sync failed: " + (error instanceof Error ? error.message : "Unknown error") };
     }
   },
 });
