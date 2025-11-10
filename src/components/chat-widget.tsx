@@ -203,12 +203,15 @@ export function ChatWidget() {
   };
 
   const handleStartConversation = async (userId: Id<"users">) => {
+    console.log("Starting conversation with user:", userId);
     try {
       const convId = await getOrCreateConversation({ otherUserId: userId });
+      console.log("Conversation created/found:", convId);
       setSelectedConvId(convId);
       setSearchQuery("");
     } catch (error) {
-      toast.error("Sohbet başlatılamadı");
+      console.error("Failed to start conversation:", error);
+      toast.error("Sohbet başlatılamadı: " + (error as Error).message);
     }
   };
 
