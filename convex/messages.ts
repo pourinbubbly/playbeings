@@ -210,8 +210,14 @@ export const getMessages = query({
     const messagesWithUrls = await Promise.all(
       messages.map(async (msg) => {
         if (msg.messageType === "image" && msg.imageUrl) {
-          const url = await ctx.storage.getUrl(msg.imageUrl);
-          return { ...msg, resolvedImageUrl: url };
+          try {
+            const url = await ctx.storage.getUrl(msg.imageUrl);
+            console.log("Resolved image URL for storage ID:", msg.imageUrl, "->", url);
+            return { ...msg, resolvedImageUrl: url };
+          } catch (error) {
+            console.error("Failed to resolve storage URL:", msg.imageUrl, error);
+            return { ...msg, resolvedImageUrl: null };
+          }
         }
         return { ...msg, resolvedImageUrl: null };
       })

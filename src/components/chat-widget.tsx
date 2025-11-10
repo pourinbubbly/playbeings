@@ -460,6 +460,14 @@ export function ChatWidget() {
                           const isImageMessage = msg.messageType === "image";
                           const imageUrl = msg.resolvedImageUrl;
                           
+                          if (isImageMessage) {
+                            console.log("Image message:", {
+                              msgId: msg._id,
+                              storageId: msg.imageUrl,
+                              resolvedUrl: imageUrl,
+                            });
+                          }
+                          
                           return (
                             <div
                               key={msg._id}
