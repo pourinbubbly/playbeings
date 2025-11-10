@@ -9,6 +9,7 @@ import { GamesLibrary } from "./_components/games-library.tsx";
 import { DailyQuestsSection } from "./_components/daily-quests-section.tsx";
 import { DailyCheckInCard } from "./_components/checkin/daily-checkin-card.tsx";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
+import { AIRecommendations } from "@/components/ai-recommendations.tsx";
 import { useEffect } from "react";
 
 export default function Dashboard() {
@@ -55,6 +56,7 @@ function DashboardContent() {
       <div className="space-y-8">
         <ProfileOverview profile={steamProfile} user={currentUser} />
         <DailyCheckInCard />
+        {currentUser && <AIRecommendations userId={currentUser._id} />}
         <DailyQuestsSection />
         <GamesLibrary />
       </div>

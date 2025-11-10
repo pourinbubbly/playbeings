@@ -311,4 +311,59 @@ export default defineSchema({
   })
     .index("by_user", ["userId"])
     .index("by_user_conversation", ["userId", "conversationId"]),
+
+  // CARV D.A.T.A. AI Framework Integration
+  carvIdentities: defineTable({
+    userId: v.id("users"),
+    carvId: v.optional(v.string()), // CARV ID (ERC-7231)
+    walletAddress: v.optional(v.string()),
+    reputationScore: v.optional(v.number()),
+    verifiedAt: v.optional(v.number()),
+    lastSynced: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_carv_id", ["carvId"]),
+
+  aiRecommendations: defineTable({
+    userId: v.id("users"),
+    type: v.string(), // "quest", "game", "reward"
+    targetId: v.string(), // questId, appId, or rewardId
+    score: v.number(), // AI confidence score (0-1)
+    reason: v.string(), // Why this was recommended
+    metadata: v.optional(v.string()), // JSON string with additional data
+    createdAt: v.number(),
+    shown: v.boolean(),
+    clicked: v.optional(v.boolean()),
+  })
+    .index("by_user_type", ["userId", "type"])
+    .index("by_user_shown", ["userId", "shown"])
+    .index("by_created", ["createdAt"]),
+
+  aiInsights: defineTable({
+    userId: v.id("users"),
+    insightType: v.string(), // "behavior", "preference", "trend"
+    category: v.string(), // "gaming", "social", "economic"
+    insight: v.string(),
+    confidence: v.number(),
+    actionable: v.boolean(),
+    generatedAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_type", ["insightType"])
+    .index("by_generated", ["generatedAt"]),
+
+  smartRewards: defineTable({
+    userId: v.id("users"),
+    rewardType: v.string(), // "token", "nft", "points", "achievement"
+    amount: v.number(),
+    reason: v.string(), // AI-determined reason
+    triggeredBy: v.string(), // "behavior", "milestone", "engagement"
+    status: v.string(), // "pending", "distributed", "failed"
+    txHash: v.optional(v.string()),
+    createdAt: v.number(),
+    distributedAt: v.optional(v.number()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_status", ["status"])
+    .index("by_created", ["createdAt"]),
 });
