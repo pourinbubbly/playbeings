@@ -28,7 +28,9 @@ export default function MyNFTs() {
 }
 
 // Helper function to get time remaining
-function getTimeRemaining(expiresAt: number): string {
+function getTimeRemaining(expiresAt: number | undefined): string {
+  if (!expiresAt || typeof expiresAt !== 'number') return "N/A";
+  
   const now = Date.now();
   const diff = expiresAt - now;
   
@@ -127,8 +129,8 @@ function NFTsContent() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {activeBoosts.map((boost) => {
                   const timeRemaining = getTimeRemaining(boost.expiresAt);
-                  const daysRemaining = Math.floor((boost.expiresAt - Date.now()) / (1000 * 60 * 60 * 24));
-                  const isExpiringSoon = daysRemaining <= 3;
+                  const daysRemaining = boost.expiresAt ? Math.floor((boost.expiresAt - Date.now()) / (1000 * 60 * 60 * 24)) : 0;
+                  const isExpiringSoon = daysRemaining > 0 && daysRemaining <= 3;
                   
                   return (
                     <div
@@ -254,7 +256,7 @@ function NFTsContent() {
                         </div>
                         
                         {/* Boost Status */}
-                        {hasActiveBoost ? (
+                        {hasActiveBoost && boostInfo ? (
                           <div className="flex items-center gap-2 text-xs bg-[var(--neon-magenta)]/10 p-2 rounded border border-[var(--neon-magenta)]/30">
                             <Zap className="w-3 h-3 text-[var(--neon-magenta)]" />
                             <div className="flex-1">
@@ -262,7 +264,7 @@ function NFTsContent() {
                                 Boost Active
                               </p>
                               <p className="text-muted-foreground">
-                                {getTimeRemaining(boostInfo.expiresAt)} remaining
+                                {boostInfo.expiresAt ? `${getTimeRemaining(boostInfo.expiresAt)} remaining` : 'Active'}
                               </p>
                             </div>
                           </div>
