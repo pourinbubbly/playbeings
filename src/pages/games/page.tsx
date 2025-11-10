@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Authenticated, AuthLoading } from "convex/react";
-import { useQuery } from "convex/react";
+import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
@@ -27,9 +27,23 @@ export default function Games() {
   );
 }
 
+interface GameDetails {
+  name: string;
+  shortDescription: string;
+  headerImage: string;
+  developers: string[];
+  publishers: string[];
+  releaseDate: string;
+  genres: string[];
+  price: string;
+}
+
 function GamesContent() {
   const games = useQuery(api.profiles.getUserGames, {});
+  const fetchGameDetails = useAction(api.steam.getGameDetails);
   const [selectedGame, setSelectedGame] = useState<Doc<"games"> | null>(null);
+  const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
+  const [isLoadingDetails, setIsLoadingDetails] = useState(false);
 
   if (games === undefined) {
     return (
@@ -70,6 +84,21 @@ function GamesContent() {
 
   const sortedGames = [...games].sort((a, b) => b.playtime - a.playtime);
 
+  const handleGameClick = async (game: Doc<"games">) => {
+    setSelectedGame(game);
+    setGameDetails(null);
+    setIsLoadingDetails(true);
+    
+    try {
+      const details = await fetchGameDetails({ appId: game.appId });
+      setGameDetails(details);
+    } catch (error) {
+      console.error("Failed to load game details:", error);
+    } finally {
+      setIsLoadingDetails(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-8">
@@ -96,7 +125,7 @@ function GamesContent() {
             <div 
               key={game._id} 
               className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
-              onClick={() => setSelectedGame(game)}
+              onClick={() => handleGameClick(game)}
             >
               <div className="aspect-[616/353] bg-black/40 relative overflow-hidden border-b-2 border-[var(--neon-purple)]/20">
                 <img
@@ -151,11 +180,66 @@ function GamesContent() {
                   {selectedGame.name}
                 </DialogTitle>
                 <DialogDescription className="text-muted-foreground uppercase tracking-wide">
-                  Steam App ID: {selectedGame.appId}
+                  {isLoadingDetails ? (
+                    "Loading details..."
+                  ) : gameDetails ? (
+                    <div className="flex items-center gap-2 flex-wrap mt-2">
+                      {gameDetails.developers.map((dev, i) => (
+                        <span key={i} className="text-[var(--neon-cyan)] font-semibold">{dev}</span>
+                      ))}
+                    </div>
+                  ) : (
+                    `Steam App ID: ${selectedGame.appId}`
+                  )}
                 </DialogDescription>
               </DialogHeader>
 
               <div className="space-y-6">
+                {/* Description */}
+                {gameDetails && gameDetails.shortDescription && (
+                  <div className="glass-card p-4 border border-[var(--neon-purple)]/20">
+                    <h3 className="text-sm font-bold text-[var(--neon-purple)] uppercase tracking-wide mb-2">About</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">{gameDetails.shortDescription}</p>
+                  </div>
+                )}
+
+                {/* Developer & Publisher Info */}
+                {gameDetails && (gameDetails.developers.length > 0 || gameDetails.publishers.length > 0) && (
+                  <div className="grid grid-cols-2 gap-4">
+                    {gameDetails.developers.length > 0 && (
+                      <div className="glass-card p-4 border border-[var(--neon-cyan)]/20">
+                        <div className="text-xs text-[var(--neon-cyan)] uppercase tracking-wide font-semibold mb-2">Developer</div>
+                        <div className="text-sm text-foreground font-semibold">
+                          {gameDetails.developers.join(", ")}
+                        </div>
+                      </div>
+                    )}
+                    {gameDetails.publishers.length > 0 && (
+                      <div className="glass-card p-4 border border-[var(--neon-magenta)]/20">
+                        <div className="text-xs text-[var(--neon-magenta)] uppercase tracking-wide font-semibold mb-2">Publisher</div>
+                        <div className="text-sm text-foreground font-semibold">
+                          {gameDetails.publishers.join(", ")}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Genres & Release Date */}
+                {gameDetails && (gameDetails.genres.length > 0 || gameDetails.releaseDate) && (
+                  <div className="flex gap-2 flex-wrap">
+                    {gameDetails.genres.map((genre, i) => (
+                      <Badge key={i} className="bg-[var(--neon-purple)]/20 border border-[var(--neon-purple)] text-[var(--neon-purple)] uppercase tracking-wide text-xs">
+                        {genre}
+                      </Badge>
+                    ))}
+                    {gameDetails.releaseDate && (
+                      <Badge className="bg-[var(--neon-cyan)]/20 border border-[var(--neon-cyan)] text-[var(--neon-cyan)] uppercase tracking-wide text-xs">
+                        {gameDetails.releaseDate}
+                      </Badge>
+                    )}
+                  </div>
+                )}
                 {/* Game Image */}
                 <div className="aspect-[616/353] bg-black/40 relative overflow-hidden rounded border-2 border-[var(--neon-purple)]/20">
                   <img

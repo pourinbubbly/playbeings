@@ -75,7 +75,16 @@ function CardsContent() {
 
   const handleMint = async (achievement: SteamAchievement) => {
     if (!connectedWallet) {
-      toast.error("Please connect your wallet first");
+      toast.error("Wallet Not Connected", {
+        description: "Please connect your Backpack wallet to continue",
+        duration: 5000,
+        action: {
+          label: "Go to Wallet",
+          onClick: () => {
+            window.location.href = "/dashboard/wallet";
+          },
+        },
+      });
       return;
     }
 

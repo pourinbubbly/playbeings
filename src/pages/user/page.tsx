@@ -29,7 +29,8 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
-import { getConnectedWallet, createProfileCommentTransaction } from "@/lib/wallet.ts";
+import { createProfileCommentTransaction, deleteProfileCommentTransaction } from "@/lib/wallet.ts";
+import { checkWalletConnection } from "@/lib/wallet-check.ts";
 
 export default function UserProfile() {
   return (
@@ -477,9 +478,7 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
       return;
     }
     
-    const walletAddress = getConnectedWallet();
-    if (!walletAddress) {
-      toast.error("Please connect your Backpack wallet first");
+    if (!checkWalletConnection()) {
       return;
     }
     
@@ -542,12 +541,46 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
   };
   
   const handleDeleteComment = async (commentId: Id<"profileComments">) => {
+    if (!checkWalletConnection()) {
+      return;
+    }
+
     try {
-      await deleteCommentMutation({ commentId });
-      toast.success("Comment deleted");
+      toast.info("Approve transaction in Backpack", {
+        description: "Confirm the deletion transaction to continue",
+      });
+
+      const { signature, explorerUrl } = await deleteProfileCommentTransaction(
+        commentId,
+        targetUser.username || targetUser.name || "User"
+      );
+
+      toast.success("Transaction submitted!", {
+        description: "Deleting comment...",
+      });
+
+      await deleteCommentMutation({ commentId, txHash: signature });
+      
+      toast.success("Comment deleted successfully!", {
+        description: "View on CARV Explorer",
+        action: {
+          label: "View TX",
+          onClick: () => window.open(explorerUrl, "_blank"),
+        },
+      });
     } catch (error) {
       console.error("Delete comment error:", error);
-      toast.error("Failed to delete comment");
+      if (error instanceof Error) {
+        if (error.message.includes("Plugin Closed") || error.message.includes("User rejected")) {
+          toast.error("Transaction cancelled");
+        } else {
+          toast.error("Failed to delete comment", {
+            description: error.message,
+          });
+        }
+      } else {
+        toast.error("Failed to delete comment");
+      }
     }
   };
   

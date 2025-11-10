@@ -389,6 +389,41 @@ export const getSteamInventory = action({
   },
 });
 
+export const getGameDetails = action({
+  args: { appId: v.number() },
+  handler: async (ctx, args) => {
+    try {
+      console.log(`Fetching game details for App ID: ${args.appId}`);
+      
+      const response = await fetch(
+        `https://store.steampowered.com/api/appdetails?appids=${args.appId}`
+      );
+      
+      const data = await response.json();
+      
+      if (!data[args.appId]?.success) {
+        throw new Error("Failed to fetch game details");
+      }
+      
+      const gameData = data[args.appId].data;
+      
+      return {
+        name: gameData.name,
+        shortDescription: gameData.short_description || "",
+        headerImage: gameData.header_image || "",
+        developers: gameData.developers || [],
+        publishers: gameData.publishers || [],
+        releaseDate: gameData.release_date?.date || "Unknown",
+        genres: gameData.genres?.map((g: { description: string }) => g.description) || [],
+        price: gameData.price_overview?.final_formatted || "Free",
+      };
+    } catch (error) {
+      console.error("Failed to fetch game details:", error);
+      throw new Error("Failed to load game details");
+    }
+  },
+});
+
 export const getSteamNews = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {

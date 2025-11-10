@@ -334,7 +334,10 @@ export const getProfileComments = query({
 });
 
 export const deleteComment = mutation({
-  args: { commentId: v.id("profileComments") },
+  args: { 
+    commentId: v.id("profileComments"),
+    txHash: v.optional(v.string()),
+  },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
     if (!identity) {

@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Calendar, Flame, Trophy, Zap, Check, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { performDailyCheckInTransaction, getConnectedWallet } from "@/lib/wallet.ts";
+import { performDailyCheckInTransaction } from "@/lib/wallet.ts";
+import { checkWalletConnection } from "@/lib/wallet-check.ts";
 import { Celebration } from "@/components/ui/celebration.tsx";
 
 export function DailyCheckInCard() {
@@ -49,12 +50,7 @@ export function DailyCheckInCard() {
   }
 
   const handleCheckIn = async () => {
-    const walletAddress = getConnectedWallet();
-    
-    if (!walletAddress) {
-      toast.error("Wallet not connected", {
-        description: "Please connect your Backpack wallet first",
-      });
+    if (!checkWalletConnection()) {
       return;
     }
 

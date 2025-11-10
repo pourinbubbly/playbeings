@@ -9,6 +9,7 @@ import { Clock, Gamepad2, Trophy, Target, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Celebration } from "@/components/ui/celebration.tsx";
 import { completeQuestTransaction } from "@/lib/wallet.ts";
+import { checkWalletConnection } from "@/lib/wallet-check.ts";
 
 interface QuestCardProps {
   quest: {
@@ -44,10 +45,7 @@ export function QuestCard({ quest, progress, completed, claimed }: QuestCardProp
   const handleClaim = async () => {
     try {
       // Check if Backpack wallet is connected
-      if (!window.backpack?.publicKey) {
-        toast.error("Wallet not connected", {
-          description: "Please connect your Backpack wallet first",
-        });
+      if (!checkWalletConnection()) {
         return;
       }
 

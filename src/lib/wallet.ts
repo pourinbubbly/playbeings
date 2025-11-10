@@ -386,6 +386,102 @@ class BackpackSigner {
   }
 }
 
+export async function deleteProfileCommentTransaction(
+  commentId: string,
+  profileUsername: string
+): Promise<{ signature: string; explorerUrl: string }> {
+  if (!window.backpack) {
+    throw new Error("Backpack wallet not found");
+  }
+
+  if (!window.backpack.publicKey) {
+    throw new Error("Wallet not connected");
+  }
+
+  try {
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
+    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+    console.log("Creating comment deletion transaction on CARV SVM...");
+
+    const transaction = new Transaction();
+
+    // Small transfer to self (0.001 SOL)
+    const lamports = 1000000; // 0.001 SOL
+    
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: walletPubkey,
+        toPubkey: walletPubkey,
+        lamports,
+      })
+    );
+
+    // Add deletion metadata as memo
+    const deleteData = JSON.stringify({
+      type: "DELETE_PROFILE_COMMENT",
+      timestamp: new Date().toISOString(),
+      commentId,
+      profileUsername,
+      app: "PlayBeings",
+    });
+    
+    const memoData = new TextEncoder().encode(deleteData);
+    
+    transaction.add({
+      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      data: Buffer.from(memoData),
+    });
+
+    // Set transaction metadata
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    console.log("Requesting Backpack approval for comment deletion...");
+    
+    // Sign and send with Backpack
+    const { signature } = await window.backpack.signAndSendTransaction(transaction);
+    
+    console.log("Comment deletion transaction submitted! Tx:", signature);
+
+    // Verify transaction on-chain (with extended timeout)
+    const confirmationPromise = connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, "confirmed");
+    
+    // Add timeout to prevent hanging (60 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+    });
+    
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Comment deletion transaction confirmed!");
+    } catch (confirmError) {
+      // Transaction submitted but confirmation timed out
+      // It might still be processing - return signature anyway
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
+    
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+    
+    return { 
+      signature, 
+      explorerUrl,
+    };
+  } catch (error) {
+    console.error("Comment deletion transaction failed:", error);
+    throw error;
+  }
+}
+
 export async function mintNFTOnCARV(
   achievementName: string,
   achievementDescription: string,

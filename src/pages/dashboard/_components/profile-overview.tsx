@@ -84,8 +84,8 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
         <div className="flex items-center gap-6">
           <div className="relative">
             <Avatar className="w-32 h-32 border-4 border-[var(--neon-cyan)]/40">
-              <AvatarImage src={profile.avatarUrl} alt={profile.personaName} />
-              <AvatarFallback className="text-3xl">{profile.personaName[0]}</AvatarFallback>
+              <AvatarImage src={user?.avatar || profile.avatarUrl} alt={user?.username || profile.personaName} />
+              <AvatarFallback className="text-3xl">{(user?.username || profile.personaName)[0]}</AvatarFallback>
             </Avatar>
             <div className="absolute -bottom-2 -right-2 w-10 h-10 rounded-full border-2 border-[var(--neon-cyan)] bg-black/80 flex items-center justify-center neon-glow-cyan">
               <span className="text-sm font-bold text-[var(--neon-cyan)]">{user?.level || 1}</span>
@@ -93,7 +93,7 @@ export function ProfileOverview({ profile, user }: ProfileOverviewProps) {
           </div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-2">
-              <h2 className="text-3xl font-bold gradient-text-cyber tracking-wide">{profile.personaName}</h2>
+              <h2 className="text-3xl font-bold gradient-text-cyber tracking-wide">{user?.username || profile.personaName}</h2>
               <Button
                 onClick={handleSync}
                 disabled={isSyncing}
