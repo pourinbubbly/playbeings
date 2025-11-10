@@ -6,10 +6,13 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty.tsx";
-import { Gamepad2, Clock, Calendar, ExternalLink, Play } from "lucide-react";
+import { Gamepad2, Clock, Calendar, ExternalLink, Play, Search, Filter } from "lucide-react";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Label } from "@/components/ui/label.tsx";
 import type { Doc } from "@/convex/_generated/dataModel.d.ts";
 
 export default function Games() {
@@ -38,12 +41,28 @@ interface GameDetails {
   price: string;
 }
 
+const GENRE_OPTIONS = [
+  "Action",
+  "Adventure",
+  "RPG",
+  "Strategy",
+  "Simulation",
+  "Sports",
+  "Racing",
+  "Shooter",
+  "Indie",
+  "Casual"
+];
+
 function GamesContent() {
   const games = useQuery(api.profiles.getUserGames, {});
   const fetchGameDetails = useAction(api.steam.getGameDetails);
   const [selectedGame, setSelectedGame] = useState<Doc<"games"> | null>(null);
   const [gameDetails, setGameDetails] = useState<GameDetails | null>(null);
   const [isLoadingDetails, setIsLoadingDetails] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
 
   if (games === undefined) {
     return (
@@ -82,7 +101,25 @@ function GamesContent() {
     );
   }
 
-  const sortedGames = [...games].sort((a, b) => b.playtime - a.playtime);
+  // Filter and sort games
+  const filteredGames = games.filter((game) => {
+    // Search filter
+    const matchesSearch = game.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Genre filter (we don't have genre data in games table, so skip for now)
+    // In a real scenario, you'd need to fetch genre data for each game
+    const matchesGenre = selectedGenres.length === 0;
+    
+    return matchesSearch && matchesGenre;
+  });
+
+  const sortedGames = [...filteredGames].sort((a, b) => b.playtime - a.playtime);
+
+  const handleGenreToggle = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
 
   const handleGameClick = async (game: Doc<"games">) => {
     setSelectedGame(game);
@@ -113,15 +150,118 @@ function GamesContent() {
                 Game Library
               </h1>
               <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
-                Your complete Steam collection
+                Your complete Steam collection · {games.length} games
               </p>
             </div>
           </div>
         </div>
 
+        {/* Search & Filters */}
+        <div className="glass-card p-6 rounded-sm border-2 border-[var(--neon-purple)]/20 space-y-4">
+          {/* Search */}
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--neon-cyan)]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search games by name..."
+                className="pl-10 glass-card border-2 border-[var(--neon-cyan)]/30 h-12 text-base"
+              />
+            </div>
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`glass-card border-2 ${
+                showFilters
+                  ? "border-[var(--neon-cyan)] bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)]"
+                  : "border-[var(--neon-purple)]/30 text-[var(--neon-purple)]"
+              } hover:bg-[var(--neon-purple)]/10 h-12 px-6 font-semibold uppercase tracking-wider`}
+            >
+              <Filter className="w-5 h-5 mr-2" />
+              Filters
+            </Button>
+          </div>
+
+          {/* Filter Panel */}
+          {showFilters && (
+            <div className="glass-card p-4 border border-[var(--neon-purple)]/20 rounded">
+              <div>
+                <p className="text-sm font-semibold text-[var(--neon-purple)] uppercase tracking-wider mb-3">
+                  Genre (Note: Genre filtering requires game details)
+                </p>
+                <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                  {GENRE_OPTIONS.map((genre) => (
+                    <div key={genre} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`genre-${genre}`}
+                        checked={selectedGenres.includes(genre)}
+                        onCheckedChange={() => handleGenreToggle(genre)}
+                        className="border-[var(--neon-purple)]/50"
+                      />
+                      <Label
+                        htmlFor={`genre-${genre}`}
+                        className="text-sm text-foreground cursor-pointer uppercase tracking-wide"
+                      >
+                        {genre}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+                {selectedGenres.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedGenres([])}
+                    className="mt-3 text-[var(--neon-cyan)] hover:text-[var(--neon-cyan)]/80"
+                  >
+                    Clear Filters
+                  </Button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Results Count */}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p className="uppercase tracking-wide">
+              Showing {sortedGames.length} of {games.length} games
+            </p>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedGenres([]);
+                }}
+                className="text-[var(--neon-cyan)] hover:text-[var(--neon-cyan)]/80"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+        </div>
+
         {/* Games Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {sortedGames.map((game) => (
+        {sortedGames.length === 0 ? (
+          <Card>
+            <CardContent className="pt-6">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <Search />
+                  </EmptyMedia>
+                  <EmptyTitle>No games found</EmptyTitle>
+                  <EmptyDescription>
+                    Try adjusting your search or filters
+                  </EmptyDescription>
+                </EmptyHeader>
+              </Empty>
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {sortedGames.map((game) => (
             <div 
               key={game._id} 
               className="glass-card rounded-sm border-2 border-[var(--neon-purple)]/20 overflow-hidden hover-glow-purple transition-all group cursor-pointer"
@@ -169,7 +309,8 @@ function GamesContent() {
               </div>
             </div>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Game Detail Modal */}
         {selectedGame && (

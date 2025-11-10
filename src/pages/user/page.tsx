@@ -11,6 +11,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
+import { Input } from "@/components/ui/input.tsx";
+import { Checkbox } from "@/components/ui/checkbox.tsx";
+import { Label } from "@/components/ui/label.tsx";
 import { 
   User, 
   UserPlus, 
@@ -27,7 +30,9 @@ import {
   Sparkles,
   Shield,
   Flame,
-  Crown
+  Crown,
+  Search,
+  Filter
 } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
@@ -408,44 +413,7 @@ function UserProfileContent() {
 
           {/* Games Tab */}
           <TabsContent value="games" className="space-y-4">
-            <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
-              <CardHeader>
-                <CardTitle className="text-xl text-[var(--neon-magenta)] uppercase tracking-wider">
-                  Game Library
-                </CardTitle>
-                <CardDescription className="uppercase tracking-wide">
-                  {userGames?.length ?? 0} games owned
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {!userGames || userGames.length === 0 ? (
-                  <div className="text-center py-12">
-                    <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-                    <p className="text-muted-foreground uppercase tracking-wide">
-                      No games found
-                    </p>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                    {userGames.map((game) => (
-                      <div key={game._id} className="glass-card border border-[var(--neon-magenta)]/20 overflow-hidden hover:border-[var(--neon-magenta)]/40 transition-all">
-                        <img 
-                          src={game.imageUrl} 
-                          alt={game.name}
-                          className="w-full aspect-[616/353] object-cover"
-                        />
-                        <div className="p-3">
-                          <p className="font-semibold text-sm text-foreground truncate">{game.name}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {Math.floor(game.playtime / 60)}h played
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <GamesTabContent userGames={userGames} />
           </TabsContent>
 
           {/* NFTs Tab */}
@@ -828,6 +796,200 @@ function BlockUserButton({ targetUserId }: { targetUserId: Id<"users"> }) {
       )}
       {isBlocked ? "Unblock" : "Block"}
     </Button>
+  );
+}
+
+// Games Tab Component with Search & Filter
+const GENRE_OPTIONS = [
+  "Action",
+  "Adventure",
+  "RPG",
+  "Strategy",
+  "Simulation",
+  "Sports",
+  "Racing",
+  "Shooter",
+  "Indie",
+  "Casual"
+];
+
+function GamesTabContent({ userGames }: { userGames: Doc<"games">[] | undefined }) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedGenres, setSelectedGenres] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
+
+  if (!userGames) {
+    return (
+      <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
+        <CardContent className="pt-6">
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (userGames.length === 0) {
+    return (
+      <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
+        <CardContent className="pt-6">
+          <div className="text-center py-12">
+            <Gamepad2 className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+            <p className="text-muted-foreground uppercase tracking-wide">
+              No games found
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  // Filter and sort games
+  const filteredGames = userGames.filter((game) => {
+    const matchesSearch = game.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesGenre = selectedGenres.length === 0;
+    return matchesSearch && matchesGenre;
+  });
+
+  const sortedGames = [...filteredGames].sort((a, b) => b.playtime - a.playtime);
+
+  const handleGenreToggle = (genre: string) => {
+    setSelectedGenres((prev) =>
+      prev.includes(genre) ? prev.filter((g) => g !== genre) : [...prev, genre]
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Search & Filters */}
+      <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
+        <CardContent className="pt-6 space-y-4">
+          <div className="flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--neon-magenta)]" />
+              <Input
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search games..."
+                className="pl-10 glass-card border-2 border-[var(--neon-magenta)]/30"
+              />
+            </div>
+            <Button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`glass-card border-2 ${
+                showFilters
+                  ? "border-[var(--neon-magenta)] bg-[var(--neon-magenta)]/10 text-[var(--neon-magenta)]"
+                  : "border-[var(--neon-purple)]/30 text-[var(--neon-purple)]"
+              } hover:bg-[var(--neon-purple)]/10 font-semibold uppercase tracking-wider`}
+            >
+              <Filter className="w-4 h-4 mr-2" />
+              Filters
+            </Button>
+          </div>
+
+          {showFilters && (
+            <div className="glass-card p-4 border border-[var(--neon-purple)]/20 rounded">
+              <p className="text-sm font-semibold text-[var(--neon-purple)] uppercase tracking-wider mb-3">
+                Genre (Note: Genre filtering requires game details)
+              </p>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {GENRE_OPTIONS.map((genre) => (
+                  <div key={genre} className="flex items-center gap-2">
+                    <Checkbox
+                      id={`user-genre-${genre}`}
+                      checked={selectedGenres.includes(genre)}
+                      onCheckedChange={() => handleGenreToggle(genre)}
+                      className="border-[var(--neon-purple)]/50"
+                    />
+                    <Label
+                      htmlFor={`user-genre-${genre}`}
+                      className="text-sm text-foreground cursor-pointer uppercase tracking-wide"
+                    >
+                      {genre}
+                    </Label>
+                  </div>
+                ))}
+              </div>
+              {selectedGenres.length > 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedGenres([])}
+                  className="mt-3 text-[var(--neon-cyan)] hover:text-[var(--neon-cyan)]/80"
+                >
+                  Clear Filters
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            <p className="uppercase tracking-wide">
+              Showing {sortedGames.length} of {userGames.length} games
+            </p>
+            {searchQuery && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedGenres([]);
+                }}
+                className="text-[var(--neon-cyan)] hover:text-[var(--neon-cyan)]/80"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Games Grid */}
+      <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">
+        <CardHeader>
+          <CardTitle className="text-xl text-[var(--neon-magenta)] uppercase tracking-wider">
+            Game Library
+          </CardTitle>
+          <CardDescription className="uppercase tracking-wide">
+            {sortedGames.length} games {searchQuery && `matching "${searchQuery}"`}
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {sortedGames.length === 0 ? (
+            <div className="text-center py-12">
+              <Search className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground uppercase tracking-wide">
+                No games found
+              </p>
+              <p className="text-xs text-muted-foreground mt-2">
+                Try adjusting your search or filters
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {sortedGames.map((game) => (
+                <div key={game._id} className="glass-card border border-[var(--neon-magenta)]/20 overflow-hidden hover:border-[var(--neon-magenta)]/40 transition-all">
+                  <img 
+                    src={game.imageUrl} 
+                    alt={game.name}
+                    className="w-full aspect-[616/353] object-cover"
+                  />
+                  <div className="p-3">
+                    <p className="font-semibold text-sm text-foreground truncate">{game.name}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {Math.floor(game.playtime / 60)}h played
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
