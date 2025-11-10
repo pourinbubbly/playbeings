@@ -98,6 +98,7 @@ export default defineSchema({
     appId: v.number(),
     gameName: v.string(),
     cardName: v.string(),
+    achievementId: v.optional(v.string()), // Unique achievement ID from Steam (gameId_apiname)
     imageUrl: v.string(),
     rarity: v.string(),
     mintedAsNft: v.boolean(),
@@ -106,7 +107,8 @@ export default defineSchema({
     earnedAt: v.number(),
   })
     .index("by_user", ["userId"])
-    .index("by_nft_status", ["mintedAsNft"]),
+    .index("by_nft_status", ["mintedAsNft"])
+    .index("by_user_achievement", ["userId", "achievementId"]),
 
   nftBoosts: defineTable({
     userId: v.id("users"),

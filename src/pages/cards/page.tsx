@@ -49,11 +49,11 @@ function CardsContent() {
   const getAchievements = useAction(api.steam.getSteamAchievements);
   const saveMinedNFT = useMutation(api.cards.saveMinedNFT);
 
-  // Check if an achievement is already minted
+  // Check if an achievement is already minted using unique achievement ID
   const isAlreadyMinted = (achievement: SteamAchievement): boolean => {
     if (!mintedNFTs) return false;
     return mintedNFTs.some(
-      (nft) => nft.appId === achievement.gameId && nft.cardName === achievement.name
+      (nft) => nft.achievementId === achievement.id
     );
   };
 
@@ -132,6 +132,7 @@ function CardsContent() {
         appId: achievement.gameId,
         gameName: achievement.gameName,
         cardName: achievement.name,
+        achievementId: achievement.id, // Pass the unique achievement ID
         imageUrl: achievement.imageUrl,
         rarity: achievement.rarity,
         nftAddress: mintAddress,

@@ -6,6 +6,7 @@ export const saveMinedNFT = mutation({
     appId: v.number(),
     gameName: v.string(),
     cardName: v.string(),
+    achievementId: v.string(), // Unique achievement ID
     imageUrl: v.string(),
     rarity: v.string(),
     nftAddress: v.string(),
@@ -35,17 +36,13 @@ export const saveMinedNFT = mutation({
       });
     }
 
-    // Check if this achievement has already been minted as NFT
+    // Check if this achievement has already been minted as NFT using unique achievement ID
     const existingNFT = await ctx.db
       .query("tradingCards")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
-      .filter((q) =>
-        q.and(
-          q.eq(q.field("appId"), args.appId),
-          q.eq(q.field("cardName"), args.cardName),
-          q.eq(q.field("mintedAsNft"), true)
-        )
+      .withIndex("by_user_achievement", (q) => 
+        q.eq("userId", user._id).eq("achievementId", args.achievementId)
       )
+      .filter((q) => q.eq(q.field("mintedAsNft"), true))
       .first();
 
     if (existingNFT) {
@@ -61,6 +58,7 @@ export const saveMinedNFT = mutation({
       appId: args.appId,
       gameName: args.gameName,
       cardName: args.cardName,
+      achievementId: args.achievementId,
       imageUrl: args.imageUrl,
       rarity: args.rarity,
       mintedAsNft: true,
