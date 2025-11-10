@@ -187,7 +187,7 @@ export function ChatWidget() {
         setLoadingTimeout(true);
         toast.error("Sohbet yüklenemedi. Lütfen tekrar deneyin.");
         setSelectedConvId(null);
-      }, 3000); // 3 seconds timeout
+      }, 5000); // 5 seconds timeout (increased for unhide operations)
 
       return () => clearTimeout(timer);
     } else if (selectedConv && loadingTimeout) {
@@ -236,14 +236,19 @@ export function ChatWidget() {
       const convId = await getOrCreateConversation({ otherUserId: userId });
       console.log("Conversation created/found:", convId);
       
-      // Set the conversation ID
+      // Set the conversation ID immediately
       setSelectedConvId(convId);
       setSearchQuery("");
       
       console.log("Selected conversation ID set to:", convId);
+      
+      // Wait a moment for the conversation to sync in the list
+      // This ensures the unhide operation has completed
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
     } catch (error) {
       console.error("Failed to start conversation:", error);
-      toast.error("Sohbet başlatılamadı: " + (error as Error).message);
+      toast.error("Sohbet başlatılamadı");
       setSelectedConvId(null);
     }
   };
