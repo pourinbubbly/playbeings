@@ -240,6 +240,9 @@ export function ChatWidget() {
       // Explicitly unhide the conversation (in case it was hidden)
       await unhideConversation({ conversationId: convId });
       
+      // Wait a bit for the queries to sync
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
       // Set the conversation ID (direct query will load it)
       setSelectedConvId(convId);
       setSearchQuery("");
