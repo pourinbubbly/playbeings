@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Authenticated } from "convex/react";
@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
-import { convexUrl } from "@/lib/convex.ts";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -37,20 +36,6 @@ export function ChatWidget() {
   const unhideConversation = useMutation(api.messages.unhideConversation);
   const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
 
-  // Get storage URLs for image messages
-  const messagesWithUrls = useMemo(() => {
-    if (!messages) return [];
-    
-    return messages.map((msg) => {
-      if (msg.messageType === "image" && msg.imageUrl) {
-        // Construct the storage URL manually
-        const url = `${convexUrl}/api/storage/${msg.imageUrl}`;
-        return { ...msg, resolvedImageUrl: url };
-      }
-      return { ...msg, resolvedImageUrl: null };
-    });
-  }, [messages]);
-
   // Check if user is at bottom of scroll
   const handleScroll = () => {
     if (messagesContainerRef.current) {
@@ -65,7 +50,7 @@ export function ChatWidget() {
     if (shouldAutoScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messagesWithUrls, shouldAutoScroll]);
+  }, [messages, shouldAutoScroll]);
 
   // Scroll to bottom when conversation changes
   useEffect(() => {
@@ -463,15 +448,16 @@ export function ChatWidget() {
                     style={{ scrollbarWidth: "thin" }}
                   >
                     <div className="space-y-3">
-                      {!messagesWithUrls || messagesWithUrls.length === 0 ? (
+                      {!messages || messages.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground text-sm">
                           Henüz mesaj yok
                         </div>
                       ) : (
-                        messagesWithUrls.map((msg) => {
+                        messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
-                          const imageUrl = msg.resolvedImageUrl;
+                          // Get resolved URL from backend (dynamically added property)
+                          const imageUrl = (msg as typeof msg & { imageUrlResolved?: string | null }).imageUrlResolved;
                           
                           return (
                             <div
