@@ -494,3 +494,94 @@ export const getSteamNews = action({
     }
   },
 });
+
+// Get top 30 most played games
+export const getTopGames = action({
+  args: { steamId: v.string() },
+  handler: async (ctx, args) => {
+    try {
+      console.log(`Fetching top games for Steam ID: ${args.steamId}`);
+      
+      // Get owned games
+      const gamesResponse = await fetch(
+        `https://api.steampowered.com/IPlayerService/GetOwnedGames/v0001/?key=${STEAM_API_KEY}&steamid=${args.steamId}&include_appinfo=1&include_played_free_games=1`
+      );
+      const gamesData = await gamesResponse.json();
+      const games = gamesData.response.games || [];
+      
+      if (games.length === 0) {
+        return [];
+      }
+
+      // Get top 30 played games (most playtime) with at least 1 hour playtime
+      const topGames = games
+        .filter((g: { playtime_forever: number }) => g.playtime_forever > 60)
+        .sort((a: { playtime_forever: number }, b: { playtime_forever: number }) => b.playtime_forever - a.playtime_forever)
+        .slice(0, 30)
+        .map((game: {
+          appid: number;
+          name: string;
+          playtime_forever: number;
+          img_icon_url: string;
+        }) => ({
+          appId: game.appid,
+          name: game.name,
+          playtime: game.playtime_forever,
+          imageUrl: `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`,
+        }));
+
+      console.log(`Found ${topGames.length} top games`);
+      return topGames;
+    } catch (error) {
+      console.error("Error fetching top games:", error);
+      throw new Error(`Failed to fetch games: ${error}`);
+    }
+  },
+});
+
+// Get achievements for a specific game
+export const getGameAchievements = action({
+  args: { 
+    steamId: v.string(),
+    appId: v.number(),
+    gameName: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      console.log(`Fetching achievements for game ${args.appId}`);
+      
+      const achievementsResponse = await fetch(
+        `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${args.appId}&key=${STEAM_API_KEY}&steamid=${args.steamId}`
+      );
+      
+      if (!achievementsResponse.ok) {
+        throw new Error("Failed to fetch achievements for this game");
+      }
+      
+      const achievementsData = await achievementsResponse.json();
+      
+      if (!achievementsData.playerstats || !achievementsData.playerstats.achievements) {
+        return [];
+      }
+
+      const achievements = achievementsData.playerstats.achievements
+        .filter((a: { achieved: number }) => a.achieved === 1)
+        .map((achievement: { apiname: string; name: string; description: string }) => ({
+          id: `${args.appId}_${achievement.apiname}`,
+          name: achievement.name || "Achievement",
+          description: achievement.description || "Unlocked achievement",
+          gameName: args.gameName,
+          gameId: args.appId,
+          imageUrl: `https://cdn.akamai.steamstatic.com/steam/apps/${args.appId}/capsule_616x353.jpg`,
+          iconUrl: `https://cdn.akamai.steamstatic.com/steamcommunity/public/images/apps/${args.appId}/${achievement.apiname}.jpg`,
+          rarity: Math.random() > 0.7 ? "Rare" : Math.random() > 0.4 ? "Uncommon" : "Common",
+        }));
+
+      console.log(`Found ${achievements.length} achievements for game ${args.appId}`);
+      return achievements;
+    } catch (error) {
+      console.error("Error fetching game achievements:", error);
+      throw new Error(`Failed to fetch achievements: ${error}`);
+    }
+  },
+});
