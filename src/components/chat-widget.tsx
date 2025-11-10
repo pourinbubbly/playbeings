@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
+import { convexUrl } from "@/lib/convex.ts";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -406,10 +407,11 @@ export function ChatWidget() {
                           let imageUrl: string | null = null;
                           if (hasImageStorage) {
                             const storageId = msg.imageUrl;
-                            // Use the Convex client URL to construct storage URL
-                            const convexUrl = import.meta.env.VITE_CONVEX_URL || '';
+                            // Use the imported convexUrl (guaranteed to be defined)
                             imageUrl = `${convexUrl}/api/storage/${storageId}`;
-                            console.log("Image URL generated:", imageUrl);
+                            console.log("Storage ID:", storageId);
+                            console.log("Convex URL:", convexUrl);
+                            console.log("Full image URL:", imageUrl);
                           }
                           
                           return (
