@@ -115,11 +115,11 @@ function UserProfileContent() {
           </div>
 
           {/* Profile Info */}
-          <div className="px-8 pb-8">
-            <div className="flex items-end justify-between -mt-16 mb-4">
+          <div className="px-8 pb-8 relative">
+            <div className="flex items-end justify-between -mt-20 mb-4">
               <div className="flex items-end gap-4">
                 {/* Avatar */}
-                <div className="w-32 h-32 rounded-full border-4 border-black bg-black overflow-hidden flex-shrink-0">
+                <div className="w-32 h-32 rounded-full border-4 border-background bg-background overflow-hidden flex-shrink-0 shadow-2xl">
                   {targetUser.avatar ? (
                     <img src={targetUser.avatar} alt={targetUser.name || "User"} className="w-full h-full object-cover" />
                   ) : (
@@ -131,7 +131,7 @@ function UserProfileContent() {
 
                 {/* Name & Stats */}
                 <div className="mb-4 min-w-0 flex-1">
-                  <h1 className="text-3xl font-bold text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.9)] uppercase tracking-wider">
+                  <h1 className="text-3xl font-bold text-foreground uppercase tracking-wider">
                     {targetUser.username || targetUser.name || "Unknown User"}
                   </h1>
                   {targetUser.bio && (

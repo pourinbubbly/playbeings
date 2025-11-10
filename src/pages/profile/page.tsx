@@ -11,10 +11,11 @@ import { Input } from "@/components/ui/input.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
 import { Label } from "@/components/ui/label.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
-import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink } from "lucide-react";
+import { User, Image, ImageIcon, Save, Upload, MessageSquare, Loader2, Send, Trash2, ExternalLink, Crop } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { getConnectedWallet, createProfileCommentTransaction } from "@/lib/wallet.ts";
+import { ImageCropDialog } from "@/components/ui/image-crop-dialog.tsx";
 
 export default function Profile() {
   return (
@@ -50,6 +51,9 @@ function ProfileContent() {
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
+  const [cropDialogOpen, setCropDialogOpen] = useState(false);
+  const [cropImageUrl, setCropImageUrl] = useState("");
+  const [cropType, setCropType] = useState<"avatar" | "banner">("avatar");
 
   // Initialize form with current user data
   React.useEffect(() => {
@@ -76,24 +80,14 @@ function ProfileContent() {
       return;
     }
 
-    setUploadingAvatar(true);
-    try {
-      const uploadUrl = await generateUploadUrl();
-      const result = await fetch(uploadUrl, {
-        method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
-      });
-      const { storageId } = await result.json();
-      const imageUrl = await getStorageUrl({ storageId });
-      setAvatar(imageUrl || "");
-      toast.success("Avatar uploaded!");
-    } catch (error) {
-      toast.error("Failed to upload avatar");
-      console.error(error);
-    } finally {
-      setUploadingAvatar(false);
-    }
+    // Open crop dialog
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageUrl(reader.result as string);
+      setCropType("avatar");
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleUploadBanner = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -105,23 +99,49 @@ function ProfileContent() {
       return;
     }
 
-    setUploadingBanner(true);
+    // Open crop dialog
+    const reader = new FileReader();
+    reader.onload = () => {
+      setCropImageUrl(reader.result as string);
+      setCropType("banner");
+      setCropDialogOpen(true);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCropComplete = async (croppedBlob: Blob) => {
+    if (cropType === "avatar") {
+      setUploadingAvatar(true);
+    } else {
+      setUploadingBanner(true);
+    }
+
     try {
       const uploadUrl = await generateUploadUrl();
       const result = await fetch(uploadUrl, {
         method: "POST",
-        headers: { "Content-Type": file.type },
-        body: file,
+        headers: { "Content-Type": "image/png" },
+        body: croppedBlob,
       });
       const { storageId } = await result.json();
       const imageUrl = await getStorageUrl({ storageId });
-      setBanner(imageUrl || "");
-      toast.success("Banner uploaded!");
+
+      if (cropType === "avatar") {
+        setAvatar(imageUrl || "");
+        toast.success("Avatar cropped and uploaded!");
+      } else {
+        setBanner(imageUrl || "");
+        toast.success("Banner cropped and uploaded!");
+      }
     } catch (error) {
-      toast.error("Failed to upload banner");
+      toast.error(`Failed to upload ${cropType}`);
       console.error(error);
     } finally {
-      setUploadingBanner(false);
+      if (cropType === "avatar") {
+        setUploadingAvatar(false);
+      } else {
+        setUploadingBanner(false);
+      }
     }
   };
 
@@ -309,8 +329,9 @@ function ProfileContent() {
                   onClick={() => document.getElementById("avatar-upload")?.click()}
                   disabled={uploadingAvatar}
                   className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
+                  title="Upload and crop avatar"
                 >
-                  {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploadingAvatar ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crop className="w-4 h-4" />}
                 </Button>
                 <input
                   id="avatar-upload"
@@ -321,7 +342,7 @@ function ProfileContent() {
                 />
               </div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                Upload from your PC or paste URL
+                Upload from PC (with cropping) or paste URL
               </p>
             </div>
 
@@ -341,8 +362,9 @@ function ProfileContent() {
                   onClick={() => document.getElementById("banner-upload")?.click()}
                   disabled={uploadingBanner}
                   className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
+                  title="Upload and crop banner"
                 >
-                  {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploadingBanner ? <Loader2 className="w-4 h-4 animate-spin" /> : <Crop className="w-4 h-4" />}
                 </Button>
                 <input
                   id="banner-upload"
@@ -353,11 +375,21 @@ function ProfileContent() {
                 />
               </div>
               <p className="text-xs text-muted-foreground uppercase tracking-wide">
-                Upload from your PC or paste URL
+                Upload from PC (with cropping) or paste URL
               </p>
             </div>
           </CardContent>
         </Card>
+
+        {/* Image Crop Dialog */}
+        <ImageCropDialog
+          open={cropDialogOpen}
+          onOpenChange={setCropDialogOpen}
+          imageUrl={cropImageUrl}
+          onCropComplete={handleCropComplete}
+          aspectRatio={cropType === "avatar" ? 1 : 4}
+          circularCrop={cropType === "avatar"}
+        />
 
         {/* Social Links */}
         <Card className="glass-card border-2 border-[var(--neon-magenta)]/20">

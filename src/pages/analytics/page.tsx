@@ -86,6 +86,16 @@ function AnalyticsContent() {
           </CardHeader>
         </Card>
 
+        {/* Points Chart - Featured at top */}
+        {progressOverTime && progressOverTime.length > 0 && (
+          <div className="relative">
+            <div className="absolute -top-3 left-6 px-3 py-1 glass-card border-2 border-[var(--neon-cyan)]/40 rounded-sm z-10">
+              <span className="text-xs font-bold text-[var(--neon-cyan)] uppercase tracking-wider">Featured</span>
+            </div>
+            <PointsChart data={progressOverTime} />
+          </div>
+        )}
+
         <OverviewStats
           analytics={gameAnalytics}
           achievements={achievementStats}
@@ -95,10 +105,6 @@ function AnalyticsContent() {
           <TopGamesChart topGames={gameAnalytics.topGames} />
           <PlaytimeDistribution distribution={gameAnalytics.playtimeRanges} />
         </div>
-
-        {progressOverTime && progressOverTime.length > 0 && (
-          <PointsChart data={progressOverTime} />
-        )}
 
         {gameAnalytics.recentGames.length > 0 && (
           <RecentActivity games={gameAnalytics.recentGames} />

@@ -274,7 +274,7 @@ export default function Index() {
             <div>
               <h3 className="font-semibold mb-4">Resources</h3>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/docs" className="hover:text-foreground transition-colors">Documentation</Link></li>
+                <li><a href="https://docs.playbeings.fun/documentation" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">Documentation</a></li>
                 <li><a href="http://explorer.testnet.carv.io/" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">CARV SVM Testnet Explorer</a></li>
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><Link to="/faq" className="hover:text-foreground transition-colors">FAQ</Link></li>
