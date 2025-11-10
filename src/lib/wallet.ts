@@ -380,6 +380,7 @@ export async function completeQuestTransaction(
 
   let retryCount = 0;
   const maxRetries = 2;
+<<<<<<< HEAD
 
   while (retryCount <= maxRetries) {
     try {
@@ -608,9 +609,125 @@ export async function deleteProfileCommentTransaction(
       // Wait before retry (exponential backoff)
       await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
     }
+<<<<<<< HEAD
   }
 
   throw new Error("Failed to delete comment transaction after multiple attempts");
+=======
+    
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+    
+    return { 
+      signature, 
+      explorerUrl,
+    };
+  } catch (error) {
+    console.error("Comment deletion transaction failed:", error);
+    throw error;
+=======
+
+  while (retryCount <= maxRetries) {
+    try {
+      const connection = new Connection(CARV_RPC_URL, {
+        commitment: "confirmed",
+        confirmTransactionInitialTimeout: 60000,
+      });
+      const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+      console.log(`Creating quest completion transaction on CARV SVM... (attempt ${retryCount + 1}/${maxRetries + 1})`);
+
+      const transaction = new Transaction();
+
+      // Small transfer to self (0.001 SOL)
+      const lamports = 1000000; // 0.001 SOL
+      
+      transaction.add(
+        SystemProgram.transfer({
+          fromPubkey: walletPubkey,
+          toPubkey: walletPubkey,
+          lamports,
+        })
+      );
+
+      // Add quest completion metadata as memo
+      const questData = JSON.stringify({
+        type: "QUEST_COMPLETED",
+        timestamp: new Date().toISOString(),
+        questTitle,
+        pointsEarned,
+        app: "PlayBeings",
+      });
+      
+      const memoData = new TextEncoder().encode(questData);
+      
+      transaction.add({
+        keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+        programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+        data: Buffer.from(memoData),
+      });
+
+      // Set transaction metadata
+      const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+      transaction.recentBlockhash = blockhash;
+      transaction.feePayer = walletPubkey;
+
+      console.log("Requesting Backpack approval for quest completion...");
+      
+      // Sign and send with Backpack
+      const { signature } = await window.backpack.signAndSendTransaction(transaction);
+      
+      console.log("Quest completion transaction submitted! Tx:", signature);
+
+      // Verify transaction on-chain (with extended timeout)
+      const confirmationPromise = connection.confirmTransaction({
+        signature,
+        blockhash,
+        lastValidBlockHeight,
+      }, "confirmed");
+      
+      // Add timeout to prevent hanging (60 seconds)
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+      });
+      
+      try {
+        await Promise.race([confirmationPromise, timeoutPromise]);
+        console.log("Quest completion transaction confirmed!");
+      } catch (confirmError) {
+        // Transaction submitted but confirmation timed out
+        // It might still be processing - return signature anyway
+        console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+      }
+      
+      const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+      
+      return { 
+        signature, 
+        explorerUrl,
+      };
+    } catch (error) {
+      console.error(`Quest completion transaction failed (attempt ${retryCount + 1}):`, error);
+      
+      // If user cancelled, don't retry
+      if (error instanceof Error && 
+          (error.message.includes("Plugin Closed") || 
+           error.message.includes("User rejected"))) {
+        throw error;
+      }
+      
+      retryCount++;
+      if (retryCount > maxRetries) {
+        throw error;
+      }
+      
+      // Wait before retry (exponential backoff)
+      await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+    }
+>>>>>>> e2316a1d8368855da6a56687891a143941741f71
+  }
+
+  throw new Error("Failed to complete quest transaction after multiple attempts");
+>>>>>>> 6ad5368c65b6a7a85f4e7ef5f18e332c8723e16b
 }
 
 export async function mintNFTOnCARV(
