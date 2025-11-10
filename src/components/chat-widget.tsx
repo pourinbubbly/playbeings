@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Authenticated } from "convex/react";
-import { MessageCircle, X, Send, Minimize2, User, Smile, Image as ImageIcon, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Minimize2, User, Smile, Image as ImageIcon, Loader2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { motion, AnimatePresence } from "motion/react";
@@ -16,6 +16,7 @@ export function ChatWidget() {
   const [messageInput, setMessageInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -68,6 +69,7 @@ export function ChatWidget() {
     if (!isOpen) {
       setShowEmojiPicker(false);
       setMessageInput("");
+      setSearchQuery("");
     }
   }, [isOpen]);
 
@@ -156,6 +158,13 @@ export function ChatWidget() {
   const selectedConv = conversations?.find((c) => c._id === selectedConvId);
   const totalUnread = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
 
+  // Filter conversations based on search
+  const filteredConversations = conversations?.filter((conv) => {
+    if (!searchQuery.trim()) return true;
+    const username = conv.otherUser?.username?.toLowerCase() || "";
+    return username.includes(searchQuery.toLowerCase());
+  });
+
   return (
     <Authenticated>
       <div className="fixed bottom-4 left-4 z-50">
@@ -172,13 +181,13 @@ export function ChatWidget() {
             >
               {/* Header */}
               <div className="p-4 border-b-2 border-[var(--neon-cyan)]/20 bg-black/40 flex items-center justify-between flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <MessageCircle className="w-5 h-5 text-[var(--neon-cyan)]" />
-                  <span className="font-bold text-[var(--neon-cyan)] uppercase tracking-wide text-sm">
+                <div className="flex items-center gap-2 flex-1 min-w-0">
+                  <MessageCircle className="w-5 h-5 text-[var(--neon-cyan)] flex-shrink-0" />
+                  <span className="font-bold text-[var(--neon-cyan)] uppercase tracking-wide text-sm truncate">
                     {selectedConv ? selectedConv.otherUser?.username : "Messages"}
                   </span>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-shrink-0">
                   {selectedConv && (
                     <button
                       onClick={() => {
@@ -186,16 +195,18 @@ export function ChatWidget() {
                         setMessageInput("");
                         setShowEmojiPicker(false);
                       }}
-                      className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors"
+                      className="text-muted-foreground hover:text-destructive transition-colors p-1"
+                      title="Sohbeti kapat"
                     >
-                      <Minimize2 className="w-4 h-4" />
+                      <X className="w-4 h-4" />
                     </button>
                   )}
                   <button
                     onClick={() => setIsOpen(false)}
-                    className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors"
+                    className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors p-1"
+                    title="Pencereyi kapat"
                   >
-                    <X className="w-4 h-4" />
+                    <Minimize2 className="w-4 h-4" />
                   </button>
                 </div>
               </div>
@@ -203,14 +214,34 @@ export function ChatWidget() {
               {/* Content */}
               {!selectedConv ? (
                 // Conversation List
-                <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
-                  <div className="p-2 space-y-1">
-                    {conversations && conversations.length === 0 && (
-                      <div className="p-8 text-center text-muted-foreground text-sm">
-                        Henüz konuşma yok
-                      </div>
-                    )}
-                    {conversations?.map((conv) => (
+                <div className="flex-1 flex flex-col min-h-0">
+                  {/* Search Bar */}
+                  <div className="p-3 border-b border-[var(--neon-cyan)]/20 bg-black/20 flex-shrink-0">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--neon-cyan)]" />
+                      <Input
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Kullanıcı ara..."
+                        className="pl-10 glass-card border border-[var(--neon-purple)]/20 text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Conversations */}
+                  <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
+                    <div className="p-2 space-y-1">
+                      {conversations && conversations.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground text-sm">
+                          Henüz konuşma yok
+                        </div>
+                      )}
+                      {searchQuery.trim() && filteredConversations?.length === 0 && (
+                        <div className="p-8 text-center text-muted-foreground text-sm">
+                          Kullanıcı bulunamadı
+                        </div>
+                      )}
+                      {filteredConversations?.map((conv) => (
                       <button
                         key={conv._id}
                         onClick={() => setSelectedConvId(conv._id)}
@@ -246,6 +277,7 @@ export function ChatWidget() {
                         </div>
                       </button>
                     ))}
+                    </div>
                   </div>
                 </div>
               ) : (
