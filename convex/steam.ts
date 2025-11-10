@@ -495,7 +495,7 @@ export const getSteamNews = action({
   },
 });
 
-// Get top 30 most played games
+// Get top 30 most played games (only games with achievements)
 export const getTopGames = action({
   args: { steamId: v.string() },
   handler: async (ctx, args) => {
@@ -513,25 +513,61 @@ export const getTopGames = action({
         return [];
       }
 
-      // Get top 30 played games (most playtime) with at least 1 hour playtime
-      const topGames = games
+      // Get top played games (most playtime) with at least 1 hour playtime
+      // We'll check more than 30 to filter out games without achievements
+      const candidateGames = games
         .filter((g: { playtime_forever: number }) => g.playtime_forever > 60)
         .sort((a: { playtime_forever: number }, b: { playtime_forever: number }) => b.playtime_forever - a.playtime_forever)
-        .slice(0, 30)
-        .map((game: {
-          appid: number;
-          name: string;
-          playtime_forever: number;
-          img_icon_url: string;
-        }) => ({
-          appId: game.appid,
-          name: game.name,
-          playtime: game.playtime_forever,
-          imageUrl: `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`,
-        }));
+        .slice(0, 50); // Check top 50 games
 
-      console.log(`Found ${topGames.length} top games`);
-      return topGames;
+      console.log(`Checking ${candidateGames.length} games for achievements...`);
+
+      // Filter games that have achievements
+      const gamesWithAchievements = [];
+      
+      for (const game of candidateGames) {
+        try {
+          // Quick check if game has achievements
+          const achievementsResponse = await fetch(
+            `https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v0001/?appid=${game.appid}&key=${STEAM_API_KEY}&steamid=${args.steamId}`
+          );
+          
+          if (achievementsResponse.ok) {
+            const achievementsData = await achievementsResponse.json();
+            
+            // Check if game has achievements and user has unlocked at least one
+            if (achievementsData.playerstats && 
+                achievementsData.playerstats.achievements && 
+                achievementsData.playerstats.achievements.length > 0) {
+              
+              const hasUnlockedAchievements = achievementsData.playerstats.achievements.some(
+                (a: { achieved: number }) => a.achieved === 1
+              );
+              
+              if (hasUnlockedAchievements) {
+                gamesWithAchievements.push({
+                  appId: game.appid,
+                  name: game.name,
+                  playtime: game.playtime_forever,
+                  imageUrl: `https://cdn.akamai.steamstatic.com/steam/apps/${game.appid}/capsule_616x353.jpg`,
+                });
+              }
+            }
+          }
+        } catch (error) {
+          // Skip games that error out
+          console.log(`Skipping game ${game.appid} - no achievements or error`);
+          continue;
+        }
+        
+        // Stop when we have 30 games with achievements
+        if (gamesWithAchievements.length >= 30) {
+          break;
+        }
+      }
+
+      console.log(`Found ${gamesWithAchievements.length} games with unlocked achievements`);
+      return gamesWithAchievements;
     } catch (error) {
       console.error("Error fetching top games:", error);
       throw new Error(`Failed to fetch games: ${error}`);
