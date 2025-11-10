@@ -25,6 +25,10 @@ export function ChatWidget() {
 
   const conversations = useQuery(api.messages.getMyConversations, {});
   const followingUsers = useQuery(api.messages.getFollowingUsers, {});
+  const selectedConvDirect = useQuery(
+    api.messages.getConversationById,
+    selectedConvId ? { conversationId: selectedConvId } : "skip"
+  );
   const messages = useQuery(
     api.messages.getMessages,
     selectedConvId ? { conversationId: selectedConvId } : "skip"
@@ -166,14 +170,16 @@ export function ChatWidget() {
     }
   };
 
-  const selectedConv = conversations?.find((c) => c._id === selectedConvId);
+  // Use direct query if available, otherwise try to find in conversations list
+  const selectedConv = selectedConvDirect || conversations?.find((c) => c._id === selectedConvId);
   const totalUnread = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
   
   // Check if we have a selected conversation ID but no conversation object yet
   const hasSelectedConv = selectedConvId !== null;
   
   console.log("Selected conv ID:", selectedConvId);
-  console.log("Selected conv object:", selectedConv);
+  console.log("Selected conv from direct query:", selectedConvDirect);
+  console.log("Selected conv final:", selectedConv);
   console.log("Has selected conv:", hasSelectedConv);
 
   // Filter conversations based on search
@@ -215,9 +221,7 @@ export function ChatWidget() {
       const convId = await getOrCreateConversation({ otherUserId: userId });
       console.log("Conversation created/found:", convId);
       
-      // Wait a bit for the conversation to be synced to queries
-      await new Promise(resolve => setTimeout(resolve, 100));
-      
+      // Set the conversation ID - the direct query will load it
       setSelectedConvId(convId);
       setSearchQuery("");
       
