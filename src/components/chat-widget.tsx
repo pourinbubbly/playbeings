@@ -5,7 +5,6 @@ import { Authenticated } from "convex/react";
 import { MessageCircle, X, Send, Minimize2, User, Smile, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
-import { ScrollArea } from "@/components/ui/scroll-area.tsx";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
@@ -19,7 +18,8 @@ export function ChatWidget() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
 
   const conversations = useQuery(api.messages.getMyConversations, {});
   const messages = useQuery(
@@ -30,12 +30,31 @@ export function ChatWidget() {
   const markAsRead = useMutation(api.messages.markAsRead);
   const generateImageUploadUrl = useMutation(api.messages.generateImageUploadUrl);
 
-  // Auto-scroll to bottom when messages change
+  // Check if user is at bottom of scroll
+  const handleScroll = () => {
+    if (messagesContainerRef.current) {
+      const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+      const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+      setShouldAutoScroll(isAtBottom);
+    }
+  };
+
+  // Auto-scroll to bottom when messages change (only if user is at bottom)
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (shouldAutoScroll && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [messages]);
+  }, [messages, shouldAutoScroll]);
+
+  // Scroll to bottom when conversation changes
+  useEffect(() => {
+    if (selectedConvId && messagesEndRef.current) {
+      setShouldAutoScroll(true);
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "auto" });
+      }, 100);
+    }
+  }, [selectedConvId]);
 
   // Mark messages as read when conversation is selected
   useEffect(() => {
@@ -184,7 +203,7 @@ export function ChatWidget() {
               {/* Content */}
               {!selectedConv ? (
                 // Conversation List
-                <ScrollArea className="flex-1">
+                <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: "thin" }}>
                   <div className="p-2 space-y-1">
                     {conversations && conversations.length === 0 && (
                       <div className="p-8 text-center text-muted-foreground text-sm">
@@ -228,11 +247,16 @@ export function ChatWidget() {
                       </button>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
               ) : (
                 // Message View
                 <div className="flex-1 flex flex-col min-h-0">
-                  <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+                  <div 
+                    ref={messagesContainerRef}
+                    onScroll={handleScroll}
+                    className="flex-1 overflow-y-auto p-4 scroll-smooth"
+                    style={{ scrollbarWidth: "thin" }}
+                  >
                     <div className="space-y-3">
                       {!messages || messages.length === 0 ? (
                         <div className="p-8 text-center text-muted-foreground text-sm">
@@ -285,7 +309,7 @@ export function ChatWidget() {
                       )}
                       <div ref={messagesEndRef} />
                     </div>
-                  </ScrollArea>
+                  </div>
 
                   {/* Message Input */}
                   <div className="p-4 border-t-2 border-[var(--neon-cyan)]/20 bg-black/40 space-y-2 flex-shrink-0">
