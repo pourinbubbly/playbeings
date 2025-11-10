@@ -12,9 +12,10 @@ interface CarvDataCardProps {
   carvId?: string | null;
   reputationScore?: number | null;
   lastSync?: number | null;
+  isWalletConnected?: boolean;
 }
 
-export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: CarvDataCardProps) {
+export function CarvDataCard({ userId, carvId, reputationScore, lastSync, isWalletConnected = false }: CarvDataCardProps) {
   const [syncing, setSyncing] = useState(false);
   const syncCarvData = useAction(api.carv.syncCarvData);
 
@@ -68,16 +69,23 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: Carv
           <div className="text-center py-8">
             <Shield className="w-16 h-16 text-muted-foreground mx-auto mb-4 opacity-50" />
             <p className="text-muted-foreground text-sm mb-4">
-              Connect your wallet to sync CARV data
+              {isWalletConnected 
+                ? "Click below to sync your CARV data from blockchain"
+                : "Connect your wallet first, then sync CARV data"}
             </p>
             <Button 
               onClick={handleSync}
-              disabled={syncing}
-              className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
+              disabled={syncing || !isWalletConnected}
+              className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black disabled:opacity-50"
             >
               {syncing && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
               {syncing ? "Syncing..." : "Sync CARV Data"}
             </Button>
+            {!isWalletConnected && (
+              <p className="text-xs text-yellow-600 dark:text-yellow-500 mt-3">
+                ⚠️ No wallet connected
+              </p>
+            )}
             <p className="text-xs text-muted-foreground mt-4">
               Powered by CARV D.A.T.A. Framework
             </p>
