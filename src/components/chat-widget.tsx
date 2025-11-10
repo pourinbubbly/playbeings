@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
 import type { Id } from "@/convex/_generated/dataModel.d.ts";
 import EmojiPicker, { type EmojiClickData } from "emoji-picker-react";
-import { convexUrl } from "@/lib/convex.ts";
 
 export function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
@@ -459,18 +458,7 @@ export function ChatWidget() {
                         messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
-                          const hasImageStorage = isImageMessage && msg.imageUrl;
-                          
-                          // Generate proper storage URL from storage ID
-                          let imageUrl: string | null = null;
-                          if (hasImageStorage) {
-                            const storageId = msg.imageUrl;
-                            // Use the imported convexUrl (guaranteed to be defined)
-                            imageUrl = `${convexUrl}/api/storage/${storageId}`;
-                            console.log("Storage ID:", storageId);
-                            console.log("Convex URL:", convexUrl);
-                            console.log("Full image URL:", imageUrl);
-                          }
+                          const imageUrl = msg.resolvedImageUrl;
                           
                           return (
                             <div
@@ -484,22 +472,28 @@ export function ChatWidget() {
                                     : "glass-card border border-[var(--neon-purple)]/20"
                                 }`}
                               >
-                                {isImageMessage && imageUrl ? (
+                                {isImageMessage ? (
                                   <div className="space-y-2">
-                                    <img
-                                      src={imageUrl}
-                                      alt="Image"
-                                      className="rounded w-full h-auto object-contain cursor-pointer"
-                                      style={{ maxHeight: "300px" }}
-                                      onClick={() => {
-                                        window.open(imageUrl, "_blank");
-                                      }}
-                                      onError={(e) => {
-                                        console.error("Image load error for URL:", imageUrl);
-                                        const target = e.target as HTMLImageElement;
-                                        target.style.display = 'none';
-                                      }}
-                                    />
+                                    {imageUrl ? (
+                                      <img
+                                        src={imageUrl}
+                                        alt="Image"
+                                        className="rounded w-full h-auto object-contain cursor-pointer"
+                                        style={{ maxHeight: "300px" }}
+                                        onClick={() => {
+                                          window.open(imageUrl, "_blank");
+                                        }}
+                                        onError={(e) => {
+                                          console.error("Image load error for URL:", imageUrl);
+                                          const target = e.target as HTMLImageElement;
+                                          target.style.display = 'none';
+                                        }}
+                                      />
+                                    ) : (
+                                      <div className="flex items-center justify-center p-4 bg-black/20 rounded">
+                                        <ImageIcon className="w-8 h-8 opacity-50" />
+                                      </div>
+                                    )}
                                     <p className="text-xs opacity-70 px-1">
                                       {new Date(msg.createdAt).toLocaleTimeString([], {
                                         hour: "2-digit",
