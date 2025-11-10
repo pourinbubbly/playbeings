@@ -206,26 +206,8 @@ export const getMessages = query({
       .order("asc")
       .collect();
 
-    // Get storage URLs for image messages
-    const messagesWithUrls = await Promise.all(
-      messages.map(async (msg) => {
-        if (msg.messageType === "image" && msg.imageUrl) {
-          const imageUrl = await ctx.storage.getUrl(msg.imageUrl);
-          console.log("Message image storage ID:", msg.imageUrl);
-          console.log("Generated URL:", imageUrl);
-          return {
-            ...msg,
-            imageStorageUrl: imageUrl || null,
-          };
-        }
-        return {
-          ...msg,
-          imageStorageUrl: null,
-        };
-      })
-    );
-
-    return messagesWithUrls;
+    // Return messages with storage IDs (frontend will generate URLs)
+    return messages;
   },
 });
 

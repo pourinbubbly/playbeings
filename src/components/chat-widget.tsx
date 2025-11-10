@@ -324,6 +324,11 @@ export function ChatWidget() {
                               {conv.lastMessage}
                             </p>
                           )}
+                          {!conv.lastMessage && (
+                            <p className="text-xs text-muted-foreground truncate">
+                              Yeni sohbet
+                            </p>
+                          )}
                         </div>
                         
                         {/* Hide button */}
@@ -395,14 +400,17 @@ export function ChatWidget() {
                         messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
                           const isImageMessage = msg.messageType === "image";
-                          const imageUrl = 'imageStorageUrl' in msg ? msg.imageStorageUrl : null;
+                          const hasImageStorage = isImageMessage && msg.imageUrl;
                           
-                          console.log("Rendering message:", {
-                            id: msg._id,
-                            type: msg.messageType,
-                            hasImageUrl: !!imageUrl,
-                            imageUrl: imageUrl
-                          });
+                          // Generate proper storage URL from storage ID
+                          let imageUrl: string | null = null;
+                          if (hasImageStorage) {
+                            const storageId = msg.imageUrl;
+                            // Use the Convex client URL to construct storage URL
+                            const convexUrl = import.meta.env.VITE_CONVEX_URL || '';
+                            imageUrl = `${convexUrl}/api/storage/${storageId}`;
+                            console.log("Image URL generated:", imageUrl);
+                          }
                           
                           return (
                             <div
@@ -428,7 +436,6 @@ export function ChatWidget() {
                                       }}
                                       onError={(e) => {
                                         console.error("Image load error for URL:", imageUrl);
-                                        console.error("Event:", e);
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
                                       }}
