@@ -38,6 +38,7 @@ export default defineSchema({
     })),
     // CARV D.A.T.A. Framework (real on-chain data)
     carvId: v.optional(v.string()),
+    carvProfileUrl: v.optional(v.string()),
     carvReputationScore: v.optional(v.number()),
     carvVerifiedAt: v.optional(v.number()),
     carvLastSync: v.optional(v.number()),

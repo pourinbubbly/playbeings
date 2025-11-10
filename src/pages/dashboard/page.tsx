@@ -63,6 +63,7 @@ function DashboardContent() {
             <CarvDataCard 
               userId={currentUser._id} 
               carvId={currentUser.carvId}
+              carvProfileUrl={currentUser.carvProfileUrl}
               reputationScore={currentUser.carvReputationScore}
               lastSync={currentUser.carvLastSync}
             />

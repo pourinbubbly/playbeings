@@ -458,3 +458,23 @@ export const searchUsers = query({
     return [...usernameMatches, ...nameMatches].slice(0, 20);
   },
 });
+
+export const getCarvVerifiedUsers = query({
+  args: {},
+  handler: async (ctx) => {
+    const allUsers = await ctx.db.query("users").collect();
+    
+    // Filter users with CARV ID
+    const verifiedUsers = allUsers.filter((user) => user.carvId);
+    
+    // Sort by reputation score (highest first), then by points
+    verifiedUsers.sort((a, b) => {
+      const aScore = a.carvReputationScore ?? 0;
+      const bScore = b.carvReputationScore ?? 0;
+      if (aScore !== bScore) return bScore - aScore;
+      return b.totalPoints - a.totalPoints;
+    });
+    
+    return verifiedUsers.slice(0, 50);
+  },
+});

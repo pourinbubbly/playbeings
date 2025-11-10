@@ -11,12 +11,14 @@ import { toast } from "sonner";
 interface CarvDataCardProps {
   userId: Id<"users">;
   carvId?: string | null;
+  carvProfileUrl?: string | null;
   reputationScore?: number | null;
   lastSync?: number | null;
 }
 
-export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: CarvDataCardProps) {
+export function CarvDataCard({ userId, carvId, carvProfileUrl, reputationScore, lastSync }: CarvDataCardProps) {
   const [inputCarvId, setInputCarvId] = useState("");
+  const [inputProfileUrl, setInputProfileUrl] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [copied, setCopied] = useState(false);
   const updateCarvId = useMutation(api.users.updateCarvId);
@@ -38,9 +40,13 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: Carv
 
     setIsSubmitting(true);
     try {
-      await updateCarvId({ carvId: inputCarvId.trim() });
+      await updateCarvId({ 
+        carvId: inputCarvId.trim(),
+        carvProfileUrl: inputProfileUrl.trim() || undefined
+      });
       toast.success("CARV ID linked successfully!");
       setInputCarvId("");
+      setInputProfileUrl("");
     } catch (error) {
       console.error("Error updating CARV ID:", error);
       toast.error("Failed to link CARV ID");
@@ -98,20 +104,22 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: Carv
                 <code className="text-xs font-mono text-green-500 break-all">
                   {carvId}
                 </code>
-                <Button
-                  size="sm"
-                  asChild
-                  className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-500 border border-green-500/50"
-                >
-                  <a
-                    href={`https://protocol.carv.io/identity/${carvId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                {carvProfileUrl && (
+                  <Button
+                    size="sm"
+                    asChild
+                    className="w-full bg-green-500/20 hover:bg-green-500/30 text-green-500 border border-green-500/50"
                   >
-                    View on CARV Protocol
-                    <ExternalLink className="w-3 h-3 ml-2" />
-                  </a>
-                </Button>
+                    <a
+                      href={carvProfileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Visit CARV Profile
+                      <ExternalLink className="w-3 h-3 ml-2" />
+                    </a>
+                  </Button>
+                )}
               </div>
             </div>
           ) : (
@@ -123,24 +131,31 @@ export function CarvDataCard({ userId, carvId, reputationScore, lastSync }: Carv
                     <span>Link Your CARV Identity</span>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Get your CARV ID from the CARV Protocol portal and enter it below to verify your identity
+                    Enter your CARV ID and profile URL to verify your identity
                   </p>
-                  <div className="flex gap-2">
+                  <div className="space-y-2">
                     <Input
                       placeholder="Enter your CARV ID"
                       value={inputCarvId}
                       onChange={(e) => setInputCarvId(e.target.value)}
-                      className="flex-1 bg-background/50 border-[var(--neon-cyan)]/30"
+                      className="w-full bg-background/50 border-[var(--neon-cyan)]/30"
                       disabled={isSubmitting}
                     />
-                    <Button
-                      onClick={handleSubmitCarvId}
-                      disabled={isSubmitting || !inputCarvId.trim()}
-                      className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
-                    >
-                      {isSubmitting ? "Linking..." : "Link"}
-                    </Button>
+                    <Input
+                      placeholder="CARV Profile URL (optional)"
+                      value={inputProfileUrl}
+                      onChange={(e) => setInputProfileUrl(e.target.value)}
+                      className="w-full bg-background/50 border-[var(--neon-cyan)]/30"
+                      disabled={isSubmitting}
+                    />
                   </div>
+                  <Button
+                    onClick={handleSubmitCarvId}
+                    disabled={isSubmitting || !inputCarvId.trim()}
+                    className="w-full bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
+                  >
+                    {isSubmitting ? "Linking..." : "Link CARV Identity"}
+                  </Button>
                   <Button
                     variant="outline"
                     size="sm"

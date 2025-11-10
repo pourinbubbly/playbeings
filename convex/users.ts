@@ -110,6 +110,7 @@ export const updateProfile = mutation({
     bio: v.optional(v.string()),
     avatar: v.optional(v.string()),
     banner: v.optional(v.string()),
+    carvProfileUrl: v.optional(v.string()),
     socialLinks: v.optional(v.object({
       twitter: v.optional(v.string()),
       discord: v.optional(v.string()),
@@ -160,6 +161,7 @@ export const updateProfile = mutation({
       bio: args.bio,
       avatar: args.avatar,
       banner: args.banner,
+      carvProfileUrl: args.carvProfileUrl,
       socialLinks: args.socialLinks,
     });
 
@@ -393,6 +395,7 @@ export const updateCarvData = internalMutation({
 export const updateCarvId = mutation({
   args: {
     carvId: v.string(),
+    carvProfileUrl: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -427,6 +430,7 @@ export const updateCarvId = mutation({
 
     await ctx.db.patch(user._id, {
       carvId: args.carvId.trim(),
+      carvProfileUrl: args.carvProfileUrl?.trim(),
       carvVerifiedAt: Date.now(),
     });
 

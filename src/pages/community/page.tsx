@@ -19,11 +19,13 @@ import {
   MessageSquare,
   Sparkles,
   Trophy,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { useDebounce } from "@/hooks/use-debounce.ts";
+import { CarvBadge } from "@/components/carv-badge.tsx";
 
 export default function Community() {
   return (
@@ -54,6 +56,7 @@ function CommunityContent() {
   const searchResults = useQuery(api.community.searchUsers, { 
     searchTerm: debouncedSearch 
   });
+  const carvVerifiedUsers = useQuery(api.community.getCarvVerifiedUsers, {});
 
   if (!currentUser) {
     return (
@@ -139,13 +142,20 @@ function CommunityContent() {
 
         {/* Tabs */}
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="glass-card border-2 border-[var(--neon-cyan)]/20 w-full grid grid-cols-3">
+          <TabsList className="glass-card border-2 border-[var(--neon-cyan)]/20 w-full grid grid-cols-4">
             <TabsTrigger 
               value="discover"
               className="data-[state=active]:bg-[var(--neon-cyan)]/20 data-[state=active]:text-[var(--neon-cyan)] uppercase tracking-wider font-semibold"
             >
               <Search className="w-4 h-4 mr-2" />
               Discover
+            </TabsTrigger>
+            <TabsTrigger 
+              value="carv"
+              className="data-[state=active]:bg-green-500/20 data-[state=active]:text-green-500 uppercase tracking-wider font-semibold"
+            >
+              <Shield className="w-4 h-4 mr-2" />
+              CARV
             </TabsTrigger>
             <TabsTrigger 
               value="followers"
@@ -201,6 +211,46 @@ function CommunityContent() {
                     </div>
                   ) : (
                     searchResults.map((user) => (
+                      <UserCard
+                        key={user._id}
+                        user={user}
+                        currentUserId={currentUser._id}
+                      />
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* CARV Verified Users Tab */}
+          <TabsContent value="carv" className="space-y-4">
+            <Card className="glass-card border-2 border-green-500/20">
+              <CardHeader>
+                <CardTitle className="text-xl text-green-500 uppercase tracking-wider">
+                  CARV Verified Players
+                </CardTitle>
+                <CardDescription className="uppercase tracking-wide">
+                  Players with verified CARV D.A.T.A. identity
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {carvVerifiedUsers === undefined ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <Skeleton key={i} className="h-20 w-full" />
+                      ))}
+                    </div>
+                  ) : carvVerifiedUsers.length === 0 ? (
+                    <div className="text-center py-12">
+                      <Shield className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                      <p className="text-muted-foreground uppercase tracking-wide">
+                        No CARV verified users yet
+                      </p>
+                    </div>
+                  ) : (
+                    carvVerifiedUsers.map((user) => (
                       <UserCard
                         key={user._id}
                         user={user}
@@ -307,6 +357,9 @@ interface UserCardProps {
     totalPoints: number;
     level: number;
     followerCount?: number;
+    carvId?: string;
+    carvProfileUrl?: string;
+    carvReputationScore?: number;
   };
   currentUserId: Id<"users">;
 }
@@ -362,13 +415,21 @@ function UserCard({ user, currentUserId }: UserCardProps) {
           </Avatar>
           
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-bold text-[var(--neon-cyan)] uppercase tracking-wide">
                 {user.username || user.name || "Unknown"}
               </h3>
               <span className="text-xs px-2 py-0.5 rounded bg-[var(--neon-purple)]/20 text-[var(--neon-purple)] border border-[var(--neon-purple)]/30 uppercase tracking-wider font-semibold">
                 LVL {user.level}
               </span>
+              {user.carvId && (
+                <CarvBadge 
+                  carvId={user.carvId}
+                  reputationScore={user.carvReputationScore}
+                  size="sm"
+                  showReputation={false}
+                />
+              )}
             </div>
             <div className="flex items-center gap-4 text-xs text-muted-foreground uppercase tracking-wider mt-1">
               <span className="flex items-center gap-1">
@@ -379,6 +440,18 @@ function UserCard({ user, currentUserId }: UserCardProps) {
                 <Users className="w-3 h-3" />
                 {user.followerCount ?? 0} followers
               </span>
+              {user.carvProfileUrl && (
+                <a 
+                  href={user.carvProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-1 text-green-500 hover:text-green-400 transition-colors"
+                >
+                  <Shield className="w-3 h-3" />
+                  CARV Profile
+                </a>
+              )}
             </div>
           </div>
         </div>

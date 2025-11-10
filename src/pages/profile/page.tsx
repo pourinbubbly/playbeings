@@ -51,6 +51,7 @@ function ProfileContent() {
   const [discord, setDiscord] = useState("");
   const [twitch, setTwitch] = useState("");
   const [youtube, setYoutube] = useState("");
+  const [carvProfile, setCarvProfile] = useState("");
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [uploadingBanner, setUploadingBanner] = useState(false);
@@ -69,6 +70,7 @@ function ProfileContent() {
       setDiscord(currentUser.socialLinks?.discord || "");
       setTwitch(currentUser.socialLinks?.twitch || "");
       setYoutube(currentUser.socialLinks?.youtube || "");
+      setCarvProfile(currentUser.carvProfileUrl || "");
     }
   }, [currentUser]);
 
@@ -156,6 +158,7 @@ function ProfileContent() {
         bio: bio || undefined,
         avatar: avatar || undefined,
         banner: banner || undefined,
+        carvProfileUrl: carvProfile || undefined,
         socialLinks: {
           twitter: twitter || undefined,
           discord: discord || undefined,
@@ -471,6 +474,27 @@ function ProfileContent() {
                   placeholder="channel name"
                   className="glass-card border border-[var(--neon-purple)]/20"
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="carvProfile" className="text-[var(--neon-cyan)] font-semibold uppercase tracking-wide flex items-center gap-2">
+                  <span>CARV Profile</span>
+                  {currentUser?.carvId && (
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 border border-green-500/50 text-green-500 font-normal">
+                      Verified
+                    </span>
+                  )}
+                </Label>
+                <Input
+                  id="carvProfile"
+                  value={carvProfile}
+                  onChange={(e) => setCarvProfile(e.target.value)}
+                  placeholder="https://protocol.carv.io/..."
+                  className="glass-card border border-[var(--neon-purple)]/20"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Your CARV D.A.T.A. profile link
+                </p>
               </div>
             </div>
           </CardContent>
