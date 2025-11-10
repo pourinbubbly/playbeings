@@ -477,6 +477,19 @@ export const completeQuest = mutation({
       timestamp: Date.now(),
     });
 
+    // Create notification for quest completion (if quests notifications enabled)
+    if (user.notificationPreferences?.quests !== false) {
+      await ctx.db.insert("notifications", {
+        userId: user._id,
+        type: "quest_complete",
+        title: "Quest Completed!",
+        message: `You earned ${boostedReward} points from "${args.questTitle}"`,
+        isRead: false,
+        link: `/dashboard/quests`,
+        createdAt: Date.now(),
+      });
+    }
+
     return {
       success: true,
       newTotal: user.totalPoints + boostedReward,

@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { createProfileCommentTransaction, deleteProfileCommentTransaction } from "@/lib/wallet.ts";
 import { checkWalletConnection } from "@/lib/wallet-check.ts";
+import { FollowersDialog } from "@/components/followers-dialog.tsx";
 
 export default function UserProfile() {
   return (
@@ -69,6 +70,8 @@ function UserProfileContent() {
   
   const [isFollowLoading, setIsFollowLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [followersDialogOpen, setFollowersDialogOpen] = useState(false);
+  const [followingDialogOpen, setFollowingDialogOpen] = useState(false);
 
   if (!userId) {
     navigate("/community");
@@ -209,18 +212,24 @@ function UserProfileContent() {
                   )}
                   
                   <div className="flex items-center gap-4 mt-3">
-                    <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setFollowersDialogOpen(true)}
+                      className="flex items-center gap-2 hover:text-[var(--neon-cyan)] transition-colors"
+                    >
                       <Users className="w-4 h-4 text-[var(--neon-cyan)]" />
                       <span className="text-sm text-muted-foreground">
                         <span className="font-semibold text-foreground">{targetUser.followerCount ?? 0}</span> Followers
                       </span>
-                    </div>
-                    <div className="flex items-center gap-2">
+                    </button>
+                    <button
+                      onClick={() => setFollowingDialogOpen(true)}
+                      className="flex items-center gap-2 hover:text-[var(--neon-magenta)] transition-colors"
+                    >
                       <UserPlus className="w-4 h-4 text-[var(--neon-magenta)]" />
                       <span className="text-sm text-muted-foreground">
                         <span className="font-semibold text-foreground">{targetUser.followingCount ?? 0}</span> Following
                       </span>
-                    </div>
+                    </button>
                     <div className="flex items-center gap-2">
                       <Trophy className="w-4 h-4 text-[var(--neon-purple)]" />
                       <span className="text-sm text-muted-foreground">
@@ -470,6 +479,20 @@ function UserProfileContent() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Followers/Following Dialogs */}
+      <FollowersDialog 
+        userId={targetUser._id} 
+        type="followers" 
+        open={followersDialogOpen} 
+        onOpenChange={setFollowersDialogOpen} 
+      />
+      <FollowersDialog 
+        userId={targetUser._id} 
+        type="following" 
+        open={followingDialogOpen} 
+        onOpenChange={setFollowingDialogOpen} 
+      />
     </DashboardLayout>
   );
 }
@@ -480,6 +503,7 @@ interface ProfileCommentsSectionProps {
 }
 
 function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSectionProps) {
+  const navigate = useNavigate();
   const comments = useQuery(api.community.getProfileComments, { userId: targetUser._id });
   const addCommentMutation = useMutation(api.community.addComment);
   const deleteCommentMutation = useMutation(api.community.deleteComment);
@@ -678,9 +702,12 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
                       )}
                     </div>
                     <div>
-                      <p className="font-semibold text-[var(--neon-cyan)]">
+                      <button
+                        onClick={() => navigate(`/user/${comment.authorId}`)}
+                        className="font-semibold text-[var(--neon-cyan)] hover:text-[var(--neon-cyan)]/80 transition-colors"
+                      >
                         {comment.author.username || comment.author.name || "Anonymous"}
-                      </p>
+                      </button>
                       <p className="text-xs text-muted-foreground">
                         {new Date(comment.createdAt).toLocaleDateString()} at {new Date(comment.createdAt).toLocaleTimeString()}
                       </p>
@@ -803,3 +830,5 @@ function BlockUserButton({ targetUserId }: { targetUserId: Id<"users"> }) {
     </Button>
   );
 }
+
+

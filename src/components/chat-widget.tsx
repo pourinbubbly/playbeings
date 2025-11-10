@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Authenticated } from "convex/react";
-import { MessageCircle, X, Send, Minimize2, User, Smile, Image, Loader2 } from "lucide-react";
+import { MessageCircle, X, Send, Minimize2, User, Smile, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button.tsx";
 import { Input } from "@/components/ui/input.tsx";
 import { ScrollArea } from "@/components/ui/scroll-area.tsx";
@@ -16,47 +16,59 @@ export function ChatWidget() {
   const [selectedConvId, setSelectedConvId] = useState<Id<"conversations"> | null>(null);
   const [messageInput, setMessageInput] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [isUploadingSticker, setIsUploadingSticker] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
 
   const conversations = useQuery(api.messages.getMyConversations, {});
   const messages = useQuery(
     api.messages.getMessages,
     selectedConvId ? { conversationId: selectedConvId } : "skip"
   );
-  const hasPremiumPass = useQuery(api.premiumPass.hasActivePremiumPass, {});
-  const customStickers = useQuery(api.messages.getCustomStickers, {});
   const sendMessage = useMutation(api.messages.sendMessage);
   const markAsRead = useMutation(api.messages.markAsRead);
-  const generateStickerUploadUrl = useMutation(api.messages.generateStickerUploadUrl);
-  const uploadCustomSticker = useMutation(api.messages.uploadCustomSticker);
+  const generateImageUploadUrl = useMutation(api.messages.generateImageUploadUrl);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     if (messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [messages]);
 
+  // Mark messages as read when conversation is selected
   useEffect(() => {
     if (selectedConvId && isOpen) {
       markAsRead({ conversationId: selectedConvId });
     }
   }, [selectedConvId, isOpen, markAsRead]);
 
+  // Reset state when closing
+  useEffect(() => {
+    if (!isOpen) {
+      setShowEmojiPicker(false);
+      setMessageInput("");
+    }
+  }, [isOpen]);
+
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageInput.trim() || !selectedConvId) return;
 
+    const content = messageInput;
+    setMessageInput("");
+    setShowEmojiPicker(false);
+
     try {
       await sendMessage({
         conversationId: selectedConvId,
-        content: messageInput,
+        content,
+        messageType: "text",
       });
-      setMessageInput("");
-      setShowEmojiPicker(false);
     } catch (error) {
-      toast.error("Failed to send message");
+      toast.error("Mesaj gönderilemedi");
+      setMessageInput(content); // Restore message on error
     }
   };
 
@@ -64,21 +76,30 @@ export function ChatWidget() {
     setMessageInput((prev) => prev + emojiData.emoji);
   };
 
-  const handleStickerUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !selectedConvId) return;
 
-    if (!hasPremiumPass) {
-      toast.error("Premium Pass required", {
-        description: "Upgrade to Premium Pass to upload custom stickers",
+    // Check file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Dosya çok büyük", {
+        description: "Maksimum 5MB boyutunda resim yükleyebilirsiniz",
       });
       return;
     }
 
-    setIsUploadingSticker(true);
+    // Check file type
+    if (!file.type.startsWith("image/")) {
+      toast.error("Geçersiz dosya tipi", {
+        description: "Sadece resim dosyaları yükleyebilirsiniz",
+      });
+      return;
+    }
+
+    setIsUploadingImage(true);
     try {
       // Generate upload URL
-      const uploadUrl = await generateStickerUploadUrl({});
+      const uploadUrl = await generateImageUploadUrl({});
 
       // Upload file
       const result = await fetch(uploadUrl, {
@@ -93,19 +114,22 @@ export function ChatWidget() {
 
       const { storageId } = await result.json();
 
-      // Save sticker to database
-      await uploadCustomSticker({ storageId });
-
-      toast.success("Custom sticker uploaded!", {
-        description: "You can now use this sticker in your messages",
+      // Send image message
+      await sendMessage({
+        conversationId: selectedConvId,
+        content: "📷 Image",
+        messageType: "image",
+        imageUrl: storageId,
       });
+
+      toast.success("Resim gönderildi!");
     } catch (error) {
-      console.error("Sticker upload error:", error);
-      toast.error("Failed to upload sticker");
+      console.error("Image upload error:", error);
+      toast.error("Resim gönderilemedi");
     } finally {
-      setIsUploadingSticker(false);
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      setIsUploadingImage(false);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
       }
     }
   };
@@ -119,13 +143,16 @@ export function ChatWidget() {
         <AnimatePresence>
           {isOpen && (
             <motion.div
-              initial={{ opacity: 0, y: 20, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: "600px" }}
-              exit={{ opacity: 0, y: 20, height: 0 }}
+              key="chat-widget"
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.95 }}
+              transition={{ duration: 0.2 }}
               className="mb-4 w-80 glass-card border-2 border-[var(--neon-cyan)]/30 rounded-sm overflow-hidden flex flex-col"
+              style={{ height: "600px" }}
             >
               {/* Header */}
-              <div className="p-4 border-b-2 border-[var(--neon-cyan)]/20 bg-black/40 flex items-center justify-between">
+              <div className="p-4 border-b-2 border-[var(--neon-cyan)]/20 bg-black/40 flex items-center justify-between flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <MessageCircle className="w-5 h-5 text-[var(--neon-cyan)]" />
                   <span className="font-bold text-[var(--neon-cyan)] uppercase tracking-wide text-sm">
@@ -135,7 +162,11 @@ export function ChatWidget() {
                 <div className="flex items-center gap-2">
                   {selectedConv && (
                     <button
-                      onClick={() => setSelectedConvId(null)}
+                      onClick={() => {
+                        setSelectedConvId(null);
+                        setMessageInput("");
+                        setShowEmojiPicker(false);
+                      }}
                       className="text-muted-foreground hover:text-[var(--neon-cyan)] transition-colors"
                     >
                       <Minimize2 className="w-4 h-4" />
@@ -157,7 +188,7 @@ export function ChatWidget() {
                   <div className="p-2 space-y-1">
                     {conversations && conversations.length === 0 && (
                       <div className="p-8 text-center text-muted-foreground text-sm">
-                        No conversations yet
+                        Henüz konuşma yok
                       </div>
                     )}
                     {conversations?.map((conv) => (
@@ -200,43 +231,67 @@ export function ChatWidget() {
                 </ScrollArea>
               ) : (
                 // Message View
-                <div className="flex-1 flex flex-col">
-                  <ScrollArea className="flex-1 p-4">
+                <div className="flex-1 flex flex-col min-h-0">
+                  <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
                     <div className="space-y-3">
-                      {messages?.map((msg) => {
-                        const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
-                        return (
-                          <div
-                            key={msg._id}
-                            className={`flex ${isSender ? "justify-end" : "justify-start"}`}
-                          >
+                      {!messages || messages.length === 0 ? (
+                        <div className="p-8 text-center text-muted-foreground text-sm">
+                          Henüz mesaj yok
+                        </div>
+                      ) : (
+                        messages.map((msg) => {
+                          const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
+                          return (
                             <div
-                              className={`max-w-[75%] p-3 rounded-lg ${
-                                isSender
-                                  ? "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white"
-                                  : "glass-card border border-[var(--neon-purple)]/20"
-                              }`}
+                              key={msg._id}
+                              className={`flex ${isSender ? "justify-end" : "justify-start"}`}
                             >
-                              <p className="text-sm break-words">{msg.content}</p>
-                              <p className="text-xs mt-1 opacity-70">
-                                {new Date(msg.createdAt).toLocaleTimeString([], {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })}
-                              </p>
+                              <div
+                                className={`max-w-[75%] p-3 rounded-lg ${
+                                  isSender
+                                    ? "bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white"
+                                    : "glass-card border border-[var(--neon-purple)]/20"
+                                }`}
+                              >
+                                {msg.messageType === "image" && msg.imageUrl ? (
+                                  <div className="space-y-2">
+                                    <img
+                                      src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${msg.imageUrl}`}
+                                      alt="Shared"
+                                      className="rounded max-w-full h-auto max-h-64 object-contain"
+                                    />
+                                    <p className="text-xs opacity-70">
+                                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-sm break-words">{msg.content}</p>
+                                    <p className="text-xs mt-1 opacity-70">
+                                      {new Date(msg.createdAt).toLocaleTimeString([], {
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      })}
+                                    </p>
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
+                          );
+                        })
+                      )}
                       <div ref={messagesEndRef} />
                     </div>
                   </ScrollArea>
 
                   {/* Message Input */}
-                  <form onSubmit={handleSendMessage} className="p-4 border-t-2 border-[var(--neon-cyan)]/20 bg-black/40 space-y-2">
+                  <div className="p-4 border-t-2 border-[var(--neon-cyan)]/20 bg-black/40 space-y-2 flex-shrink-0">
                     {/* Emoji Picker */}
                     {showEmojiPicker && (
-                      <div className="relative">
+                      <div className="relative mb-2">
                         <EmojiPicker
                           onEmojiClick={handleEmojiClick}
                           width="100%"
@@ -245,56 +300,56 @@ export function ChatWidget() {
                       </div>
                     )}
 
-                    <div className="flex gap-2">
+                    <form onSubmit={handleSendMessage} className="flex gap-2">
                       {/* Emoji Button */}
                       <Button
                         type="button"
+                        size="icon"
                         onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        className="glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/10"
+                        className="glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/10 flex-shrink-0"
                       >
                         <Smile className="w-4 h-4" />
                       </Button>
 
-                      {/* Sticker Upload Button (Premium only) */}
-                      {hasPremiumPass && (
-                        <>
-                          <input
-                            ref={fileInputRef}
-                            type="file"
-                            accept="image/*"
-                            onChange={handleStickerUpload}
-                            className="hidden"
-                          />
-                          <Button
-                            type="button"
-                            onClick={() => fileInputRef.current?.click()}
-                            disabled={isUploadingSticker}
-                            className="glass-card border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10"
-                          >
-                            {isUploadingSticker ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Image className="w-4 h-4" />
-                            )}
-                          </Button>
-                        </>
-                      )}
+                      {/* Image Upload Button */}
+                      <input
+                        ref={imageInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        className="hidden"
+                      />
+                      <Button
+                        type="button"
+                        size="icon"
+                        onClick={() => imageInputRef.current?.click()}
+                        disabled={isUploadingImage}
+                        className="glass-card border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10 flex-shrink-0"
+                      >
+                        {isUploadingImage ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <ImageIcon className="w-4 h-4" />
+                        )}
+                      </Button>
 
                       <Input
                         value={messageInput}
                         onChange={(e) => setMessageInput(e.target.value)}
-                        placeholder="Type a message..."
+                        placeholder="Mesaj yaz..."
                         className="flex-1 glass-card border-[var(--neon-purple)]/30"
+                        disabled={isUploadingImage}
                       />
                       <Button
                         type="submit"
-                        disabled={!messageInput.trim()}
-                        className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10"
+                        size="icon"
+                        disabled={!messageInput.trim() || isUploadingImage}
+                        className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 flex-shrink-0"
                       >
                         <Send className="w-4 h-4" />
                       </Button>
-                    </div>
-                  </form>
+                    </form>
+                  </div>
                 </div>
               )}
             </motion.div>

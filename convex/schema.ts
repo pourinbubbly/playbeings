@@ -215,6 +215,8 @@ export default defineSchema({
     senderId: v.id("users"),
     receiverId: v.id("users"),
     content: v.string(),
+    messageType: v.optional(v.string()), // "text", "image"
+    imageUrl: v.optional(v.id("_storage")), // For image messages
     isRead: v.boolean(),
     createdAt: v.number(),
   })

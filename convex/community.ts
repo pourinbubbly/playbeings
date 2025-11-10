@@ -305,6 +305,28 @@ export const addComment = mutation({
       });
     }
 
+    // Check if blocked
+    const isBlocked = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", currentUser._id).eq("blockedId", args.profileUserId)
+      )
+      .first();
+
+    const isBlockedBy = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", args.profileUserId).eq("blockedId", currentUser._id)
+      )
+      .first();
+
+    if (isBlocked || isBlockedBy) {
+      throw new ConvexError({
+        message: "Cannot comment on this profile",
+        code: "FORBIDDEN",
+      });
+    }
+
     await ctx.db.insert("profileComments", {
       profileUserId: args.profileUserId,
       authorId: currentUser._id,

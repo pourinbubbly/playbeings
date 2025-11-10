@@ -196,6 +196,8 @@ export const sendMessage = mutation({
   args: {
     conversationId: v.id("conversations"),
     content: v.string(),
+    messageType: v.optional(v.string()),
+    imageUrl: v.optional(v.id("_storage")),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -269,6 +271,8 @@ export const sendMessage = mutation({
       senderId: user._id,
       receiverId,
       content: args.content,
+      messageType: args.messageType || "text",
+      imageUrl: args.imageUrl,
       isRead: false,
       createdAt: now,
     });
@@ -279,11 +283,27 @@ export const sendMessage = mutation({
         ? { unreadCount2: conv.unreadCount2 + 1 }
         : { unreadCount1: conv.unreadCount1 + 1 };
 
+    const lastMsg = args.messageType === "image" ? "📷 Image" : args.content.substring(0, 100);
+
     await ctx.db.patch(args.conversationId, {
-      lastMessage: args.content.substring(0, 100),
+      lastMessage: lastMsg,
       lastMessageTime: now,
       ...unreadUpdate,
     });
+
+    // Create notification for receiver (if messages notifications enabled)
+    const receiver = await ctx.db.get(receiverId);
+    if (receiver && receiver.notificationPreferences?.messages !== false) {
+      await ctx.db.insert("notifications", {
+        userId: receiverId,
+        type: "message",
+        title: "New Message",
+        message: `${user.username || user.name || "Someone"} sent you a message`,
+        isRead: false,
+        link: `/dashboard`,
+        createdAt: now,
+      });
+    }
 
     return { success: true };
   },
@@ -571,6 +591,22 @@ export const getCustomStickers = query({
 
 // Generate upload URL for stickers
 export const generateStickerUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+// Generate upload URL for chat images
+export const generateImageUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
     const identity = await ctx.auth.getUserIdentity();

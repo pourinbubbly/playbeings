@@ -140,6 +140,17 @@ export const activatePremiumPass = mutation({
       premiumPassExpiry: expiryDate,
     });
 
+    // Create notification for premium pass activation
+    await ctx.db.insert("notifications", {
+      userId: user._id,
+      type: "premium_pass",
+      title: "Premium Pass Activated!",
+      message: "Your Premium Pass is now active for 30 days. Unlock exclusive quests and rewards!",
+      isRead: false,
+      link: `/premium`,
+      createdAt: now,
+    });
+
     return { success: true, expiryDate };
   },
 });
@@ -481,6 +492,19 @@ export const claimPremiumReward = mutation({
         reason: `Premium Quest: ${quest.title}`,
         timestamp: Date.now(),
       });
+
+      // Create notification for points earned
+      if (user.notificationPreferences?.rewards !== false) {
+        await ctx.db.insert("notifications", {
+          userId: user._id,
+          type: "points",
+          title: "Points Earned!",
+          message: `You earned ${quest.pointsReward} points from Premium Quest: ${quest.title}`,
+          isRead: false,
+          link: `/premium`,
+          createdAt: Date.now(),
+        });
+      }
     }
 
     return { 
