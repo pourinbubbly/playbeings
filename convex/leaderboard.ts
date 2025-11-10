@@ -42,6 +42,7 @@ export const getLeaderboard = query({
           level: user.level,
           hasPremiumPass: !!premiumPass,
           carvId: user.carvId,
+          carvProfileUrl: user.carvProfileUrl,
           carvReputationScore: user.carvReputationScore,
         };
       })

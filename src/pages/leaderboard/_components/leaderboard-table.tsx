@@ -16,6 +16,7 @@ interface LeaderboardEntry {
   level: number;
   hasPremiumPass?: boolean;
   carvId?: string | null;
+  carvProfileUrl?: string | null;
   carvReputationScore?: number | null;
 }
 
@@ -82,7 +83,7 @@ export function LeaderboardTable({ leaderboard, currentUserId }: LeaderboardTabl
                           You
                         </Badge>
                       )}
-                      {entry.carvId && (
+                      {entry.carvId && entry.carvProfileUrl && (
                         <CarvBadge 
                           carvId={entry.carvId}
                           reputationScore={entry.carvReputationScore}

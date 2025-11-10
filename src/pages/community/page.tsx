@@ -422,7 +422,7 @@ function UserCard({ user, currentUserId }: UserCardProps) {
               <span className="text-xs px-2 py-0.5 rounded bg-[var(--neon-purple)]/20 text-[var(--neon-purple)] border border-[var(--neon-purple)]/30 uppercase tracking-wider font-semibold">
                 LVL {user.level}
               </span>
-              {user.carvId && (
+              {user.carvId && user.carvProfileUrl && (
                 <CarvBadge 
                   carvId={user.carvId}
                   reputationScore={user.carvReputationScore}

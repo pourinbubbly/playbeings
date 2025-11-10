@@ -464,8 +464,8 @@ export const getCarvVerifiedUsers = query({
   handler: async (ctx) => {
     const allUsers = await ctx.db.query("users").collect();
     
-    // Filter users with CARV ID
-    const verifiedUsers = allUsers.filter((user) => user.carvId);
+    // Filter users with CARV Profile URL (only those who added their CARV profile link)
+    const verifiedUsers = allUsers.filter((user) => user.carvProfileUrl);
     
     // Sort by reputation score (highest first), then by points
     verifiedUsers.sort((a, b) => {
