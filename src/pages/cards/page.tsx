@@ -122,10 +122,11 @@ function CardsContent() {
         achievement.imageUrl
       );
 
-      // Calculate boost: 0.05-0.15% based on rarity
-      let boost = 0.05;
-      if (achievement.rarity === "Rare") boost = 0.1;
-      else if (achievement.rarity === "Epic") boost = 0.15;
+      // Calculate boost based on rarity
+      let boost = 0.05; // Common: 0.05%
+      if (achievement.rarity === "Uncommon") boost = 0.1; // Uncommon: 0.1%
+      else if (achievement.rarity === "Rare") boost = 0.5; // Rare: 0.5%
+      else if (achievement.rarity === "Epic") boost = 1; // Epic: 1%
       
       // Save to database with boost
       await saveMinedNFT({
@@ -143,7 +144,7 @@ function CardsContent() {
       toast.success(`Achievement NFT Minted!`, {
         description: (
           <div className="space-y-2">
-            <p className="font-semibold text-[var(--neon-magenta)]">+{boost.toFixed(1)}% point boost activated!</p>
+            <p className="font-semibold text-[var(--neon-magenta)]">+{boost}% point boost activated!</p>
             <p className="text-xs text-muted-foreground">Mint Address: {mintAddress.slice(0, 8)}...{mintAddress.slice(-6)}</p>
             <a 
               href={explorerUrl} 
@@ -212,7 +213,7 @@ function CardsContent() {
                 Achievement NFTs
               </h1>
               <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
-                Load Steam achievements • Mint as NFTs • Earn 0.05-0.15% boost per achievement
+                Load Steam achievements • Mint as NFTs • Earn 0.05-1% boost per achievement
               </p>
             </div>
           </div>
