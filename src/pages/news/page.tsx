@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useAction } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Newspaper, ExternalLink, Loader2, Calendar } from "lucide-react";
+import { Newspaper, ExternalLink, Loader2, Calendar, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 import { formatDistanceToNow } from "date-fns";
@@ -45,12 +45,15 @@ interface NewsItem {
 function NewsContent() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [loading, setLoading] = useState(false);
+  const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
   const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const getNews = useAction(api.steam.getSteamNews);
 
-  const handleLoadNews = async () => {
+  const handleLoadNews = useCallback(async (silent = false) => {
     if (!steamProfile?.steamId) {
-      toast.error("Please connect your Steam account first");
+      if (!silent) {
+        toast.error("Please connect your Steam account first");
+      }
       return;
     }
 
@@ -58,21 +61,33 @@ function NewsContent() {
     try {
       const result = await getNews({ steamId: steamProfile.steamId });
       setNews(result);
-      if (result.length === 0) {
-        toast.info("No news found", {
-          description: "Play some games to see their latest updates!",
-        });
-      } else {
-        toast.success(`Loaded ${result.length} news articles!`);
+      if (!silent) {
+        if (result.length === 0) {
+          toast.info("No news found", {
+            description: "Play some games to see their latest updates!",
+          });
+        } else {
+          toast.success(`Loaded ${result.length} news articles!`);
+        }
       }
     } catch (error) {
-      toast.error("Failed to load news", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
+      if (!silent) {
+        toast.error("Failed to load news", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [steamProfile?.steamId, getNews]);
+
+  // Auto-load news on mount
+  useEffect(() => {
+    if (steamProfile?.steamId && !hasAutoLoaded) {
+      setHasAutoLoaded(true);
+      handleLoadNews(true);
+    }
+  }, [steamProfile?.steamId, hasAutoLoaded, handleLoadNews]);
 
   if (steamProfile === undefined) {
     return (
@@ -104,35 +119,36 @@ function NewsContent() {
           </div>
         </div>
 
-        {/* Load News Button */}
+        {/* Status Messages */}
         {!steamProfile?.steamId ? (
           <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center">
             <p className="text-muted-foreground uppercase tracking-wide">
               Please connect your Steam account first to load game news
             </p>
           </div>
+        ) : loading && news.length === 0 ? (
+          <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+            <Loader2 className="w-16 h-16 text-[var(--neon-cyan)] mx-auto animate-spin" />
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Loading news...
+            </p>
+          </div>
         ) : news.length === 0 ? (
           <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
             <Newspaper className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
             <p className="text-muted-foreground uppercase tracking-wide">
-              Load the latest news from your most played games
+              No news found
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Play some games to see their latest updates!
             </p>
             <Button 
-              onClick={handleLoadNews}
+              onClick={() => handleLoadNews(false)}
               disabled={loading}
               className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Newspaper className="w-4 h-4 mr-2" />
-                  Load News
-                </>
-              )}
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
             </Button>
           </div>
         ) : null}
@@ -145,7 +161,7 @@ function NewsContent() {
                 {news.length} articles from your top games
               </p>
               <Button 
-                onClick={handleLoadNews}
+                onClick={() => handleLoadNews(false)}
                 disabled={loading}
                 size="sm"
                 variant="ghost"
@@ -154,7 +170,7 @@ function NewsContent() {
                 {loading ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
-                  <Newspaper className="w-4 h-4 mr-2" />
+                  <RefreshCw className="w-4 h-4 mr-2" />
                 )}
                 Refresh
               </Button>

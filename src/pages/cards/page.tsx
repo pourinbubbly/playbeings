@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Authenticated, AuthLoading, Unauthenticated } from "convex/react";
 import { useQuery, useAction, useMutation } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
@@ -6,7 +6,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { DashboardLayout } from "../dashboard/_components/dashboard-layout.tsx";
 import { Button } from "@/components/ui/button.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
-import { Sparkles, Trophy, Loader2 } from "lucide-react";
+import { Sparkles, Trophy, Loader2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
 
@@ -43,6 +43,7 @@ function CardsContent() {
   const [achievements, setAchievements] = useState<SteamAchievement[]>([]);
   const [loading, setLoading] = useState(false);
   const [minting, setMinting] = useState<string | null>(null);
+  const [hasAutoLoaded, setHasAutoLoaded] = useState(false);
   const connectedWallet = useQuery(api.wallets.getConnectedWallet);
   const steamProfile = useQuery(api.profiles.getSteamProfile, {});
   const mintedNFTs = useQuery(api.nft.getMintedNFTs);
@@ -57,9 +58,11 @@ function CardsContent() {
     );
   };
 
-  const handleLoadAchievements = async () => {
+  const handleLoadAchievements = useCallback(async (silent = false) => {
     if (!steamProfile?.steamId) {
-      toast.error("Please connect your Steam account first");
+      if (!silent) {
+        toast.error("Please connect your Steam account first");
+      }
       return;
     }
 
@@ -67,21 +70,33 @@ function CardsContent() {
     try {
       const result = await getAchievements({ steamId: steamProfile.steamId });
       setAchievements(result);
-      if (result.length === 0) {
-        toast.info("No achievements found", {
-          description: "Play some games and unlock achievements to mint NFTs!",
-        });
-      } else {
-        toast.success(`Loaded ${result.length} achievements!`);
+      if (!silent) {
+        if (result.length === 0) {
+          toast.info("No achievements found", {
+            description: "Play some games and unlock achievements to mint NFTs!",
+          });
+        } else {
+          toast.success(`Loaded ${result.length} achievements!`);
+        }
       }
     } catch (error) {
-      toast.error("Failed to load achievements", {
-        description: error instanceof Error ? error.message : "Unknown error",
-      });
+      if (!silent) {
+        toast.error("Failed to load achievements", {
+          description: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, [steamProfile?.steamId, getAchievements]);
+
+  // Auto-load achievements on mount
+  useEffect(() => {
+    if (steamProfile?.steamId && !hasAutoLoaded) {
+      setHasAutoLoaded(true);
+      handleLoadAchievements(true);
+    }
+  }, [steamProfile?.steamId, hasAutoLoaded, handleLoadAchievements]);
 
   const handleMint = async (achievement: SteamAchievement) => {
     if (!connectedWallet) {
@@ -227,41 +242,62 @@ function CardsContent() {
           </div>
         </div>
 
-        {/* Load Achievements Button */}
+        {/* No Steam Profile */}
         {!steamProfile?.steamId ? (
           <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center">
             <p className="text-muted-foreground uppercase tracking-wide">
               Please connect your Steam account first to load achievements
             </p>
           </div>
+        ) : loading && achievements.length === 0 ? (
+          <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
+            <Loader2 className="w-16 h-16 text-[var(--neon-cyan)] mx-auto animate-spin" />
+            <p className="text-muted-foreground uppercase tracking-wide">
+              Loading achievements...
+            </p>
+          </div>
         ) : achievements.length === 0 ? (
           <div className="glass-card p-8 rounded-sm border-2 border-[var(--neon-cyan)]/20 text-center space-y-4">
             <Trophy className="w-16 h-16 text-[var(--neon-cyan)] mx-auto opacity-50" />
             <p className="text-muted-foreground uppercase tracking-wide">
-              Load your unlocked Steam achievements to mint as NFTs
+              No achievements found
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Play some games and unlock achievements to mint NFTs!
             </p>
             <Button 
-              onClick={handleLoadAchievements}
+              onClick={() => handleLoadAchievements(false)}
               disabled={loading}
               className="glass-card border-2 border-[var(--neon-cyan)] hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 font-bold uppercase tracking-wider"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Loading...
-                </>
-              ) : (
-                <>
-                  <Trophy className="w-4 h-4 mr-2" />
-                  Load Achievements
-                </>
-              )}
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Refresh
             </Button>
           </div>
         ) : null}
 
         {/* Achievements Grid */}
         {achievements.length > 0 && (
+          <>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-muted-foreground uppercase tracking-wide">
+                {achievements.length} achievements available to mint
+              </p>
+              <Button 
+                onClick={() => handleLoadAchievements(false)}
+                disabled={loading}
+                size="sm"
+                variant="ghost"
+                className="glass-card border border-[var(--neon-cyan)]/40 hover:neon-glow-cyan text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20"
+              >
+                {loading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                )}
+                Refresh
+              </Button>
+            </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {achievements.map((achievement) => {
               const alreadyMinted = isAlreadyMinted(achievement);
@@ -353,7 +389,8 @@ function CardsContent() {
                 </div>
               );
             })}
-          </div>
+            </div>
+          </>
         )}
       </div>
     </DashboardLayout>
