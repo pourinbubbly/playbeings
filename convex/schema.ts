@@ -175,4 +175,37 @@ export default defineSchema({
     .index("by_user", ["userId"])
     .index("by_user_and_date", ["userId", "date"])
     .index("by_date", ["date"]),
+
+  conversations: defineTable({
+    participant1: v.id("users"),
+    participant2: v.id("users"),
+    lastMessage: v.optional(v.string()),
+    lastMessageTime: v.optional(v.number()),
+    unreadCount1: v.number(), // unread for participant1
+    unreadCount2: v.number(), // unread for participant2
+  })
+    .index("by_participant1", ["participant1"])
+    .index("by_participant2", ["participant2"])
+    .index("by_participants", ["participant1", "participant2"]),
+
+  messages: defineTable({
+    conversationId: v.id("conversations"),
+    senderId: v.id("users"),
+    receiverId: v.id("users"),
+    content: v.string(),
+    isRead: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index("by_conversation", ["conversationId"])
+    .index("by_sender", ["senderId"])
+    .index("by_receiver", ["receiverId"]),
+
+  blocks: defineTable({
+    blockerId: v.id("users"),
+    blockedId: v.id("users"),
+    createdAt: v.number(),
+  })
+    .index("by_blocker", ["blockerId"])
+    .index("by_blocked", ["blockedId"])
+    .index("by_blocker_blocked", ["blockerId", "blockedId"]),
 });

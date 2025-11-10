@@ -221,7 +221,7 @@ function UserProfileContent() {
               </div>
 
               {/* Actions */}
-              <div className="mb-4">
+              <div className="mb-4 flex gap-2">
                 {isSelf ? (
                   <Button
                     onClick={() => navigate("/profile")}
@@ -230,27 +230,31 @@ function UserProfileContent() {
                     Edit Profile
                   </Button>
                 ) : (
-                  <Button
-                    onClick={handleFollowToggle}
-                    disabled={isFollowLoading || isFollowing === undefined}
-                    className={
-                      isFollowing
-                        ? "glass-card border-2 border-destructive text-destructive hover:bg-destructive/10 font-semibold uppercase tracking-wider"
-                        : "glass-card border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10 hover:neon-glow-magenta font-semibold uppercase tracking-wider"
-                    }
-                  >
-                    {isFollowing ? (
-                      <>
-                        <UserMinus className="w-4 h-4 mr-2" />
-                        Unfollow
-                      </>
-                    ) : (
-                      <>
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        Follow
-                      </>
-                    )}
-                  </Button>
+                  <>
+                    <Button
+                      onClick={handleFollowToggle}
+                      disabled={isFollowLoading || isFollowing === undefined}
+                      className={
+                        isFollowing
+                          ? "glass-card border-2 border-destructive text-destructive hover:bg-destructive/10 font-semibold uppercase tracking-wider"
+                          : "glass-card border-2 border-[var(--neon-magenta)] text-[var(--neon-magenta)] hover:bg-[var(--neon-magenta)]/10 hover:neon-glow-magenta font-semibold uppercase tracking-wider"
+                      }
+                    >
+                      {isFollowing ? (
+                        <>
+                          <UserMinus className="w-4 h-4 mr-2" />
+                          Unfollow
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus className="w-4 h-4 mr-2" />
+                          Follow
+                        </>
+                      )}
+                    </Button>
+                    <SendMessageButton targetUserId={targetUser._id} />
+                    <BlockUserButton targetUserId={targetUser._id} />
+                  </>
                 )}
               </div>
             </div>
@@ -705,5 +709,86 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+// Send Message Button Component
+function SendMessageButton({ targetUserId }: { targetUserId: Id<"users"> }) {
+  const navigate = useNavigate();
+  const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSendMessage = async () => {
+    setIsLoading(true);
+    try {
+      const convId = await getOrCreateConversation({ otherUserId: targetUserId });
+      toast.success("Conversation started");
+      // Note: The chat widget will be opened via global state or you can add a custom event
+    } catch (error) {
+      console.error("Failed to start conversation:", error);
+      toast.error("Failed to start conversation");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleSendMessage}
+      disabled={isLoading}
+      className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 hover:neon-glow-cyan font-semibold uppercase tracking-wider"
+    >
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <MessageSquare className="w-4 h-4 mr-2" />
+      )}
+      Message
+    </Button>
+  );
+}
+
+// Block User Button Component
+function BlockUserButton({ targetUserId }: { targetUserId: Id<"users"> }) {
+  const isBlocked = useQuery(api.messages.isBlocked, { userId: targetUserId });
+  const blockUser = useMutation(api.messages.blockUser);
+  const unblockUser = useMutation(api.messages.unblockUser);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleBlockToggle = async () => {
+    setIsLoading(true);
+    try {
+      if (isBlocked) {
+        await unblockUser({ userId: targetUserId });
+        toast.success("User unblocked");
+      } else {
+        await blockUser({ userId: targetUserId });
+        toast.success("User blocked");
+      }
+    } catch (error) {
+      console.error("Failed to toggle block:", error);
+      toast.error("Failed to update block status");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Button
+      onClick={handleBlockToggle}
+      disabled={isLoading || isBlocked === undefined}
+      className={
+        isBlocked
+          ? "glass-card border-2 border-[var(--neon-purple)] text-[var(--neon-purple)] hover:bg-[var(--neon-purple)]/10 font-semibold uppercase tracking-wider"
+          : "glass-card border-2 border-destructive text-destructive hover:bg-destructive/10 font-semibold uppercase tracking-wider"
+      }
+    >
+      {isLoading ? (
+        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+      ) : (
+        <Shield className="w-4 h-4 mr-2" />
+      )}
+      {isBlocked ? "Unblock" : "Block"}
+    </Button>
   );
 }

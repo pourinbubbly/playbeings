@@ -1,0 +1,482 @@
+import { v } from "convex/values";
+import { mutation, query } from "./_generated/server";
+import { ConvexError } from "convex/values";
+import type { Id } from "./_generated/dataModel.d.ts";
+
+// Get or create a conversation between two users
+export const getOrCreateConversation = mutation({
+  args: {
+    otherUserId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check if blocked
+    const isBlocked = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", user._id).eq("blockedId", args.otherUserId)
+      )
+      .first();
+
+    const isBlockedBy = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", args.otherUserId).eq("blockedId", user._id)
+      )
+      .first();
+
+    if (isBlocked || isBlockedBy) {
+      throw new ConvexError({
+        message: "Cannot message this user",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Find existing conversation (either direction)
+    const [participant1, participant2] =
+      user._id < args.otherUserId
+        ? [user._id, args.otherUserId]
+        : [args.otherUserId, user._id];
+
+    const existingConv = await ctx.db
+      .query("conversations")
+      .withIndex("by_participants", (q) =>
+        q.eq("participant1", participant1).eq("participant2", participant2)
+      )
+      .first();
+
+    if (existingConv) {
+      return existingConv._id;
+    }
+
+    // Create new conversation
+    const convId = await ctx.db.insert("conversations", {
+      participant1,
+      participant2,
+      unreadCount1: 0,
+      unreadCount2: 0,
+    });
+
+    return convId;
+  },
+});
+
+// Get conversations for current user
+export const getMyConversations = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    // Get all conversations where user is participant
+    const convs1 = await ctx.db
+      .query("conversations")
+      .withIndex("by_participant1", (q) => q.eq("participant1", user._id))
+      .collect();
+
+    const convs2 = await ctx.db
+      .query("conversations")
+      .withIndex("by_participant2", (q) => q.eq("participant2", user._id))
+      .collect();
+
+    const allConvs = [...convs1, ...convs2];
+
+    // Get other user info for each conversation
+    const convsWithUsers = await Promise.all(
+      allConvs.map(async (conv) => {
+        const otherUserId =
+          conv.participant1 === user._id ? conv.participant2 : conv.participant1;
+        const otherUser = await ctx.db.get(otherUserId);
+        const unreadCount =
+          conv.participant1 === user._id ? conv.unreadCount1 : conv.unreadCount2;
+
+        return {
+          _id: conv._id,
+          otherUser: otherUser
+            ? {
+                _id: otherUser._id,
+                username: otherUser.username || otherUser.name || "Unknown User",
+                avatar: otherUser.avatar,
+              }
+            : null,
+          lastMessage: conv.lastMessage,
+          lastMessageTime: conv.lastMessageTime,
+          unreadCount,
+        };
+      })
+    );
+
+    // Sort by last message time
+    return convsWithUsers
+      .filter((c) => c.otherUser !== null)
+      .sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
+  },
+});
+
+// Get messages in a conversation
+export const getMessages = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    // Verify user is part of conversation
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) {
+      return [];
+    }
+
+    if (conv.participant1 !== user._id && conv.participant2 !== user._id) {
+      return [];
+    }
+
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .order("asc")
+      .collect();
+
+    return messages;
+  },
+});
+
+// Send a message
+export const sendMessage = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+    content: v.string(),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) {
+      throw new ConvexError({
+        message: "Conversation not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Verify user is part of conversation
+    if (conv.participant1 !== user._id && conv.participant2 !== user._id) {
+      throw new ConvexError({
+        message: "Not authorized",
+        code: "FORBIDDEN",
+      });
+    }
+
+    const receiverId =
+      conv.participant1 === user._id ? conv.participant2 : conv.participant1;
+
+    // Check if blocked
+    const isBlocked = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", user._id).eq("blockedId", receiverId)
+      )
+      .first();
+
+    const isBlockedBy = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", receiverId).eq("blockedId", user._id)
+      )
+      .first();
+
+    if (isBlocked || isBlockedBy) {
+      throw new ConvexError({
+        message: "Cannot message this user",
+        code: "FORBIDDEN",
+      });
+    }
+
+    const now = Date.now();
+
+    // Insert message
+    await ctx.db.insert("messages", {
+      conversationId: args.conversationId,
+      senderId: user._id,
+      receiverId,
+      content: args.content,
+      isRead: false,
+      createdAt: now,
+    });
+
+    // Update conversation
+    const unreadUpdate =
+      conv.participant1 === user._id
+        ? { unreadCount2: conv.unreadCount2 + 1 }
+        : { unreadCount1: conv.unreadCount1 + 1 };
+
+    await ctx.db.patch(args.conversationId, {
+      lastMessage: args.content.substring(0, 100),
+      lastMessageTime: now,
+      ...unreadUpdate,
+    });
+
+    return { success: true };
+  },
+});
+
+// Mark messages as read
+export const markAsRead = mutation({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return;
+    }
+
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) {
+      return;
+    }
+
+    // Verify user is part of conversation
+    if (conv.participant1 !== user._id && conv.participant2 !== user._id) {
+      return;
+    }
+
+    // Get unread messages for this user
+    const messages = await ctx.db
+      .query("messages")
+      .withIndex("by_conversation", (q) =>
+        q.eq("conversationId", args.conversationId)
+      )
+      .filter((q) =>
+        q.and(q.eq(q.field("receiverId"), user._id), q.eq(q.field("isRead"), false))
+      )
+      .collect();
+
+    // Mark all as read
+    await Promise.all(
+      messages.map((msg) => ctx.db.patch(msg._id, { isRead: true }))
+    );
+
+    // Reset unread count
+    const unreadUpdate =
+      conv.participant1 === user._id
+        ? { unreadCount1: 0 }
+        : { unreadCount2: 0 };
+
+    await ctx.db.patch(args.conversationId, unreadUpdate);
+  },
+});
+
+// Block user
+export const blockUser = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check if already blocked
+    const existing = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", user._id).eq("blockedId", args.userId)
+      )
+      .first();
+
+    if (existing) {
+      throw new ConvexError({
+        message: "User already blocked",
+        code: "CONFLICT",
+      });
+    }
+
+    await ctx.db.insert("blocks", {
+      blockerId: user._id,
+      blockedId: args.userId,
+      createdAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Unblock user
+export const unblockUser = mutation({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    const block = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", user._id).eq("blockedId", args.userId)
+      )
+      .first();
+
+    if (!block) {
+      throw new ConvexError({
+        message: "User not blocked",
+        code: "NOT_FOUND",
+      });
+    }
+
+    await ctx.db.delete(block._id);
+
+    return { success: true };
+  },
+});
+
+// Check if user is blocked
+export const isBlocked = query({
+  args: {
+    userId: v.id("users"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return false;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return false;
+    }
+
+    const block = await ctx.db
+      .query("blocks")
+      .withIndex("by_blocker_blocked", (q) =>
+        q.eq("blockerId", user._id).eq("blockedId", args.userId)
+      )
+      .first();
+
+    return !!block;
+  },
+});
