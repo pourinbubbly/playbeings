@@ -27,6 +27,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu.tsx";
+import { NotificationBell } from "@/components/notification-bell.tsx";
 
 export function DashboardLayout({ children }: { children: React.ReactNode }) {
   const location = useLocation();
@@ -74,7 +75,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
           
           <div className="flex items-center gap-4">
             {user && (
-              <DropdownMenu>
+              <>
+                <NotificationBell />
+                <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button 
                     variant="ghost" 
@@ -115,6 +118,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+              </>
             )}
           </div>
         </div>

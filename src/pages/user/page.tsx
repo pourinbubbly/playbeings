@@ -6,6 +6,7 @@ import { api } from "@/convex/_generated/api.js";
 import type { Doc, Id } from "@/convex/_generated/dataModel.d.ts";
 import { DashboardLayout } from "@/pages/dashboard/_components/dashboard-layout.tsx";
 import { Button } from "@/components/ui/button.tsx";
+import { Badge } from "@/components/ui/badge.tsx";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card.tsx";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
@@ -25,7 +26,8 @@ import {
   Trash2,
   Sparkles,
   Shield,
-  Flame
+  Flame,
+  Crown
 } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
@@ -60,6 +62,7 @@ function UserProfileContent() {
   const userGames = useQuery(api.profiles.getUserGames, userId ? { userId: userId as Id<"users"> } : "skip");
   const userNFTs = useQuery(api.nft.getMintedNFTs, {});
   const isFollowing = useQuery(api.community.isFollowing, userId ? { userId: userId as Id<"users"> } : "skip");
+  const hasPremiumPass = useQuery(api.premiumPass.hasActivePremiumPass, userId ? { userId: userId as Id<"users"> } : "skip");
   
   const followUser = useMutation(api.community.followUser);
   const unfollowUser = useMutation(api.community.unfollowUser);
@@ -132,9 +135,17 @@ function UserProfileContent() {
 
                 {/* Name & Stats */}
                 <div className="mb-4 min-w-0 flex-1">
-                  <h1 className="text-3xl font-bold text-foreground uppercase tracking-wider">
-                    {targetUser.username || targetUser.name || "Unknown User"}
-                  </h1>
+                  <div className="flex items-center gap-3 mb-1">
+                    <h1 className="text-3xl font-bold text-foreground uppercase tracking-wider">
+                      {targetUser.username || targetUser.name || "Unknown User"}
+                    </h1>
+                    {hasPremiumPass && (
+                      <Badge className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white font-bold uppercase tracking-wider px-3 py-1 neon-glow-cyan flex items-center gap-2">
+                        <Crown className="w-4 h-4" />
+                        Premium Pass
+                      </Badge>
+                    )}
+                  </div>
                   {targetUser.bio && (
                     <p className="text-muted-foreground mt-1">{targetUser.bio}</p>
                   )}

@@ -20,6 +20,19 @@ export const getLeaderboard = query({
           .withIndex("by_user", (q) => q.eq("userId", user._id))
           .unique();
 
+        // Check if user has active premium pass
+        const now = Date.now();
+        const premiumPass = await ctx.db
+          .query("premiumPasses")
+          .withIndex("by_user", (q) => q.eq("userId", user._id))
+          .filter((q) =>
+            q.and(
+              q.eq(q.field("isActive"), true),
+              q.gt(q.field("expiryDate"), now)
+            )
+          )
+          .first();
+
         return {
           rank: index + 1,
           userId: user._id,
@@ -27,6 +40,7 @@ export const getLeaderboard = query({
           avatar: steamProfile?.avatarUrl || "",
           points: user.totalPoints,
           level: user.level,
+          hasPremiumPass: !!premiumPass,
         };
       })
     );
@@ -70,6 +84,19 @@ export const getCurrentUserRank = query({
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .unique();
 
+    // Check if user has active premium pass
+    const now = Date.now();
+    const premiumPass = await ctx.db
+      .query("premiumPasses")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("isActive"), true),
+          q.gt(q.field("expiryDate"), now)
+        )
+      )
+      .first();
+
     return {
       rank,
       userId: user._id,
@@ -77,6 +104,7 @@ export const getCurrentUserRank = query({
       avatar: steamProfile?.avatarUrl || "",
       points: user.totalPoints,
       level: user.level,
+      hasPremiumPass: !!premiumPass,
     };
   },
 });

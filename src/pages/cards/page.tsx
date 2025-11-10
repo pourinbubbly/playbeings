@@ -105,10 +105,10 @@ function CardsContent() {
         achievement.imageUrl
       );
 
-      // Calculate boost: 0.5-1.5% based on rarity
-      let boost = 0.5;
-      if (achievement.rarity === "Rare") boost = 1;
-      else if (achievement.rarity === "Epic") boost = 1.5;
+      // Calculate boost: 0.05-0.15% based on rarity
+      let boost = 0.05;
+      if (achievement.rarity === "Rare") boost = 0.1;
+      else if (achievement.rarity === "Epic") boost = 0.15;
       
       // Save to database with boost
       const saveNFT = await import("@/convex/_generated/api.js").then(m => m.api.cards.saveMinedNFT);
@@ -179,7 +179,7 @@ function CardsContent() {
                 Achievement NFTs
               </h1>
               <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
-                Load Steam achievements • Mint as NFTs • Earn 5-15% boost per achievement
+                Load Steam achievements • Mint as NFTs • Earn 0.05-0.15% boost per achievement
               </p>
             </div>
           </div>

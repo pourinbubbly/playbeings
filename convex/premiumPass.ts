@@ -4,28 +4,35 @@ import { ConvexError } from "convex/values";
 
 // Check if user has active premium pass
 export const hasActivePremiumPass = query({
-  args: {},
+  args: { userId: v.optional(v.id("users")) },
   handler: async (ctx, args) => {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      return false;
-    }
+    let targetUserId = args.userId;
 
-    const user = await ctx.db
-      .query("users")
-      .withIndex("by_token", (q) =>
-        q.eq("tokenIdentifier", identity.tokenIdentifier)
-      )
-      .unique();
+    // If no userId provided, get current user
+    if (!targetUserId) {
+      const identity = await ctx.auth.getUserIdentity();
+      if (!identity) {
+        return false;
+      }
 
-    if (!user) {
-      return false;
+      const user = await ctx.db
+        .query("users")
+        .withIndex("by_token", (q) =>
+          q.eq("tokenIdentifier", identity.tokenIdentifier)
+        )
+        .unique();
+
+      if (!user) {
+        return false;
+      }
+
+      targetUserId = user._id;
     }
 
     const now = Date.now();
     const pass = await ctx.db
       .query("premiumPasses")
-      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .withIndex("by_user", (q) => q.eq("userId", targetUserId))
       .filter((q) =>
         q.and(
           q.eq(q.field("isActive"), true),

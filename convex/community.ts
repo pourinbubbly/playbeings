@@ -69,6 +69,17 @@ export const followUser = mutation({
       await ctx.db.patch(args.userId, {
         followerCount: targetFollowerCount + 1,
       });
+
+      // Create notification for the followed user
+      await ctx.db.insert("notifications", {
+        userId: args.userId,
+        type: "follow",
+        title: "New Follower",
+        message: `${currentUser.username || currentUser.name || "Someone"} started following you!`,
+        isRead: false,
+        link: `/user/${currentUser._id}`,
+        createdAt: Date.now(),
+      });
     }
 
     return { success: true };
@@ -299,6 +310,19 @@ export const addComment = mutation({
       txHash: args.txHash,
       createdAt: Date.now(),
     });
+
+    // Create notification for the profile owner (if not commenting on own profile)
+    if (args.profileUserId !== currentUser._id) {
+      await ctx.db.insert("notifications", {
+        userId: args.profileUserId,
+        type: "comment",
+        title: "New Comment",
+        message: `${currentUser.username || currentUser.name || "Someone"} commented on your profile`,
+        isRead: false,
+        link: `/user/${args.profileUserId}`,
+        createdAt: Date.now(),
+      });
+    }
 
     return { success: true };
   },

@@ -278,65 +278,94 @@ function PremiumPassContent() {
                   </div>
                 ) : (
                   <>
-                    <p className="text-sm text-muted-foreground mb-6 uppercase tracking-wide">
-                      ⚠️ You can claim one quest per day. Missed days cannot be claimed later. Bonus points awarded every 5 days!
-                    </p>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div className="glass-card p-4 border-2 border-[var(--neon-purple)]/30 mb-6 bg-[var(--neon-purple)]/5">
+                      <p className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide flex items-center gap-2">
+                        <Trophy className="w-4 h-4" />
+                        Important: You can claim one quest per day. Missed days cannot be claimed later!
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        🎉 Bonus points awarded on days 5, 10, 15, 20, 25, and 30!
+                      </p>
+                    </div>
+                    <div className="space-y-3">
                       {premiumQuests.quests.map((quest) => {
                         const progress = premiumQuests.userProgress.find(
                           (p) => p.questId === quest.id
                         );
+                        const hasBonus = quest.pointsReward && quest.pointsReward > 0;
 
                         return (
                           <div
                             key={quest.id}
-                            className={`glass-card p-4 border-2 space-y-3 ${
+                            className={`glass-card p-5 border-2 transition-all ${
                               progress?.claimed
-                                ? "border-[var(--neon-purple)]/20"
-                                : "border-[var(--neon-cyan)]/20"
+                                ? "border-[var(--neon-purple)]/20 opacity-70"
+                                : "border-[var(--neon-cyan)]/30 hover:border-[var(--neon-cyan)]/50"
                             }`}
                           >
-                            <div className="flex items-start gap-3">
+                            <div className="flex items-center gap-4">
+                              {/* Day Number */}
+                              <div className="flex-shrink-0 w-16 h-16 rounded border-2 border-[var(--neon-cyan)] flex items-center justify-center bg-black/40">
+                                <div className="text-center">
+                                  <div className="text-xs text-[var(--neon-cyan)] uppercase font-semibold">Day</div>
+                                  <div className="text-xl font-bold text-[var(--neon-cyan)]">{quest.dayNumber}</div>
+                                </div>
+                              </div>
+
+                              {/* Quest Info */}
                               <div className="flex-1 min-w-0">
-                                <h3 className="font-bold text-foreground uppercase tracking-wide text-sm">
+                                <h3 className="font-bold text-foreground uppercase tracking-wide text-base mb-1">
                                   {quest.title}
                                 </h3>
-                                <p className="text-xs text-muted-foreground mt-1">
+                                <p className="text-sm text-muted-foreground">
                                   {quest.description}
                                 </p>
                               </div>
-                              <div className="text-2xl flex-shrink-0">
-                                {quest.rewardType === "points" ? `${quest.pointsReward}pts` : quest.rewardData}
+
+                              {/* Reward Display */}
+                              <div className="flex-shrink-0 text-right">
+                                <div className="text-3xl mb-1">
+                                  {quest.rewardType === "points" ? "🏆" : quest.rewardData}
+                                </div>
+                                {hasBonus && (
+                                  <div className="glass-card px-3 py-1 border-2 border-[var(--neon-magenta)] inline-block">
+                                    <span className="text-sm font-bold text-[var(--neon-magenta)] uppercase tracking-wide">
+                                      +{quest.pointsReward} pts
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Action Button */}
+                              <div className="flex-shrink-0">
+                                {!progress?.claimed ? (
+                                  <Button
+                                    onClick={() => handleClaimReward(quest.id)}
+                                    disabled={selectedQuestId === quest.id}
+                                    className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider px-6"
+                                  >
+                                    {selectedQuestId === quest.id ? (
+                                      <>
+                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                        Claiming...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Trophy className="w-4 h-4 mr-2" />
+                                        Claim
+                                      </>
+                                    )}
+                                  </Button>
+                                ) : (
+                                  <div className="glass-card border-2 border-[var(--neon-purple)]/30 px-6 py-2 bg-[var(--neon-purple)]/10">
+                                    <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide flex items-center gap-2">
+                                      <Trophy className="w-4 h-4" />
+                                      Claimed
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
-
-                            {!progress?.claimed && (
-                              <Button
-                                onClick={() => handleClaimReward(quest.id)}
-                                disabled={selectedQuestId === quest.id}
-                                className="w-full glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider"
-                              >
-                                {selectedQuestId === quest.id ? (
-                                  <>
-                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                    Claiming...
-                                  </>
-                                ) : (
-                                  <>
-                                    <Trophy className="w-4 h-4 mr-2" />
-                                    Claim
-                                  </>
-                                )}
-                              </Button>
-                            )}
-
-                            {progress?.claimed && (
-                              <div className="text-center py-2 glass-card border border-[var(--neon-purple)]/20">
-                                <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide">
-                                  ✓ Claimed
-                                </span>
-                              </div>
-                            )}
                           </div>
                         );
                       })}

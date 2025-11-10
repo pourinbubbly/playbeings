@@ -267,4 +267,16 @@ export default defineSchema({
     stickerUrl: v.string(), // Storage ID for the uploaded sticker
     uploadedAt: v.number(),
   }).index("by_user", ["userId"]),
+
+  notifications: defineTable({
+    userId: v.id("users"),
+    type: v.string(), // "follow", "quest_complete", "message", "comment", "check_in"
+    title: v.string(),
+    message: v.string(),
+    isRead: v.boolean(),
+    link: v.optional(v.string()),
+    createdAt: v.number(),
+  })
+    .index("by_user", ["userId"])
+    .index("by_user_unread", ["userId", "isRead"]),
 });

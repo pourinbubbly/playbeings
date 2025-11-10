@@ -19,6 +19,7 @@ import type * as initializeApp from "../initializeApp.js";
 import type * as leaderboard from "../leaderboard.js";
 import type * as messages from "../messages.js";
 import type * as nft from "../nft.js";
+import type * as notifications from "../notifications.js";
 import type * as premium from "../premium.js";
 import type * as premiumPass from "../premiumPass.js";
 import type * as profiles from "../profiles.js";
@@ -55,6 +56,7 @@ declare const fullApi: ApiFromModules<{
   leaderboard: typeof leaderboard;
   messages: typeof messages;
   nft: typeof nft;
+  notifications: typeof notifications;
   premium: typeof premium;
   premiumPass: typeof premiumPass;
   profiles: typeof profiles;

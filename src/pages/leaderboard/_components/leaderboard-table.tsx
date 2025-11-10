@@ -13,6 +13,7 @@ interface LeaderboardEntry {
   avatar: string;
   points: number;
   level: number;
+  hasPremiumPass?: boolean;
 }
 
 interface LeaderboardTableProps {
@@ -76,6 +77,12 @@ export function LeaderboardTable({ leaderboard, currentUserId }: LeaderboardTabl
                       {isCurrentUser && (
                         <Badge variant="secondary" className="text-xs">
                           You
+                        </Badge>
+                      )}
+                      {entry.hasPremiumPass && (
+                        <Badge className="bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] text-white text-xs font-bold uppercase tracking-wider px-2 py-0.5 neon-glow-cyan">
+                          <Crown className="w-3 h-3 mr-1" />
+                          Premium
                         </Badge>
                       )}
                     </div>
