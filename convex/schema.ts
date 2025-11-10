@@ -227,12 +227,14 @@ export default defineSchema({
     quests: v.array(
       v.object({
         id: v.string(),
-        type: v.string(), // "playtime", "achievements", "checkin"
+        type: v.string(), // "daily_login", "playtime", "achievements", "checkin"
         title: v.string(),
         description: v.string(),
         requirement: v.number(),
+        dayNumber: v.optional(v.number()), // Day 1-30 for daily quests
         rewardType: v.string(), // "emoji", "sticker", "points"
-        rewardData: v.string(), // emoji char or sticker URL
+        rewardData: v.string(), // emoji char or sticker URL or points amount
+        pointsReward: v.optional(v.number()), // Bonus points for milestone days
         icon: v.string(),
       })
     ),
@@ -245,8 +247,10 @@ export default defineSchema({
     progress: v.number(),
     completed: v.boolean(),
     claimed: v.boolean(),
+    txHash: v.optional(v.string()), // CARV SVM transaction hash for claiming
     rewardType: v.optional(v.string()),
     rewardData: v.optional(v.string()),
+    claimedAt: v.optional(v.number()),
   })
     .index("by_user_and_month", ["userId", "month"])
     .index("by_user_quest_month", ["userId", "questId", "month"]),
@@ -256,5 +260,11 @@ export default defineSchema({
     rewardType: v.string(), // "emoji", "sticker"
     rewardData: v.string(),
     earnedAt: v.number(),
+  }).index("by_user", ["userId"]),
+
+  customStickers: defineTable({
+    userId: v.id("users"),
+    stickerUrl: v.string(), // Storage ID for the uploaded sticker
+    uploadedAt: v.number(),
   }).index("by_user", ["userId"]),
 });

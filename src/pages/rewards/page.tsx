@@ -108,6 +108,9 @@ function RewardsContent() {
                 <p className="text-muted-foreground text-sm uppercase tracking-wide mt-1">
                   Redeem points for gift cards
                 </p>
+                <p className="text-xs text-[var(--neon-purple)] uppercase tracking-wide mt-2 font-semibold">
+                  ⚠️ Premium Pass required to redeem rewards
+                </p>
               </div>
             </div>
             <div className="glass-card p-4 rounded-sm border-2 border-[var(--neon-magenta)] neon-glow-magenta text-center">

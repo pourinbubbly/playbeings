@@ -1,9 +1,11 @@
 import { useQuery } from "convex/react";
 import { api } from "@/convex/_generated/api.js";
 import { Skeleton } from "@/components/ui/skeleton.tsx";
-import { Target, ChevronRight } from "lucide-react";
+import { Target, ChevronRight, ChevronLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Progress } from "@/components/ui/progress.tsx";
+import { useRef, useState, useEffect } from "react";
+import { Button } from "@/components/ui/button.tsx";
 
 // Quest icon to image mapping - Her quest için farklı resim
 const questIconImages: Record<string, string> = {
@@ -21,6 +23,36 @@ const questIconImages: Record<string, string> = {
 
 export function DailyQuestsSection() {
   const questsData = useQuery(api.quests.getTodayQuests);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [showLeftButton, setShowLeftButton] = useState(false);
+  const [showRightButton, setShowRightButton] = useState(false);
+
+  const checkScroll = () => {
+    if (scrollContainerRef.current) {
+      const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+      setShowLeftButton(scrollLeft > 0);
+      setShowRightButton(scrollLeft < scrollWidth - clientWidth - 10);
+    }
+  };
+
+  useEffect(() => {
+    checkScroll();
+    const container = scrollContainerRef.current;
+    if (container) {
+      container.addEventListener("scroll", checkScroll);
+      return () => container.removeEventListener("scroll", checkScroll);
+    }
+  }, [questsData]);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollContainerRef.current) {
+      const scrollAmount = 400;
+      scrollContainerRef.current.scrollBy({
+        left: direction === "left" ? -scrollAmount : scrollAmount,
+        behavior: "smooth",
+      });
+    }
+  };
 
   if (questsData === undefined) {
     return (
@@ -61,7 +93,27 @@ export function DailyQuestsSection() {
 
       {/* Horizontal Scrolling Quests */}
       <div className="relative -mx-6 px-6">
-        <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-custom">
+        {/* Left Scroll Button */}
+        {showLeftButton && (
+          <Button
+            onClick={() => scroll("left")}
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </Button>
+        )}
+
+        {/* Right Scroll Button */}
+        {showRightButton && (
+          <Button
+            onClick={() => scroll("right")}
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/20 w-10 h-10 p-0 rounded-full neon-glow-cyan"
+          >
+            <ChevronRight className="w-5 h-5" />
+          </Button>
+        )}
+
+        <div ref={scrollContainerRef} className="flex gap-4 overflow-x-auto pb-4 scrollbar-custom">
           {questsData.quests.slice(0, 5).map((quest: { id: string; type: string; title: string; description: string; requirement: number; reward: number; icon: string }) => {
             const userProgress = progressMap.get(quest.id) as { progress: number; completed: boolean; claimed: boolean } | undefined;
             const progress = userProgress?.progress || 0;

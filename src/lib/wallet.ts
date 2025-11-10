@@ -727,3 +727,97 @@ export async function purchasePremiumPassTransaction(): Promise<{ signature: str
     throw error;
   }
 }
+
+export async function claimPremiumQuestTransaction(
+  questTitle: string,
+  dayNumber: number
+): Promise<{ signature: string; explorerUrl: string }> {
+  if (!window.backpack) {
+    throw new Error("Backpack wallet not found");
+  }
+
+  if (!window.backpack.publicKey) {
+    throw new Error("Wallet not connected");
+  }
+
+  try {
+    const connection = new Connection(CARV_RPC_URL, {
+      commitment: "confirmed",
+      confirmTransactionInitialTimeout: 60000,
+    });
+    const walletPubkey = new PublicKey(window.backpack.publicKey.toString());
+
+    console.log("Creating premium quest claim transaction on CARV SVM...");
+
+    const transaction = new Transaction();
+
+    // Small transfer to self (0.001 SOL)
+    const lamports = 1000000; // 0.001 SOL
+    
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: walletPubkey,
+        toPubkey: walletPubkey,
+        lamports,
+      })
+    );
+
+    // Add quest claim metadata as memo
+    const claimData = JSON.stringify({
+      type: "PREMIUM_QUEST_CLAIM",
+      timestamp: new Date().toISOString(),
+      questTitle,
+      dayNumber,
+      app: "PlayBeings",
+    });
+    
+    const memoData = new TextEncoder().encode(claimData);
+    
+    transaction.add({
+      keys: [{ pubkey: walletPubkey, isSigner: true, isWritable: false }],
+      programId: new PublicKey("MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr"),
+      data: Buffer.from(memoData),
+    });
+
+    // Set transaction metadata
+    const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash("confirmed");
+    transaction.recentBlockhash = blockhash;
+    transaction.feePayer = walletPubkey;
+
+    console.log("Requesting Backpack approval for premium quest claim...");
+    
+    // Sign and send with Backpack
+    const { signature } = await window.backpack.signAndSendTransaction(transaction);
+    
+    console.log("Premium quest claim transaction submitted! Tx:", signature);
+
+    // Verify transaction on-chain (with extended timeout)
+    const confirmationPromise = connection.confirmTransaction({
+      signature,
+      blockhash,
+      lastValidBlockHeight,
+    }, "confirmed");
+    
+    // Add timeout to prevent hanging (60 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+    });
+    
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("Premium quest claim transaction confirmed!");
+    } catch (confirmError) {
+      console.warn("Transaction confirmation timed out, but transaction was submitted:", signature);
+    }
+    
+    const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+    
+    return { 
+      signature, 
+      explorerUrl,
+    };
+  } catch (error) {
+    console.error("Premium quest claim transaction failed:", error);
+    throw error;
+  }
+}

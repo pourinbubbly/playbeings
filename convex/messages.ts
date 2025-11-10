@@ -480,3 +480,107 @@ export const isBlocked = query({
     return !!block;
   },
 });
+
+// Upload custom sticker (Premium Pass required)
+export const uploadCustomSticker = mutation({
+  args: {
+    storageId: v.id("_storage"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      throw new ConvexError({
+        message: "User not found",
+        code: "NOT_FOUND",
+      });
+    }
+
+    // Check if user has active premium pass
+    const now = Date.now();
+    const premiumPass = await ctx.db
+      .query("premiumPasses")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("isActive"), true),
+          q.gt(q.field("expiryDate"), now)
+        )
+      )
+      .first();
+
+    if (!premiumPass) {
+      throw new ConvexError({
+        code: "FORBIDDEN",
+        message: "Premium Pass required to upload custom stickers",
+      });
+    }
+
+    // Save sticker
+    await ctx.db.insert("customStickers", {
+      userId: user._id,
+      stickerUrl: args.storageId,
+      uploadedAt: Date.now(),
+    });
+
+    return { success: true };
+  },
+});
+
+// Get user's custom stickers
+export const getCustomStickers = query({
+  args: {},
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return [];
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return [];
+    }
+
+    const stickers = await ctx.db
+      .query("customStickers")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .collect();
+
+    return stickers;
+  },
+});
+
+// Generate upload URL for stickers
+export const generateStickerUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new ConvexError({
+        message: "User not logged in",
+        code: "UNAUTHENTICATED",
+      });
+    }
+
+    return await ctx.storage.generateUploadUrl();
+  },
+});

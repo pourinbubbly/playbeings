@@ -1,5 +1,5 @@
 import "./polyfills.ts";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
 import { DefaultProviders } from "./components/providers/default.tsx";
 import { PageTransition } from "./components/ui/page-transition.tsx";
 import { ChatWidget } from "./components/chat-widget.tsx";
@@ -26,6 +26,19 @@ import PrivacyPolicy from "./pages/privacy/page.tsx";
 import TermsOfService from "./pages/terms/page.tsx";
 import CookiePolicy from "./pages/cookies/page.tsx";
 import NotFound from "./pages/NotFound.tsx";
+
+// Wrapper to conditionally show chat widget only on dashboard routes
+function ChatWidgetWrapper() {
+  const location = useLocation();
+  const isDashboardRoute = location.pathname.startsWith("/dashboard") || 
+                           location.pathname.startsWith("/profile") ||
+                           location.pathname.startsWith("/user") ||
+                           location.pathname.startsWith("/settings") ||
+                           location.pathname.startsWith("/community") ||
+                           location.pathname.startsWith("/premium");
+  
+  return isDashboardRoute ? <ChatWidget /> : null;
+}
 
 export default function App() {
   return (
@@ -59,7 +72,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
         </PageTransition>
-        <ChatWidget />
+        <ChatWidgetWrapper />
       </BrowserRouter>
     </DefaultProviders>
   );

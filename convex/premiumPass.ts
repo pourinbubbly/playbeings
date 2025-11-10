@@ -312,6 +312,7 @@ export const syncPremiumQuestProgress = mutation({
 export const claimPremiumReward = mutation({
   args: {
     questId: v.string(),
+    txHash: v.string(),
   },
   handler: async (ctx, args) => {
     const identity = await ctx.auth.getUserIdentity();
@@ -338,35 +339,7 @@ export const claimPremiumReward = mutation({
 
     const currentMonth = new Date().toISOString().slice(0, 7);
 
-    const progress = await ctx.db
-      .query("userPremiumQuests")
-      .withIndex("by_user_quest_month", (q) =>
-        q.eq("userId", user._id).eq("questId", args.questId).eq("month", currentMonth)
-      )
-      .first();
-
-    if (!progress) {
-      throw new ConvexError({
-        message: "Quest not found",
-        code: "NOT_FOUND",
-      });
-    }
-
-    if (!progress.completed) {
-      throw new ConvexError({
-        message: "Quest not completed",
-        code: "BAD_REQUEST",
-      });
-    }
-
-    if (progress.claimed) {
-      throw new ConvexError({
-        message: "Reward already claimed",
-        code: "CONFLICT",
-      });
-    }
-
-    // Get quest details
+    // Get quest details first
     const premiumQuestData = await ctx.db
       .query("premiumQuests")
       .withIndex("by_month", (q) => q.eq("month", currentMonth))
@@ -380,29 +353,137 @@ export const claimPremiumReward = mutation({
     }
 
     const quest = premiumQuestData.quests.find((q) => q.id === args.questId);
-    if (!quest) {
+    if (!quest || !quest.dayNumber) {
       throw new ConvexError({
         message: "Quest not found",
         code: "NOT_FOUND",
       });
     }
 
+    // Check if user can claim this day (can only claim current or future days within the month)
+    const passInfo = await ctx.db
+      .query("premiumPasses")
+      .withIndex("by_user", (q) => q.eq("userId", user._id))
+      .filter((q) =>
+        q.and(
+          q.eq(q.field("isActive"), true),
+          q.gt(q.field("expiryDate"), Date.now())
+        )
+      )
+      .first();
+
+    if (!passInfo) {
+      throw new ConvexError({
+        message: "No active Premium Pass",
+        code: "FORBIDDEN",
+      });
+    }
+
+    // Calculate which day of the pass the user is on
+    const passStartDate = new Date(passInfo.purchaseDate);
+    const today = new Date();
+    const daysSinceStart = Math.floor((today.getTime() - passStartDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    // User can only claim the current day or earlier days (but not future days, and not missed days)
+    if (quest.dayNumber > daysSinceStart) {
+      throw new ConvexError({
+        message: `This quest unlocks on Day ${quest.dayNumber}. You are currently on Day ${daysSinceStart}.`,
+        code: "BAD_REQUEST",
+      });
+    }
+
+    // Check if user has already claimed any quest today
+    const todayString = new Date().toISOString().slice(0, 10);
+    const todaysClaims = await ctx.db
+      .query("userPremiumQuests")
+      .withIndex("by_user_and_month", (q) => q.eq("userId", user._id).eq("month", currentMonth))
+      .filter((q) => q.eq(q.field("claimed"), true))
+      .collect();
+
+    const alreadyClaimedToday = todaysClaims.some((claim) => {
+      if (!claim.claimedAt) return false;
+      const claimDate = new Date(claim.claimedAt).toISOString().slice(0, 10);
+      return claimDate === todayString;
+    });
+
+    if (alreadyClaimedToday) {
+      throw new ConvexError({
+        message: "You have already claimed a quest today. Come back tomorrow!",
+        code: "CONFLICT",
+      });
+    }
+
+    const progress = await ctx.db
+      .query("userPremiumQuests")
+      .withIndex("by_user_quest_month", (q) =>
+        q.eq("userId", user._id).eq("questId", args.questId).eq("month", currentMonth)
+      )
+      .first();
+
+    if (progress?.claimed) {
+      throw new ConvexError({
+        message: "Reward already claimed",
+        code: "CONFLICT",
+      });
+    }
+
     // Mark as claimed
-    await ctx.db.patch(progress._id, {
-      claimed: true,
-      rewardType: quest.rewardType,
-      rewardData: quest.rewardData,
-    });
+    if (progress) {
+      await ctx.db.patch(progress._id, {
+        claimed: true,
+        completed: true,
+        txHash: args.txHash,
+        rewardType: quest.rewardType,
+        rewardData: quest.rewardData,
+        claimedAt: Date.now(),
+      });
+    } else {
+      await ctx.db.insert("userPremiumQuests", {
+        userId: user._id,
+        questId: args.questId,
+        month: currentMonth,
+        progress: 1,
+        completed: true,
+        claimed: true,
+        txHash: args.txHash,
+        rewardType: quest.rewardType,
+        rewardData: quest.rewardData,
+        claimedAt: Date.now(),
+      });
+    }
 
-    // Add reward to user's collection
-    await ctx.db.insert("premiumRewards", {
-      userId: user._id,
-      rewardType: quest.rewardType,
-      rewardData: quest.rewardData,
-      earnedAt: Date.now(),
-    });
+    // Add reward to user's collection (if emoji/sticker)
+    if (quest.rewardType === "emoji" || quest.rewardType === "sticker") {
+      await ctx.db.insert("premiumRewards", {
+        userId: user._id,
+        rewardType: quest.rewardType,
+        rewardData: quest.rewardData,
+        earnedAt: Date.now(),
+      });
+    }
 
-    return { success: true, reward: { type: quest.rewardType, data: quest.rewardData } };
+    // Add points if this is a milestone day
+    if (quest.rewardType === "points" && quest.pointsReward) {
+      await ctx.db.patch(user._id, {
+        totalPoints: user.totalPoints + quest.pointsReward,
+      });
+
+      await ctx.db.insert("pointHistory", {
+        userId: user._id,
+        amount: quest.pointsReward,
+        reason: `Premium Quest: ${quest.title}`,
+        timestamp: Date.now(),
+      });
+    }
+
+    return { 
+      success: true, 
+      reward: { 
+        type: quest.rewardType, 
+        data: quest.rewardData,
+        points: quest.pointsReward || 0,
+      } 
+    };
   },
 });
 

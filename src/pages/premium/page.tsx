@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton.tsx";
 import { Crown, Sparkles, Zap, Trophy, ExternalLink, Loader2, Check } from "lucide-react";
 import { toast } from "sonner";
 import { UnauthenticatedPage } from "@/components/ui/unauthenticated-page.tsx";
-import { purchasePremiumPassTransaction } from "@/lib/wallet.ts";
+import { purchasePremiumPassTransaction, claimPremiumQuestTransaction } from "@/lib/wallet.ts";
 import { checkWalletConnection } from "@/lib/wallet-check.ts";
 
 export default function PremiumPass() {
@@ -76,10 +76,38 @@ function PremiumPassContent() {
   };
 
   const handleClaimReward = async (questId: string) => {
+    if (!checkWalletConnection()) return;
+
     setSelectedQuestId(questId);
     try {
-      await claimReward({ questId });
-      toast.success("Reward claimed! Check your messages for new emojis 🎉");
+      // Find the quest to get day number
+      const quest = premiumQuests?.quests.find((q) => q.id === questId);
+      if (!quest || !quest.dayNumber) {
+        throw new Error("Quest not found");
+      }
+
+      toast.info("Creating claim transaction on CARV SVM Testnet...");
+      
+      const { signature, explorerUrl } = await claimPremiumQuestTransaction(
+        quest.title,
+        quest.dayNumber
+      );
+      
+      toast.success("Transaction submitted! Processing claim...", {
+        description: (
+          <a href={explorerUrl} target="_blank" rel="noopener noreferrer" className="text-[var(--neon-cyan)] hover:underline flex items-center gap-1">
+            View on Explorer <ExternalLink className="w-3 h-3" />
+          </a>
+        ),
+      });
+
+      await claimReward({ questId, txHash: signature });
+      
+      if (quest.rewardType === "points") {
+        toast.success(`${quest.title} completed! +${quest.pointsReward} points 🎉`);
+      } else {
+        toast.success(`${quest.title} completed! ${quest.rewardData}`);
+      }
     } catch (error) {
       console.error("Claim failed:", error);
       const err = error as Error;
@@ -244,89 +272,77 @@ function PremiumPassContent() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid md:grid-cols-2 gap-4">
-                  {premiumQuests?.quests.map((quest, index) => {
-                    const progress = premiumQuests.userProgress.find(
-                      (p) => p.questId === quest.id
-                    );
-                    const progressPercent = Math.min(
-                      100,
-                      ((progress?.progress || 0) / quest.requirement) * 100
-                    );
+                {!premiumQuests || premiumQuests.quests.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Loading quests...</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-sm text-muted-foreground mb-6 uppercase tracking-wide">
+                      ⚠️ You can claim one quest per day. Missed days cannot be claimed later. Bonus points awarded every 5 days!
+                    </p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {premiumQuests.quests.map((quest) => {
+                        const progress = premiumQuests.userProgress.find(
+                          (p) => p.questId === quest.id
+                        );
 
-                    return (
-                      <div
-                        key={quest.id}
-                        className="glass-card p-4 border border-[var(--neon-cyan)]/20 space-y-3"
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="w-12 h-12 rounded bg-black/40 border-2 border-[var(--neon-cyan)] overflow-hidden flex-shrink-0">
-                            <img
-                              src={quest.icon}
-                              alt={quest.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-bold text-foreground uppercase tracking-wide text-sm">
-                              {quest.title}
-                            </h3>
-                            <p className="text-xs text-muted-foreground">
-                              {quest.description}
-                            </p>
-                          </div>
-                          <div className="text-2xl">{quest.rewardData}</div>
-                        </div>
-
-                        {/* Progress Bar */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="text-muted-foreground">
-                              {progress?.progress || 0} / {quest.requirement}
-                            </span>
-                            <span className="text-[var(--neon-cyan)] font-semibold">
-                              {Math.round(progressPercent)}%
-                            </span>
-                          </div>
-                          <div className="h-2 bg-black/40 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-[var(--neon-cyan)] to-[var(--neon-purple)] transition-all"
-                              style={{ width: `${progressPercent}%` }}
-                            />
-                          </div>
-                        </div>
-
-                        {progress?.completed && !progress?.claimed && (
-                          <Button
-                            onClick={() => handleClaimReward(quest.id)}
-                            disabled={selectedQuestId === quest.id}
-                            className="w-full glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider"
+                        return (
+                          <div
+                            key={quest.id}
+                            className={`glass-card p-4 border-2 space-y-3 ${
+                              progress?.claimed
+                                ? "border-[var(--neon-purple)]/20"
+                                : "border-[var(--neon-cyan)]/20"
+                            }`}
                           >
-                            {selectedQuestId === quest.id ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Claiming...
-                              </>
-                            ) : (
-                              <>
-                                <Trophy className="w-4 h-4 mr-2" />
-                                Claim Reward
-                              </>
-                            )}
-                          </Button>
-                        )}
+                            <div className="flex items-start gap-3">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-bold text-foreground uppercase tracking-wide text-sm">
+                                  {quest.title}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {quest.description}
+                                </p>
+                              </div>
+                              <div className="text-2xl flex-shrink-0">
+                                {quest.rewardType === "points" ? `${quest.pointsReward}pts` : quest.rewardData}
+                              </div>
+                            </div>
 
-                        {progress?.claimed && (
-                          <div className="text-center py-2 glass-card border border-[var(--neon-purple)]/20">
-                            <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide">
-                              ✓ Claimed
-                            </span>
+                            {!progress?.claimed && (
+                              <Button
+                                onClick={() => handleClaimReward(quest.id)}
+                                disabled={selectedQuestId === quest.id}
+                                className="w-full glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider"
+                              >
+                                {selectedQuestId === quest.id ? (
+                                  <>
+                                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                    Claiming...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Trophy className="w-4 h-4 mr-2" />
+                                    Claim
+                                  </>
+                                )}
+                              </Button>
+                            )}
+
+                            {progress?.claimed && (
+                              <div className="text-center py-2 glass-card border border-[var(--neon-purple)]/20">
+                                <span className="text-sm text-[var(--neon-purple)] font-semibold uppercase tracking-wide">
+                                  ✓ Claimed
+                                </span>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        );
+                      })}
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </>

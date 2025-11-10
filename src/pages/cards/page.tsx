@@ -105,10 +105,10 @@ function CardsContent() {
         achievement.imageUrl
       );
 
-      // Calculate boost: 5-15% based on rarity
-      let boost = 5;
-      if (achievement.rarity === "Rare") boost = 10;
-      else if (achievement.rarity === "Epic") boost = 15;
+      // Calculate boost: 0.5-1.5% based on rarity
+      let boost = 0.5;
+      if (achievement.rarity === "Rare") boost = 1;
+      else if (achievement.rarity === "Epic") boost = 1.5;
       
       // Save to database with boost
       const saveNFT = await import("@/convex/_generated/api.js").then(m => m.api.cards.saveMinedNFT);
@@ -128,7 +128,7 @@ function CardsContent() {
       toast.success(`Achievement NFT Minted!`, {
         description: (
           <div className="space-y-2">
-            <p className="font-semibold text-[var(--neon-magenta)]">+{boost}% point boost activated!</p>
+            <p className="font-semibold text-[var(--neon-magenta)]">+{boost.toFixed(1)}% point boost activated!</p>
             <p className="text-xs text-muted-foreground">Mint Address: {mintAddress.slice(0, 8)}...{mintAddress.slice(-6)}</p>
             <a 
               href={explorerUrl} 
