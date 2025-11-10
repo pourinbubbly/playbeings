@@ -59,7 +59,9 @@ export const getActiveBoosts = query({
       .collect();
 
     // Filter out expired boosts (only return non-expired ones)
-    const activeBoosts = boosts.filter((boost) => boost.expiresAt > now);
+    const activeBoosts = boosts.filter(
+      (boost) => boost.expiresAt !== undefined && boost.expiresAt > now
+    );
 
     return activeBoosts;
   },
@@ -94,7 +96,9 @@ export const calculatePointsWithBoost = query({
       .collect();
 
     // Filter only non-expired boosts
-    const activeBoosts = boosts.filter((boost) => boost.expiresAt > now);
+    const activeBoosts = boosts.filter(
+      (boost) => boost.expiresAt !== undefined && boost.expiresAt > now
+    );
 
     // Calculate total boost percentage
     const totalBoostPercentage = activeBoosts.reduce(

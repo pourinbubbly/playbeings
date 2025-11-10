@@ -125,8 +125,8 @@ export default defineSchema({
     nftAddress: v.string(),
     boostPercentage: v.number(),
     isActive: v.boolean(),
-    activatedAt: v.number(), // Timestamp when boost was activated
-    expiresAt: v.number(), // Timestamp when boost expires (30 days from activation)
+    activatedAt: v.optional(v.number()), // Timestamp when boost was activated
+    expiresAt: v.optional(v.number()), // Timestamp when boost expires (30 days from activation)
   })
     .index("by_user", ["userId"])
     .index("by_nft", ["nftAddress"])
@@ -330,13 +330,13 @@ export default defineSchema({
     targetId: v.string(), // questId, appId, or rewardId
     score: v.number(), // AI confidence score (0-1)
     reason: v.string(), // Why this was recommended
-    metadata: v.optional(v.string()), // JSON string with additional data
+    metadata: v.string(), // JSON string with additional data
     createdAt: v.number(),
     shown: v.boolean(),
     clicked: v.optional(v.boolean()),
   })
-    .index("by_user_type", ["userId", "type"])
-    .index("by_user_shown", ["userId", "shown"])
+    .index("by_user", ["userId"])
+    .index("by_user_and_type", ["userId", "type"])
     .index("by_created", ["createdAt"]),
 
   aiInsights: defineTable({

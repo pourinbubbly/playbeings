@@ -48,19 +48,33 @@ export const getRecommendations = query({
       return [];
     }
 
-    let query = ctx.db
-      .query("aiRecommendations")
-      .withIndex("by_user_type", (q) => q.eq("userId", args.userId));
+    try {
+      let recommendations;
+      
+      if (args.type !== undefined) {
+        // Query with both userId and type using the composite index
+        const typeValue: string = args.type;
+        recommendations = await ctx.db
+          .query("aiRecommendations")
+          .withIndex("by_user_and_type", (q) => 
+            q.eq("userId", args.userId).eq("type", typeValue)
+          )
+          .order("desc")
+          .take(args.limit || 10);
+      } else {
+        // Query with just userId
+        recommendations = await ctx.db
+          .query("aiRecommendations")
+          .withIndex("by_user", (q) => q.eq("userId", args.userId))
+          .order("desc")
+          .take(args.limit || 10);
+      }
 
-    if (args.type) {
-      query = query.filter((q) => q.eq(q.field("type"), args.type));
+      return recommendations;
+    } catch (error) {
+      console.error("Error fetching recommendations:", error);
+      return [];
     }
-
-    const recommendations = await query
-      .order("desc")
-      .take(args.limit || 10);
-
-    return recommendations;
   },
 });
 

@@ -28,6 +28,7 @@ interface Insight {
 
 export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  
   const recommendations = useQuery(api.carvMutations.getRecommendations, {
     userId: userId,
     limit: 5,
@@ -41,7 +42,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
     }
   }, [recommendations, isGenerating]);
 
-  if (!recommendations) {
+  if (recommendations === undefined) {
     return (
       <Card className="glass-card border-2 border-[var(--neon-cyan)]/20">
         <CardHeader>
