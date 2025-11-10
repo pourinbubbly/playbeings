@@ -67,7 +67,11 @@ export const saveMinedNFT = mutation({
       earnedAt: Date.now(),
     });
 
-    // Activate the boost
+    // Activate the boost with 30-day expiry
+    const now = Date.now();
+    const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const expiresAt = now + thirtyDaysInMs;
+
     const existingBoost = await ctx.db
       .query("nftBoosts")
       .withIndex("by_nft", (q) => q.eq("nftAddress", args.nftAddress))
@@ -78,6 +82,8 @@ export const saveMinedNFT = mutation({
       await ctx.db.patch(existingBoost._id, {
         boostPercentage: args.boostPercentage,
         isActive: true,
+        activatedAt: now,
+        expiresAt: expiresAt,
       });
     } else {
       await ctx.db.insert("nftBoosts", {
@@ -85,6 +91,8 @@ export const saveMinedNFT = mutation({
         nftAddress: args.nftAddress,
         boostPercentage: args.boostPercentage,
         isActive: true,
+        activatedAt: now,
+        expiresAt: expiresAt,
       });
     }
 

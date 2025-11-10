@@ -50,13 +50,18 @@ export const getActiveBoosts = query({
       return [];
     }
 
+    const now = Date.now();
+    
     const boosts = await ctx.db
       .query("nftBoosts")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .filter((q) => q.eq(q.field("isActive"), true))
       .collect();
 
-    return boosts;
+    // Filter out expired boosts (only return non-expired ones)
+    const activeBoosts = boosts.filter((boost) => boost.expiresAt > now);
+
+    return activeBoosts;
   },
 });
 
@@ -79,15 +84,20 @@ export const calculatePointsWithBoost = query({
       return args.basePoints;
     }
 
-    // Get all active boosts
+    const now = Date.now();
+
+    // Get all active boosts that haven't expired
     const boosts = await ctx.db
       .query("nftBoosts")
       .withIndex("by_user", (q) => q.eq("userId", user._id))
       .filter((q) => q.eq(q.field("isActive"), true))
       .collect();
 
+    // Filter only non-expired boosts
+    const activeBoosts = boosts.filter((boost) => boost.expiresAt > now);
+
     // Calculate total boost percentage
-    const totalBoostPercentage = boosts.reduce(
+    const totalBoostPercentage = activeBoosts.reduce(
       (sum, boost) => sum + boost.boostPercentage,
       0
     );
@@ -129,6 +139,10 @@ export const activateNFTBoost = mutation({
       });
     }
 
+    const now = Date.now();
+    const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000; // 30 days
+    const expiresAt = now + thirtyDaysInMs;
+
     // Check if boost already exists
     const existingBoost = await ctx.db
       .query("nftBoosts")
@@ -137,10 +151,12 @@ export const activateNFTBoost = mutation({
       .unique();
 
     if (existingBoost) {
-      // Update existing boost
+      // Update existing boost with new expiry
       await ctx.db.patch(existingBoost._id, {
         boostPercentage: args.boostPercentage,
         isActive: true,
+        activatedAt: now,
+        expiresAt: expiresAt,
       });
     } else {
       // Create new boost
@@ -149,6 +165,8 @@ export const activateNFTBoost = mutation({
         nftAddress: args.nftAddress,
         boostPercentage: args.boostPercentage,
         isActive: true,
+        activatedAt: now,
+        expiresAt: expiresAt,
       });
     }
 

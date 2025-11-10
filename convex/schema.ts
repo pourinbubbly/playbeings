@@ -125,9 +125,12 @@ export default defineSchema({
     nftAddress: v.string(),
     boostPercentage: v.number(),
     isActive: v.boolean(),
+    activatedAt: v.number(), // Timestamp when boost was activated
+    expiresAt: v.number(), // Timestamp when boost expires (30 days from activation)
   })
     .index("by_user", ["userId"])
-    .index("by_nft", ["nftAddress"]),
+    .index("by_nft", ["nftAddress"])
+    .index("by_user_active", ["userId", "isActive"]),
 
   rewards: defineTable({
     name: v.string(),
