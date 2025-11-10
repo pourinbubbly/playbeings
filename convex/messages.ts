@@ -67,6 +67,18 @@ export const getOrCreateConversation = mutation({
       .first();
 
     if (existingConv) {
+      // If conversation was hidden, unhide it
+      const hidden = await ctx.db
+        .query("hiddenConversations")
+        .withIndex("by_user_conversation", (q) =>
+          q.eq("userId", user._id).eq("conversationId", existingConv._id)
+        )
+        .first();
+      
+      if (hidden) {
+        await ctx.db.delete(hidden._id);
+      }
+      
       return existingConv._id;
     }
 
