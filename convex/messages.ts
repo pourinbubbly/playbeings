@@ -302,7 +302,7 @@ export const sendMessage = mutation({
         ? { unreadCount2: conv.unreadCount2 + 1 }
         : { unreadCount1: conv.unreadCount1 + 1 };
 
-    const lastMsg = args.messageType === "image" ? "📷 Image" : args.content.substring(0, 100);
+    const lastMsg = args.messageType === "image" ? "📷 Resim" : args.content.substring(0, 100);
 
     await ctx.db.patch(args.conversationId, {
       lastMessage: lastMsg,

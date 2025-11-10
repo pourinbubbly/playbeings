@@ -136,12 +136,19 @@ export function ChatWidget() {
         throw new Error("Upload failed");
       }
 
-      const { storageId } = await result.json();
+      const response = await result.json();
+      const storageId = response.storageId;
+
+      if (!storageId) {
+        throw new Error("No storage ID returned");
+      }
+
+      console.log("Uploaded image storage ID:", storageId);
 
       // Send image message
       await sendMessage({
         conversationId: selectedConvId,
-        content: "📷 Image",
+        content: "📷 Resim",
         messageType: "image",
         imageUrl: storageId,
       });
@@ -400,14 +407,26 @@ export function ChatWidget() {
                                     : "glass-card border border-[var(--neon-purple)]/20"
                                 }`}
                               >
-                                {isImageMessage ? (
+                                {isImageMessage && msg.imageUrl ? (
                                   <div className="space-y-2">
                                     <img
-                                      src={`${import.meta.env.VITE_CONVEX_URL}/api/storage/${msg.imageUrl}`}
-                                      alt="Shared"
+                                      src={(() => {
+                                        const baseUrl = (import.meta.env.VITE_CONVEX_URL || '').replace(/\/$/, '');
+                                        return `${baseUrl}/api/storage/${msg.imageUrl}`;
+                                      })()}
+                                      alt="Image"
                                       className="rounded w-full h-auto object-contain cursor-pointer"
                                       style={{ maxHeight: "300px" }}
-                                      onClick={() => window.open(`${import.meta.env.VITE_CONVEX_URL}/api/storage/${msg.imageUrl}`, "_blank")}
+                                      onClick={() => {
+                                        const baseUrl = (import.meta.env.VITE_CONVEX_URL || '').replace(/\/$/, '');
+                                        window.open(`${baseUrl}/api/storage/${msg.imageUrl}`, "_blank");
+                                      }}
+                                      onError={(e) => {
+                                        console.error("Image load error:", msg.imageUrl);
+                                        console.error("Full URL:", e.currentTarget.src);
+                                        const target = e.target as HTMLImageElement;
+                                        target.style.display = 'none';
+                                      }}
                                     />
                                     <p className="text-xs opacity-70 px-1">
                                       {new Date(msg.createdAt).toLocaleTimeString([], {
