@@ -3,7 +3,7 @@
 import { action, internalAction } from "./_generated/server";
 import { v } from "convex/values";
 import { ConvexError } from "convex/values";
-import { internal } from "./_generated/api";
+import { internal, api } from "./_generated/api";
 
 // CARV D.A.T.A. Framework API Base URL
 const CARV_API_BASE = "https://interface.carv.io/ai-agent-backend";
@@ -124,10 +124,26 @@ export const analyzeBehaviorWithAI = internalAction({
   args: {
     userId: v.id("users"),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{
+    gamingPreferences: {
+      genres: string[];
+      playStyle: string;
+      sessionLength: number;
+    };
+    engagement: {
+      level: "low" | "medium" | "high";
+      trend: "increasing" | "stable" | "decreasing";
+    };
+    recommendations: {
+      nextQuest: string;
+      suggestedGame: string;
+      rewardMultiplier: number;
+    };
+    insights: string[];
+  } | null> => {
     try {
       // Get user data from database
-      const user = await ctx.runQuery(internal.users.getUserById, { userId: args.userId });
+      const user = await ctx.runQuery(api.users.getUserById, { userId: args.userId });
       if (!user) return null;
 
       // Get user's games
@@ -146,9 +162,9 @@ User Stats:
 - Total Points: ${user.totalPoints}
 - Level: ${user.level}
 - Total Games: ${games?.length || 0}
-- Top 3 Games: ${games?.slice(0, 3).map((g) => `${g.name} (${g.playtime}min)`).join(", ")}
+- Top 3 Games: ${games?.slice(0, 3).map((g: { name: string; playtime: number }) => `${g.name} (${g.playtime}min)`).join(", ")}
 
-Recent Quest Completion Rate: ${recentQuests?.filter((q) => q.completed).length || 0}/${recentQuests?.length || 0}
+Recent Quest Completion Rate: ${recentQuests?.filter((q: { completed: boolean }) => q.completed).length || 0}/${recentQuests?.length || 0}
 
 Provide a JSON response with:
 1. gamingPreferences: {genres: string[], playStyle: string, sessionLength: number}
@@ -182,8 +198,8 @@ Format as valid JSON only, no markdown.`;
 
       // Fallback to rule-based analysis if AI fails
       if (!insights) {
-        const totalPlaytime = games?.reduce((sum, g) => sum + g.playtime, 0) || 0;
-        const avgSessionLength = totalPlaytime / Math.max(games?.length || 1, 1);
+        const totalPlaytime = games?.reduce((sum: number, g: { playtime: number }) => sum + g.playtime, 0) || 0;
+        const avgSessionLength: number = totalPlaytime / Math.max(games?.length || 1, 1);
         
         insights = {
           gamingPreferences: {
@@ -203,7 +219,7 @@ Format as valid JSON only, no markdown.`;
           insights: [
             `Total playtime: ${totalPlaytime} minutes`,
             `Playing ${games?.length || 0} different games`,
-            `Quest completion rate: ${Math.round(((recentQuests?.filter((q) => q.completed).length || 0) / Math.max(recentQuests?.length || 1, 1)) * 100)}%`,
+            `Quest completion rate: ${Math.round(((recentQuests?.filter((q: { completed: boolean }) => q.completed).length || 0) / Math.max(recentQuests?.length || 1, 1)) * 100)}%`,
           ],
         };
       }
@@ -227,12 +243,17 @@ Format as valid JSON only, no markdown.`;
 });
 
 // AI-powered game recommendations using DeepSeek + Steam data
-export const generateGameRecommendations = internalAction({
+export const generateGameRecommendations = action({
   args: {
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Array<{
+    appId: string;
+    name: string;
+    reason: string;
+    confidence: number;
+  }>> => {
     try {
       // Get behavioral insights first
       const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
@@ -241,7 +262,7 @@ export const generateGameRecommendations = internalAction({
 
       // Get user's current games
       const games = await ctx.runQuery(internal.steam.getUserGames, { userId: args.userId });
-      const topGames = games?.slice(0, 5).map((g) => g.name).join(", ") || "No games yet";
+      const topGames = games?.slice(0, 5).map((g: { name: string }) => g.name).join(", ") || "No games yet";
 
       // Use DeepSeek AI to generate personalized recommendations
       const recommendPrompt = `Based on this user's gaming profile, recommend ${args.limit || 5} games:
@@ -270,7 +291,12 @@ Return as JSON array only, no markdown.`;
         },
       ]);
 
-      let recommendations = [];
+      let recommendations: Array<{
+        appId: string;
+        name: string;
+        reason: string;
+        confidence: number;
+      }> = [];
 
       if (aiResponse) {
         try {
@@ -340,12 +366,18 @@ Return as JSON array only, no markdown.`;
 });
 
 // AI-powered quest recommendations using DeepSeek
-export const generateQuestRecommendations = internalAction({
+export const generateQuestRecommendations = action({
   args: {
     userId: v.id("users"),
     limit: v.optional(v.number()),
   },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<Array<{
+    questId: string;
+    title: string;
+    reason: string;
+    confidence: number;
+    suggestedReward: number;
+  }>> => {
     try {
       // Get behavioral insights
       const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
@@ -388,7 +420,13 @@ Return as JSON array only.`;
         },
       ]);
 
-      let recommendations = [];
+      let recommendations: Array<{
+        questId: string;
+        title: string;
+        reason: string;
+        confidence: number;
+        suggestedReward: number;
+      }> = [];
 
       if (aiResponse) {
         try {
@@ -401,7 +439,7 @@ Return as JSON array only.`;
 
       // Fallback recommendations
       if (recommendations.length === 0) {
-        const playStyle = behavior?.gamingPreferences?.playStyle || "casual";
+        const playStyle: string = behavior?.gamingPreferences?.playStyle || "casual";
         recommendations = [
           {
             questId: `${playStyle}_play_${Date.now()}`,
@@ -462,7 +500,7 @@ export const optimizeRewardDistribution = internalAction({
   handler: async (ctx, args) => {
     try {
       // Get user data and behavior
-      const user = await ctx.runQuery(internal.users.getUserById, { userId: args.userId });
+      const user = await ctx.runQuery(api.users.getUserById, { userId: args.userId });
       if (!user) return args.baseReward;
 
       const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
@@ -514,14 +552,8 @@ export const optimizeRewardDistribution = internalAction({
         createdAt: Date.now(),
       });
 
-      // Autonomous notification
-      await ctx.runMutation(internal.notifications.create, {
-        userId: args.userId,
-        type: "points",
-        title: "Smart Reward Distributed!",
-        message: `You earned ${optimizedReward} points (${bonusAmount > 0 ? "+" + bonusAmount + " AI bonus" : "base"})`,
-        link: "/dashboard",
-      });
+      // Autonomous notification - Log in console for now
+      console.log(`Smart reward notification: User ${args.userId} earned ${optimizedReward} points (${bonusAmount > 0 ? "+" + bonusAmount + " AI bonus" : "base"})`);
 
       return optimizedReward;
     } catch (error) {

@@ -47,6 +47,15 @@ export const getUserById = query({
   },
 });
 
+// Internal query for actions to use
+export const getUserByIdInternal = query({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    return user;
+  },
+});
+
 export const generateUploadUrl = mutation({
   args: {},
   handler: async (ctx) => {
