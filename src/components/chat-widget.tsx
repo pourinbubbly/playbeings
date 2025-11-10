@@ -34,6 +34,7 @@ export function ChatWidget() {
   const markAsRead = useMutation(api.messages.markAsRead);
   const generateImageUploadUrl = useMutation(api.messages.generateImageUploadUrl);
   const hideConversation = useMutation(api.messages.hideConversation);
+  const unhideConversation = useMutation(api.messages.unhideConversation);
   const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
 
   // Check if user is at bottom of scroll
@@ -233,18 +234,22 @@ export function ChatWidget() {
     console.log("Starting conversation with user:", userId);
     setLoadingTimeout(false); // Reset timeout state
     try {
+      // First, get or create the conversation
       const convId = await getOrCreateConversation({ otherUserId: userId });
       console.log("Conversation created/found:", convId);
       
-      // Set the conversation ID immediately
+      // Explicitly unhide the conversation (in case it was hidden)
+      await unhideConversation({ conversationId: convId });
+      console.log("Conversation unhidden");
+      
+      // Wait a moment for the query to sync
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Set the conversation ID
       setSelectedConvId(convId);
       setSearchQuery("");
       
       console.log("Selected conversation ID set to:", convId);
-      
-      // Wait a moment for the conversation to sync in the list
-      // This ensures the unhide operation has completed
-      await new Promise(resolve => setTimeout(resolve, 500));
       
     } catch (error) {
       console.error("Failed to start conversation:", error);

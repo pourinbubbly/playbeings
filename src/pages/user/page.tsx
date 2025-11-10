@@ -719,17 +719,23 @@ function ProfileCommentsSection({ currentUser, targetUser }: ProfileCommentsSect
 function SendMessageButton({ targetUserId }: { targetUserId: Id<"users"> }) {
   const navigate = useNavigate();
   const getOrCreateConversation = useMutation(api.messages.getOrCreateConversation);
+  const unhideConversation = useMutation(api.messages.unhideConversation);
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSendMessage = async () => {
     setIsLoading(true);
     try {
+      // Get or create conversation
       const convId = await getOrCreateConversation({ otherUserId: targetUserId });
-      toast.success("Conversation started");
+      
+      // Unhide conversation if it was hidden
+      await unhideConversation({ conversationId: convId });
+      
+      toast.success("Sohbet açıldı - Chat widget'ı açın");
       // Note: The chat widget will be opened via global state or you can add a custom event
     } catch (error) {
       console.error("Failed to start conversation:", error);
-      toast.error("Failed to start conversation");
+      toast.error("Sohbet başlatılamadı");
     } finally {
       setIsLoading(false);
     }
