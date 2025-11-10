@@ -807,3 +807,59 @@ export const getFollowingUsers = query({
     return followingUsers.filter((u) => u !== null);
   },
 });
+
+// Get conversation by ID (for direct access)
+export const getConversationById = query({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return null;
+    }
+
+    const user = await ctx.db
+      .query("users")
+      .withIndex("by_token", (q) =>
+        q.eq("tokenIdentifier", identity.tokenIdentifier)
+      )
+      .unique();
+
+    if (!user) {
+      return null;
+    }
+
+    const conv = await ctx.db.get(args.conversationId);
+    if (!conv) {
+      return null;
+    }
+
+    // Verify user is part of conversation
+    if (conv.participant1 !== user._id && conv.participant2 !== user._id) {
+      return null;
+    }
+
+    const otherUserId =
+      conv.participant1 === user._id ? conv.participant2 : conv.participant1;
+    const otherUser = await ctx.db.get(otherUserId);
+    const unreadCount =
+      conv.participant1 === user._id ? conv.unreadCount1 : conv.unreadCount2;
+
+    if (!otherUser) {
+      return null;
+    }
+
+    return {
+      _id: conv._id,
+      otherUser: {
+        _id: otherUser._id,
+        username: otherUser.username || otherUser.name || "Unknown User",
+        avatar: otherUser.avatar,
+      },
+      lastMessage: conv.lastMessage,
+      lastMessageTime: conv.lastMessageTime,
+      unreadCount,
+    };
+  },
+});
