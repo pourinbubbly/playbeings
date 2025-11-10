@@ -679,8 +679,7 @@ export async function purchasePremiumPassTransaction(): Promise<{ signature: str
     const transaction = new Transaction();
 
     // Transfer 0.05 SOL to PlayBeings treasury (premium pass payment)
-    // Using a burn/treasury address - 11111111111111111111111111111112 (System Program + 1)
-    const treasuryAddress = new PublicKey("11111111111111111111111111111112");
+    const treasuryAddress = new PublicKey("8ZeTZaujAWzR8UkLsXGeo8LSd8LoBgkTzXdGEbAjRAjk");
     const lamports = 50000000; // 0.05 SOL
     
     transaction.add(
