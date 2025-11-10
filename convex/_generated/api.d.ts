@@ -29,6 +29,7 @@ import type * as quests from "../quests.js";
 import type * as rewards from "../rewards.js";
 import type * as stats from "../stats.js";
 import type * as steam from "../steam.js";
+import type * as steamQueries from "../steamQueries.js";
 import type * as users from "../users.js";
 import type * as wallets from "../wallets.js";
 
@@ -68,6 +69,7 @@ declare const fullApi: ApiFromModules<{
   rewards: typeof rewards;
   stats: typeof stats;
   steam: typeof steam;
+  steamQueries: typeof steamQueries;
   users: typeof users;
   wallets: typeof wallets;
 }>;

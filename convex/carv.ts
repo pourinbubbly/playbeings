@@ -147,7 +147,7 @@ export const analyzeBehaviorWithAI = internalAction({
       if (!user) return null;
 
       // Get user's games
-      const games = await ctx.runQuery(internal.steam.getUserGames, { userId: args.userId });
+      const games = await ctx.runQuery(internal.steamQueries.getUserGames, { userId: args.userId });
       
       // Get user's recent quests
       const recentQuests = await ctx.runQuery(internal.quests.getUserRecentQuests, { 
@@ -261,7 +261,7 @@ export const generateGameRecommendations = action({
       });
 
       // Get user's current games
-      const games = await ctx.runQuery(internal.steam.getUserGames, { userId: args.userId });
+      const games = await ctx.runQuery(internal.steamQueries.getUserGames, { userId: args.userId });
       const topGames = games?.slice(0, 5).map((g: { name: string }) => g.name).join(", ") || "No games yet";
 
       // Use DeepSeek AI to generate personalized recommendations
