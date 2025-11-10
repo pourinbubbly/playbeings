@@ -665,3 +665,33 @@ export const getUserQuestStats = query({
     };
   },
 });
+
+// Internal query to get user's recent quests
+export const getUserRecentQuests = internalQuery({
+  args: {
+    userId: v.id("users"),
+    limit: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const userQuests = await ctx.db
+      .query("userQuests")
+      .withIndex("by_user_and_date", (q) => q.eq("userId", args.userId))
+      .order("desc")
+      .take(args.limit);
+    
+    return userQuests;
+  },
+});
+
+// Internal query to get daily quests for a date
+export const getDailyQuests = internalQuery({
+  args: { date: v.string() },
+  handler: async (ctx, args) => {
+    const dailyQuests = await ctx.db
+      .query("dailyQuests")
+      .withIndex("by_date", (q) => q.eq("date", args.date))
+      .unique();
+    
+    return dailyQuests;
+  },
+});

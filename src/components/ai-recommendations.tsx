@@ -28,19 +28,27 @@ interface Insight {
 
 export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
   const [isGenerating, setIsGenerating] = useState(false);
+  const generateRecommendations = useAction(api.carv.generateGameRecommendations);
+  const generateQuests = useAction(api.carv.generateQuestRecommendations);
   
   const recommendations = useQuery(api.carvMutations.getRecommendations, {
     userId: userId,
     limit: 5,
   });
 
-  // Auto-generate recommendations on mount if none exist
-  useEffect(() => {
-    if (recommendations && recommendations.length === 0 && !isGenerating) {
-      // Don't auto-generate for now to avoid unnecessary API calls
-      // setIsGenerating(true);
+  const handleGenerate = async () => {
+    setIsGenerating(true);
+    try {
+      await Promise.all([
+        generateRecommendations({ userId }),
+        generateQuests({ userId, limit: 3 }),
+      ]);
+    } catch (error) {
+      console.error("Error generating recommendations:", error);
+    } finally {
+      setIsGenerating(false);
     }
-  }, [recommendations, isGenerating]);
+  };
 
   if (recommendations === undefined) {
     return (
@@ -80,7 +88,7 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
                 AI Recommendations
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                Powered by CARV D.A.T.A.
+                Powered by CARV D.A.T.A. + DeepSeek AI
               </CardDescription>
             </div>
           </div>
@@ -88,11 +96,19 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
         <CardContent>
           <div className="text-center py-8">
             <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-3 opacity-50" />
-            <p className="text-muted-foreground text-sm">
-              AI is learning your preferences...
+            <p className="text-muted-foreground text-sm mb-4">
+              Get AI-powered personalized recommendations
             </p>
-            <p className="text-xs text-muted-foreground mt-2">
-              Complete more quests and activities to get personalized recommendations
+            <Button 
+              onClick={handleGenerate} 
+              disabled={isGenerating}
+              className="bg-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/80 text-black"
+            >
+              {isGenerating && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {isGenerating ? "Analyzing..." : "Generate Recommendations"}
+            </Button>
+            <p className="text-xs text-muted-foreground mt-4">
+              Uses DeepSeek AI to analyze your gaming patterns
             </p>
           </div>
         </CardContent>
@@ -111,13 +127,25 @@ export function AIRecommendations({ userId }: { userId: Id<"users"> }) {
                 AI Recommendations
               </CardTitle>
               <CardDescription className="uppercase tracking-wide text-xs">
-                Powered by CARV D.A.T.A. Framework
+                CARV D.A.T.A. + DeepSeek AI
               </CardDescription>
             </div>
           </div>
-          <Badge variant="secondary" className="bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/20">
-            {recommendations.length} Active
-          </Badge>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline"
+              size="sm"
+              onClick={handleGenerate} 
+              disabled={isGenerating}
+              className="border-[var(--neon-cyan)]/20 hover:border-[var(--neon-cyan)]/40"
+            >
+              {isGenerating && <Loader2 className="w-3 h-3 mr-1 animate-spin" />}
+              {isGenerating ? "Updating..." : "Refresh"}
+            </Button>
+            <Badge variant="secondary" className="bg-[var(--neon-cyan)]/10 text-[var(--neon-cyan)] border border-[var(--neon-cyan)]/20">
+              {recommendations.length} Active
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

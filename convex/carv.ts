@@ -5,11 +5,18 @@ import { v } from "convex/values";
 import { ConvexError } from "convex/values";
 import { internal } from "./_generated/api";
 
-// CARV API Base URL
-const CARV_API_BASE = "https://api.carv.io/data";
+// CARV D.A.T.A. Framework API Base URL
+const CARV_API_BASE = "https://interface.carv.io/ai-agent-backend";
+// DeepSeek API Base URL (OpenAI compatible)
+const DEEPSEEK_API_BASE = "https://api.deepseek.com/v1";
 
 // CARV API Client Helper
-async function carvApiRequest(endpoint: string, params: Record<string, string> = {}) {
+async function carvApiRequest(
+  endpoint: string, 
+  params: Record<string, string> = {},
+  method: "GET" | "POST" = "GET",
+  body?: unknown
+) {
   const apiKey = process.env.CARV_API_KEY;
   if (!apiKey) {
     throw new ConvexError({
@@ -19,17 +26,20 @@ async function carvApiRequest(endpoint: string, params: Record<string, string> =
   }
 
   const url = new URL(`${CARV_API_BASE}${endpoint}`);
-  Object.entries(params).forEach(([key, value]) => {
-    url.searchParams.append(key, value);
-  });
+  if (method === "GET") {
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.append(key, value);
+    });
+  }
 
   try {
     const response = await fetch(url.toString(), {
-      method: "GET",
+      method,
       headers: {
-        "Authorization": `Bearer ${apiKey}`,
+        "Authorization": apiKey,
         "Content-Type": "application/json",
       },
+      body: body ? JSON.stringify(body) : undefined,
     });
 
     if (!response.ok) {
@@ -48,22 +58,59 @@ async function carvApiRequest(endpoint: string, params: Record<string, string> =
   }
 }
 
-// Get user's on-chain identity and reputation
+// DeepSeek AI Client Helper
+async function deepseekRequest(messages: Array<{ role: string; content: string }>) {
+  const apiKey = process.env.DEEPSEEK_API_KEY;
+  if (!apiKey) {
+    console.warn("DeepSeek API key not configured, using fallback logic");
+    return null;
+  }
+
+  try {
+    const response = await fetch(`${DEEPSEEK_API_BASE}/chat/completions`, {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: "deepseek-chat",
+        messages,
+        temperature: 0.7,
+        max_tokens: 1000,
+      }),
+    });
+
+    if (!response.ok) {
+      console.error(`DeepSeek API error (${response.status})`);
+      return null;
+    }
+
+    const data = await response.json();
+    return data.choices[0]?.message?.content || null;
+  } catch (error) {
+    console.error("DeepSeek API request error:", error);
+    return null;
+  }
+}
+
+// Get user's on-chain identity and reputation from CARV
 export const getUserIdentity = action({
   args: {
     walletAddress: v.string(),
   },
   handler: async (ctx, args) => {
     try {
-      const data = await carvApiRequest("/identity", {
+      // Call CARV API for on-chain identity
+      const data = await carvApiRequest("/token_info", {
         address: args.walletAddress,
       });
       
       return {
-        carvId: data.carv_id || null,
-        reputationScore: data.reputation_score || 0,
-        verifiedAt: data.verified_at || null,
-        metadata: data.metadata || {},
+        carvId: data.data?.carv_id || null,
+        reputationScore: data.data?.reputation_score || 0,
+        verifiedAt: data.data?.verified_at || null,
+        metadata: data.data?.metadata || {},
       };
     } catch (error) {
       console.error("Error fetching CARV identity:", error);
@@ -72,42 +119,114 @@ export const getUserIdentity = action({
   },
 });
 
-// Get user's cross-chain activity and behavior patterns
-export const getUserBehaviorInsights = action({
+// Real-time behavioral analytics using Steam data + DeepSeek AI
+export const analyzeBehaviorWithAI = internalAction({
   args: {
-    walletAddress: v.optional(v.string()),
-    steamId: v.optional(v.string()),
+    userId: v.id("users"),
   },
   handler: async (ctx, args) => {
     try {
-      // Mock implementation - CARV API documentation needed for exact endpoints
-      // This would call CARV's behavior analysis endpoints
-      const insights = {
-        gamingPreferences: {
-          genres: ["action", "strategy", "rpg"],
-          playStyle: "competitive",
-          averageSessionLength: 120, // minutes
+      // Get user data from database
+      const user = await ctx.runQuery(internal.users.getUserById, { userId: args.userId });
+      if (!user) return null;
+
+      // Get user's games
+      const games = await ctx.runQuery(internal.steam.getUserGames, { userId: args.userId });
+      
+      // Get user's recent quests
+      const recentQuests = await ctx.runQuery(internal.quests.getUserRecentQuests, { 
+        userId: args.userId, 
+        limit: 10 
+      });
+
+      // Prepare data for AI analysis
+      const analysisPrompt = `Analyze this gaming user's behavior and provide insights:
+
+User Stats:
+- Total Points: ${user.totalPoints}
+- Level: ${user.level}
+- Total Games: ${games?.length || 0}
+- Top 3 Games: ${games?.slice(0, 3).map((g) => `${g.name} (${g.playtime}min)`).join(", ")}
+
+Recent Quest Completion Rate: ${recentQuests?.filter((q) => q.completed).length || 0}/${recentQuests?.length || 0}
+
+Provide a JSON response with:
+1. gamingPreferences: {genres: string[], playStyle: string, sessionLength: number}
+2. engagement: {level: "low"|"medium"|"high", trend: "increasing"|"stable"|"decreasing"}
+3. recommendations: {nextQuest: string, suggestedGame: string, rewardMultiplier: number}
+4. insights: string[]
+
+Format as valid JSON only, no markdown.`;
+
+      // Get AI insights from DeepSeek
+      const aiResponse = await deepseekRequest([
+        {
+          role: "system",
+          content: "You are a gaming behavioral analyst. Provide actionable insights in JSON format.",
         },
-        socialBehavior: {
-          engagement: "high",
-          communityParticipation: 0.75,
+        {
+          role: "user",
+          content: analysisPrompt,
         },
-        economicBehavior: {
-          spendingPattern: "moderate",
-          rewardResponsiveness: 0.8,
-        },
-      };
+      ]);
+
+      let insights;
+      if (aiResponse) {
+        try {
+          insights = JSON.parse(aiResponse);
+        } catch {
+          console.warn("Failed to parse AI response, using fallback");
+          insights = null;
+        }
+      }
+
+      // Fallback to rule-based analysis if AI fails
+      if (!insights) {
+        const totalPlaytime = games?.reduce((sum, g) => sum + g.playtime, 0) || 0;
+        const avgSessionLength = totalPlaytime / Math.max(games?.length || 1, 1);
+        
+        insights = {
+          gamingPreferences: {
+            genres: ["action", "strategy"],
+            playStyle: avgSessionLength > 120 ? "hardcore" : "casual",
+            sessionLength: Math.round(avgSessionLength),
+          },
+          engagement: {
+            level: user.totalPoints > 1000 ? "high" : user.totalPoints > 500 ? "medium" : "low",
+            trend: "stable",
+          },
+          recommendations: {
+            nextQuest: "Complete 3 matches",
+            suggestedGame: "New competitive title",
+            rewardMultiplier: 1.2,
+          },
+          insights: [
+            `Total playtime: ${totalPlaytime} minutes`,
+            `Playing ${games?.length || 0} different games`,
+            `Quest completion rate: ${Math.round(((recentQuests?.filter((q) => q.completed).length || 0) / Math.max(recentQuests?.length || 1, 1)) * 100)}%`,
+          ],
+        };
+      }
+
+      // Store insights in database
+      await ctx.runMutation(internal.carvMutations.storeInsight, {
+        userId: args.userId,
+        insightType: "behavior",
+        category: "gaming",
+        insight: JSON.stringify(insights),
+        confidence: 0.85,
+        actionable: true,
+      });
 
       return insights;
     } catch (error) {
-      console.error("Error fetching behavior insights:", error);
+      console.error("Error analyzing behavior:", error);
       return null;
     }
   },
 });
 
-// Generate AI-powered game recommendations  
-// Note: This is a mock implementation - real CARV integration would use their AI endpoints
+// AI-powered game recommendations using DeepSeek + Steam data
 export const generateGameRecommendations = internalAction({
   args: {
     userId: v.id("users"),
@@ -115,35 +234,98 @@ export const generateGameRecommendations = internalAction({
   },
   handler: async (ctx, args) => {
     try {
-      // Generate recommendations based on AI analysis
-      // This is a simplified version - real implementation would use CARV's AI endpoints
-      const recommendations = [
+      // Get behavioral insights first
+      const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
+        userId: args.userId,
+      });
+
+      // Get user's current games
+      const games = await ctx.runQuery(internal.steam.getUserGames, { userId: args.userId });
+      const topGames = games?.slice(0, 5).map((g) => g.name).join(", ") || "No games yet";
+
+      // Use DeepSeek AI to generate personalized recommendations
+      const recommendPrompt = `Based on this user's gaming profile, recommend ${args.limit || 5} games:
+
+Current Top Games: ${topGames}
+Play Style: ${behavior?.gamingPreferences?.playStyle || "casual"}
+Preferences: ${behavior?.gamingPreferences?.genres?.join(", ") || "various"}
+Engagement: ${behavior?.engagement?.level || "medium"}
+
+For each game, provide:
+- appId (Steam App ID)
+- name (Game name)
+- reason (Why recommended)
+- confidence (0.0-1.0)
+
+Return as JSON array only, no markdown.`;
+
+      const aiResponse = await deepseekRequest([
         {
-          appId: "730", // CS:GO
-          reason: "Popular among competitive players with similar playstyle",
-          confidence: 0.85,
+          role: "system",
+          content: "You are a Steam game recommendation expert. Always return valid JSON arrays.",
         },
         {
-          appId: "570", // Dota 2
-          reason: "Strategic gameplay matches your preferences",
-          confidence: 0.78,
+          role: "user",
+          content: recommendPrompt,
         },
-        {
-          appId: "252490", // Rust
-          reason: "High engagement potential based on your patterns",
-          confidence: 0.72,
-        },
-      ];
+      ]);
+
+      let recommendations = [];
+
+      if (aiResponse) {
+        try {
+          const parsed = JSON.parse(aiResponse);
+          recommendations = Array.isArray(parsed) ? parsed : parsed.recommendations || [];
+        } catch {
+          console.warn("Failed to parse AI recommendations, using fallback");
+        }
+      }
+
+      // Fallback recommendations if AI fails
+      if (recommendations.length === 0) {
+        recommendations = [
+          {
+            appId: "730",
+            name: "Counter-Strike 2",
+            reason: "Popular competitive FPS with active community",
+            confidence: 0.85,
+          },
+          {
+            appId: "570",
+            name: "Dota 2",
+            reason: "Strategic MOBA with deep gameplay",
+            confidence: 0.78,
+          },
+          {
+            appId: "1172470",
+            name: "Apex Legends",
+            reason: "Fast-paced battle royale",
+            confidence: 0.75,
+          },
+          {
+            appId: "252490",
+            name: "Rust",
+            reason: "Survival game with social elements",
+            confidence: 0.72,
+          },
+          {
+            appId: "1623730",
+            name: "Palworld",
+            reason: "Trending multiplayer adventure",
+            confidence: 0.70,
+          },
+        ].slice(0, args.limit || 5);
+      }
 
       // Store recommendations in database
-      for (const rec of recommendations) {
+      for (const rec of recommendations.slice(0, args.limit || 5)) {
         await ctx.runMutation(internal.carvMutations.storeRecommendationMutation, {
           userId: args.userId,
           type: "game",
-          targetId: rec.appId,
-          score: rec.confidence,
+          targetId: String(rec.appId || rec.name),
+          score: rec.confidence || 0.75,
           reason: rec.reason,
-          metadata: "{}",
+          metadata: JSON.stringify({ name: rec.name }),
           createdAt: Date.now(),
           shown: false,
         });
@@ -157,49 +339,106 @@ export const generateGameRecommendations = internalAction({
   },
 });
 
-// Generate AI-powered quest recommendations
-// Note: This is a mock implementation - real CARV integration would use their AI endpoints
+// AI-powered quest recommendations using DeepSeek
 export const generateQuestRecommendations = internalAction({
   args: {
     userId: v.id("users"),
+    limit: v.optional(v.number()),
   },
-  handler: async (ctx, args): Promise<Array<{
-    questId: string;
-    reason: string;
-    confidence: number;
-    suggestedReward: number;
-  }>> => {
+  handler: async (ctx, args) => {
     try {
-      // Analyze patterns and generate personalized quest recommendations
-      const recommendations: Array<{
-        questId: string;
-        reason: string;
-        confidence: number;
-        suggestedReward: number;
-      }> = [
+      // Get behavioral insights
+      const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
+        userId: args.userId,
+      });
+
+      // Get available daily quests
+      const today = new Date().toISOString().split("T")[0];
+      const dailyQuests = await ctx.runQuery(internal.quests.getDailyQuests, { date: today });
+
+      const questPrompt = `Based on this user's profile, recommend ${args.limit || 3} quests:
+
+Play Style: ${behavior?.gamingPreferences?.playStyle || "casual"}
+Engagement: ${behavior?.engagement?.level || "medium"}
+Session Length: ${behavior?.gamingPreferences?.sessionLength || 60} minutes
+
+Available Quest Types:
+- Play specific games (30-120 min)
+- Win matches (1-5 wins)
+- Earn achievements (1-3 achievements)
+- Social activities (add friends, comment)
+
+For each quest, provide:
+- questId (unique id)
+- title (Quest name)
+- reason (Why recommended)
+- confidence (0.0-1.0)
+- suggestedReward (50-300 points)
+
+Return as JSON array only.`;
+
+      const aiResponse = await deepseekRequest([
         {
-          questId: "play_competitive",
-          reason: "Based on your competitive playstyle",
-          confidence: 0.82,
-          suggestedReward: 150,
+          role: "system",
+          content: "You are a quest design expert. Create engaging, achievable quests.",
         },
         {
-          questId: "social_engagement",
-          reason: "High community engagement detected",
-          confidence: 0.76,
-          suggestedReward: 150,
+          role: "user",
+          content: questPrompt,
         },
-      ];
+      ]);
+
+      let recommendations = [];
+
+      if (aiResponse) {
+        try {
+          const parsed = JSON.parse(aiResponse);
+          recommendations = Array.isArray(parsed) ? parsed : parsed.recommendations || [];
+        } catch {
+          console.warn("Failed to parse AI quest recommendations");
+        }
+      }
+
+      // Fallback recommendations
+      if (recommendations.length === 0) {
+        const playStyle = behavior?.gamingPreferences?.playStyle || "casual";
+        recommendations = [
+          {
+            questId: `${playStyle}_play_${Date.now()}`,
+            title: playStyle === "hardcore" ? "Play for 2 hours" : "Play for 30 minutes",
+            reason: `Matches your ${playStyle} playstyle`,
+            confidence: 0.85,
+            suggestedReward: playStyle === "hardcore" ? 200 : 100,
+          },
+          {
+            questId: `achievement_${Date.now()}`,
+            title: "Unlock 2 achievements",
+            reason: "Build your collection",
+            confidence: 0.75,
+            suggestedReward: 150,
+          },
+          {
+            questId: `social_${Date.now()}`,
+            title: "Comment on a profile",
+            reason: "Increase community engagement",
+            confidence: 0.70,
+            suggestedReward: 100,
+          },
+        ].slice(0, args.limit || 3);
+      }
 
       // Store recommendations
-      for (const rec of recommendations) {
+      for (const rec of recommendations.slice(0, args.limit || 3)) {
         await ctx.runMutation(internal.carvMutations.storeRecommendationMutation, {
           userId: args.userId,
           type: "quest",
-          targetId: rec.questId,
-          score: rec.confidence,
+          targetId: rec.questId || rec.title,
+          score: rec.confidence || 0.75,
           reason: rec.reason,
-          metadata: "{}",
+          metadata: JSON.stringify({ 
+            title: rec.title, 
+            reward: rec.suggestedReward 
+          }),
           createdAt: Date.now(),
           shown: false,
         });
@@ -213,8 +452,7 @@ export const generateQuestRecommendations = internalAction({
   },
 });
 
-// Smart reward optimization based on user behavior
-// Note: This is a mock implementation - real CARV integration would use behavioral data
+// Autonomous reward distribution with AI optimization
 export const optimizeRewardDistribution = internalAction({
   args: {
     userId: v.id("users"),
@@ -223,21 +461,66 @@ export const optimizeRewardDistribution = internalAction({
   },
   handler: async (ctx, args) => {
     try {
-      // AI-based reward optimization
-      // Factors: user engagement, retention risk, milestone importance
-      const multiplier = 1.2; // Base 20% bonus for AI optimization
+      // Get user data and behavior
+      const user = await ctx.runQuery(internal.users.getUserById, { userId: args.userId });
+      if (!user) return args.baseReward;
 
+      const behavior = await ctx.runAction(internal.carv.analyzeBehaviorWithAI, {
+        userId: args.userId,
+      });
+
+      // Calculate AI-optimized multiplier
+      let multiplier = 1.0;
+
+      // Factor 1: Engagement level (0.8x - 1.3x)
+      const engagementBonus = {
+        high: 1.3,
+        medium: 1.1,
+        low: 0.9,
+      };
+      multiplier *= engagementBonus[behavior?.engagement?.level as keyof typeof engagementBonus] || 1.0;
+
+      // Factor 2: Trend (additional 10% if improving)
+      if (behavior?.engagement?.trend === "increasing") {
+        multiplier *= 1.1;
+      }
+
+      // Factor 3: Context-specific multipliers
+      const contextBonus = {
+        milestone: 1.5,
+        quest_complete: 1.2,
+        engagement: 1.1,
+        daily_checkin: 1.0,
+      };
+      multiplier *= contextBonus[args.context as keyof typeof contextBonus] || 1.0;
+
+      // Factor 4: Premium pass bonus
+      if (user.hasPremiumPass && (user.premiumPassExpiry || 0) > Date.now()) {
+        multiplier *= 1.15;
+      }
+
+      // Calculate optimized reward
       const optimizedReward = Math.floor(args.baseReward * multiplier);
+      const bonusAmount = optimizedReward - args.baseReward;
 
-      // Log smart reward
+      // Log smart reward distribution
       await ctx.runMutation(internal.carvMutations.logSmartRewardMutation, {
         userId: args.userId,
         rewardType: "points",
         amount: optimizedReward,
-        reason: `AI-optimized reward (${multiplier.toFixed(2)}x multiplier)`,
+        reason: `AI-optimized: ${multiplier.toFixed(2)}x multiplier (Engagement: ${behavior?.engagement?.level}, Context: ${args.context}, Bonus: +${bonusAmount})`,
         triggeredBy: args.context,
         status: "distributed",
         createdAt: Date.now(),
+      });
+
+      // Autonomous notification
+      await ctx.runMutation(internal.notifications.create, {
+        userId: args.userId,
+        type: "points",
+        title: "Smart Reward Distributed!",
+        message: `You earned ${optimizedReward} points (${bonusAmount > 0 ? "+" + bonusAmount + " AI bonus" : "base"})`,
+        link: "/dashboard",
       });
 
       return optimizedReward;
