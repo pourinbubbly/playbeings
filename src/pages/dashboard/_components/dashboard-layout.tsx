@@ -42,6 +42,7 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
 
   const moreNavItems = [
     { href: "/premium", icon: Crown, label: "Premium Pass" },
+    { href: "/community", icon: Users, label: "Community" },
     { href: "/dashboard/wallet", icon: Wallet, label: "Wallet" },
     { href: "/dashboard/cards", icon: CreditCard, label: "NFT Cards" },
     { href: "/dashboard/nfts", icon: Zap, label: "My NFTs" },
@@ -101,12 +102,6 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                     <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-muted-foreground hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10">
                       <Settings className="w-4 h-4" />
                       <span>Settings</span>
-                    </DropdownMenuItem>
-                  </Link>
-                  <Link to="/community">
-                    <DropdownMenuItem className="flex items-center gap-3 px-4 py-3 cursor-pointer font-semibold uppercase tracking-wider text-sm text-muted-foreground hover:text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10">
-                      <Users className="w-4 h-4" />
-                      <span>Community</span>
                     </DropdownMenuItem>
                   </Link>
                   <DropdownMenuItem 

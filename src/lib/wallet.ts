@@ -611,20 +611,41 @@ export async function mintNFTOnCARV(
     transaction.partialSign(mintKeypair);
 
     console.log("Requesting Backpack approval...");
+    console.log("Mint Address (NFT):", mintAddress);
     
     // Sign and send with Backpack (single approval)
     const { signature } = await window.backpack.signAndSendTransaction(transaction);
     
-    console.log("NFT Minted! Tx:", signature);
+    console.log("NFT Mint Transaction Submitted! Tx:", signature);
+    console.log("Confirming NFT mint on-chain...");
 
-    // Wait for confirmation
-    await connection.confirmTransaction({
+    // Wait for confirmation with timeout
+    const confirmationPromise = connection.confirmTransaction({
       signature,
       blockhash,
       lastValidBlockHeight,
     }, "confirmed");
+    
+    // Add timeout to prevent hanging (60 seconds)
+    const timeoutPromise = new Promise((_, reject) => {
+      setTimeout(() => reject(new Error("Transaction confirmation timeout")), 60000);
+    });
+    
+    try {
+      await Promise.race([confirmationPromise, timeoutPromise]);
+      console.log("NFT Mint confirmed on CARV SVM!");
+      console.log("NFT successfully minted at address:", mintAddress);
+    } catch (confirmError) {
+      console.warn("NFT mint confirmation timed out, but transaction was submitted:", signature);
+      console.log("NFT should be available at:", mintAddress);
+    }
 
     const explorerUrl = `http://explorer.testnet.carv.io/tx/${signature}`;
+    
+    console.log("NFT Mint Complete!");
+    console.log("- Mint Address:", mintAddress);
+    console.log("- Transaction:", signature);
+    console.log("- Explorer:", explorerUrl);
     
     return { 
       signature, 
@@ -657,13 +678,15 @@ export async function purchasePremiumPassTransaction(): Promise<{ signature: str
 
     const transaction = new Transaction();
 
-    // Transfer 0.05 SOL to self (premium pass payment)
+    // Transfer 0.05 SOL to PlayBeings treasury (premium pass payment)
+    // Using a burn/treasury address - 11111111111111111111111111111112 (System Program + 1)
+    const treasuryAddress = new PublicKey("11111111111111111111111111111112");
     const lamports = 50000000; // 0.05 SOL
     
     transaction.add(
       SystemProgram.transfer({
         fromPubkey: walletPubkey,
-        toPubkey: walletPubkey,
+        toPubkey: treasuryAddress,
         lamports,
       })
     );

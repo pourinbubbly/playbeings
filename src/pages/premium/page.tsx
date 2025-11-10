@@ -35,6 +35,7 @@ function PremiumPassContent() {
   const passInfo = useQuery(api.premiumPass.getPremiumPassInfo, {});
   const hasPass = useQuery(api.premiumPass.hasActivePremiumPass, {});
   const premiumQuests = useQuery(api.premiumPass.getPremiumQuests, {});
+  const checkInStatus = useQuery(api.checkin.getCheckInStatus, {});
   const activatePass = useMutation(api.premiumPass.activatePremiumPass);
   const syncProgress = useMutation(api.premiumPass.syncPremiumQuestProgress);
   const claimReward = useMutation(api.premiumPass.claimPremiumReward);
@@ -303,6 +304,9 @@ function PremiumPassContent() {
                         const isToday = quest.dayNumber === daysSinceStart;
                         const isFuture = quest.dayNumber && quest.dayNumber > daysSinceStart;
                         const isPast = quest.dayNumber && quest.dayNumber < daysSinceStart;
+                        
+                        // Check if user has checked in today (required for claiming today's quest)
+                        const hasCheckedInToday = checkInStatus?.hasCheckedInToday || false;
 
                         // Calculate unlock date for future quests
                         const unlockDate = new Date(passStartDate);
@@ -369,23 +373,31 @@ function PremiumPassContent() {
                                     </span>
                                   </div>
                                 ) : isToday ? (
-                                  <Button
-                                    onClick={() => handleClaimReward(quest.id)}
-                                    disabled={selectedQuestId === quest.id}
-                                    className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider px-6"
-                                  >
-                                    {selectedQuestId === quest.id ? (
-                                      <>
-                                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                        Claiming...
-                                      </>
-                                    ) : (
-                                      <>
-                                        <Trophy className="w-4 h-4 mr-2" />
-                                        Claim
-                                      </>
-                                    )}
-                                  </Button>
+                                  hasCheckedInToday ? (
+                                    <Button
+                                      onClick={() => handleClaimReward(quest.id)}
+                                      disabled={selectedQuestId === quest.id}
+                                      className="glass-card border-2 border-[var(--neon-cyan)] text-[var(--neon-cyan)] hover:bg-[var(--neon-cyan)]/10 font-semibold uppercase tracking-wider px-6"
+                                    >
+                                      {selectedQuestId === quest.id ? (
+                                        <>
+                                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                          Claiming...
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Trophy className="w-4 h-4 mr-2" />
+                                          Claim
+                                        </>
+                                      )}
+                                    </Button>
+                                  ) : (
+                                    <div className="glass-card border-2 border-yellow-500/30 px-6 py-2 bg-yellow-500/5">
+                                      <span className="text-sm text-yellow-500 font-semibold uppercase tracking-wide">
+                                        Check-In First
+                                      </span>
+                                    </div>
+                                  )
                                 ) : isPast ? (
                                   <div className="glass-card border-2 border-destructive/30 px-6 py-2 bg-destructive/5">
                                     <span className="text-sm text-destructive font-semibold uppercase tracking-wide">
