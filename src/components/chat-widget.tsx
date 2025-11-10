@@ -25,10 +25,6 @@ export function ChatWidget() {
 
   const conversations = useQuery(api.messages.getMyConversations, {});
   const followingUsers = useQuery(api.messages.getFollowingUsers, {});
-  const directConversation = useQuery(
-    api.messages.getConversationById,
-    selectedConvId ? { conversationId: selectedConvId } : "skip"
-  );
   const messages = useQuery(
     api.messages.getMessages,
     selectedConvId ? { conversationId: selectedConvId } : "skip"
@@ -175,21 +171,27 @@ export function ChatWidget() {
     }
   };
 
-  // Get selected conversation from list or direct fetch
-  const selectedConv = conversations?.find((c) => c._id === selectedConvId) || directConversation;
+  const selectedConv = conversations?.find((c) => c._id === selectedConvId);
   const totalUnread = conversations?.reduce((sum, c) => sum + c.unreadCount, 0) || 0;
   
   // Check if we have a selected conversation ID but no conversation object yet
   const hasSelectedConv = selectedConvId !== null;
+  
+  console.log("Selected conv ID:", selectedConvId);
+  console.log("Selected conv object:", selectedConv);
+  console.log("Has selected conv:", hasSelectedConv);
+  console.log("Conversations list length:", conversations?.length);
 
   // Handle loading timeout for new conversations
   useEffect(() => {
     if (hasSelectedConv && !selectedConv && !loadingTimeout) {
+      console.log("Starting loading timeout...");
       const timer = setTimeout(() => {
+        console.log("Loading timeout reached");
         setLoadingTimeout(true);
         toast.error("Sohbet yüklenemedi. Lütfen tekrar deneyin.");
         setSelectedConvId(null);
-      }, 3000); // 3 seconds timeout
+      }, 5000); // 5 seconds timeout
 
       return () => clearTimeout(timer);
     } else if (selectedConv && loadingTimeout) {
@@ -232,20 +234,25 @@ export function ChatWidget() {
   };
 
   const handleStartConversation = async (userId: Id<"users">) => {
+    console.log("Starting conversation with user:", userId);
     setLoadingTimeout(false); // Reset timeout state
     try {
       // First, get or create the conversation
       const convId = await getOrCreateConversation({ otherUserId: userId });
+      console.log("Conversation created/found:", convId);
       
       // Explicitly unhide the conversation (in case it was hidden)
       await unhideConversation({ conversationId: convId });
+      console.log("Conversation unhidden");
       
-      // Wait a bit for the queries to sync
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Wait a moment for the query to sync
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      // Set the conversation ID (direct query will load it)
+      // Set the conversation ID
       setSelectedConvId(convId);
       setSearchQuery("");
+      
+      console.log("Selected conversation ID set to:", convId);
       
     } catch (error) {
       console.error("Failed to start conversation:", error);
