@@ -211,12 +211,17 @@ export const getMessages = query({
       messages.map(async (msg) => {
         if (msg.messageType === "image" && msg.imageUrl) {
           const imageUrl = await ctx.storage.getUrl(msg.imageUrl);
+          console.log("Message image storage ID:", msg.imageUrl);
+          console.log("Generated URL:", imageUrl);
           return {
             ...msg,
-            imageUrl: imageUrl || undefined,
+            imageStorageUrl: imageUrl || null,
           };
         }
-        return msg;
+        return {
+          ...msg,
+          imageStorageUrl: null,
+        };
       })
     );
 

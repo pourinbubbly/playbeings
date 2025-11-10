@@ -394,7 +394,16 @@ export function ChatWidget() {
                       ) : (
                         messages.map((msg) => {
                           const isSender = msg.senderId === selectedConv.otherUser?._id ? false : true;
-                          const isImageMessage = msg.messageType === "image" && msg.imageUrl;
+                          const isImageMessage = msg.messageType === "image";
+                          const imageUrl = 'imageStorageUrl' in msg ? msg.imageStorageUrl : null;
+                          
+                          console.log("Rendering message:", {
+                            id: msg._id,
+                            type: msg.messageType,
+                            hasImageUrl: !!imageUrl,
+                            imageUrl: imageUrl
+                          });
+                          
                           return (
                             <div
                               key={msg._id}
@@ -407,21 +416,19 @@ export function ChatWidget() {
                                     : "glass-card border border-[var(--neon-purple)]/20"
                                 }`}
                               >
-                                {isImageMessage && msg.imageUrl ? (
+                                {isImageMessage && imageUrl ? (
                                   <div className="space-y-2">
                                     <img
-                                      src={typeof msg.imageUrl === 'string' ? msg.imageUrl : ''}
+                                      src={imageUrl}
                                       alt="Image"
                                       className="rounded w-full h-auto object-contain cursor-pointer"
                                       style={{ maxHeight: "300px" }}
                                       onClick={() => {
-                                        if (typeof msg.imageUrl === 'string') {
-                                          window.open(msg.imageUrl, "_blank");
-                                        }
+                                        window.open(imageUrl, "_blank");
                                       }}
                                       onError={(e) => {
-                                        console.error("Image load error:", msg.imageUrl);
-                                        console.error("Full URL:", e.currentTarget.src);
+                                        console.error("Image load error for URL:", imageUrl);
+                                        console.error("Event:", e);
                                         const target = e.target as HTMLImageElement;
                                         target.style.display = 'none';
                                       }}
