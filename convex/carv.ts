@@ -7,8 +7,8 @@ import { internal, api } from "./_generated/api";
 
 // CARV D.A.T.A. Framework API Base URL
 const CARV_API_BASE = "https://interface.carv.io/ai-agent-backend";
-// DeepSeek API Base URL (OpenAI compatible)
-const DEEPSEEK_API_BASE = "https://api.deepseek.com/v1";
+// OpenRouter API Base URL (OpenAI compatible, supports free DeepSeek models)
+const OPENROUTER_API_BASE = "https://openrouter.ai/api/v1";
 
 // CARV API Client Helper
 async function carvApiRequest(
@@ -58,23 +58,25 @@ async function carvApiRequest(
   }
 }
 
-// DeepSeek AI Client Helper
+// OpenRouter AI Client Helper (supports free DeepSeek models)
 async function deepseekRequest(messages: Array<{ role: string; content: string }>) {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.OPENROUTER_API_KEY;
   if (!apiKey) {
-    console.warn("DeepSeek API key not configured, using fallback logic");
+    console.warn("OpenRouter API key not configured, using fallback logic");
     return null;
   }
 
   try {
-    const response = await fetch(`${DEEPSEEK_API_BASE}/chat/completions`, {
+    const response = await fetch(`${OPENROUTER_API_BASE}/chat/completions`, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiKey}`,
         "Content-Type": "application/json",
+        "HTTP-Referer": "https://playbeings.app",
+        "X-Title": "PlayBeings",
       },
       body: JSON.stringify({
-        model: "deepseek-chat",
+        model: "deepseek/deepseek-chat", // Free model on OpenRouter
         messages,
         temperature: 0.7,
         max_tokens: 1000,
@@ -82,14 +84,15 @@ async function deepseekRequest(messages: Array<{ role: string; content: string }
     });
 
     if (!response.ok) {
-      console.error(`DeepSeek API error (${response.status})`);
+      const errorText = await response.text();
+      console.error(`OpenRouter API error (${response.status}):`, errorText);
       return null;
     }
 
     const data = await response.json();
     return data.choices[0]?.message?.content || null;
   } catch (error) {
-    console.error("DeepSeek API request error:", error);
+    console.error("OpenRouter API request error:", error);
     return null;
   }
 }
