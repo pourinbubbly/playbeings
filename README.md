@@ -140,17 +140,6 @@ BACKEND_URL=https://api.playbeings.fun
 
 ---
 
-## 💬 Community & Support
-
-| Platform   | Status                                                         |
-| ---------- | -------------------------------------------------------------- |
-| 🌐 Website | [playbeings.onhercules.app](https://playbeings.onhercules.app) |
-| 💬 Discord | Coming soon                                                    |
-| 🐦 Twitter | Coming soon                                                    |
-| 📧 Email   | [hello@hercules.app](mailto:hello@hercules.app)                |
-
----
-
 ## ⚖️ License
 
 This project is licensed under the **MIT License**.
