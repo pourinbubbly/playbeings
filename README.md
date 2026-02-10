@@ -10,10 +10,7 @@ A gamified Web3 platform that connects Steam, CARV SVM, and AI, complete daily q
     Play daily quests, mint NFTs from your Steam achievements, climb the leaderboard and win real gift cards.
   </p>
 
-  <a href="https://playbeings.fun"><b>🌐 Visit Website</b></a> ·
-  <a href="#-getting-started"><b>🚀 Getting Started</b></a> ·
-  <a href="#-features"><b>🧩 Features</b></a> ·
-  <a href="#-rewards"><b>🏆 Rewards</b></a>
+
 </div>
 
 ---
